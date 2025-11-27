@@ -1,4 +1,4 @@
-import { AppointmentCalendar } from '../../management/AppointmentCalendar';
+import { AppointmentCalendar } from '../../management/calendar/AppointmentCalendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 

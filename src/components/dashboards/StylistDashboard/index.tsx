@@ -3,80 +3,36 @@ import { useAuth } from '../../../contexts/auth/index';
 import { useData } from '../../../contexts/data/index';
 import { UserProfile } from '../../UserProfile';
 
-// Sub-componentes
+// Componentes
 import { StylistHeader } from './StylistHeader';
 import { StylistStats } from './StylistStats';
-import { StylistAppointments } from './StylistAppointments';
-
+// Usamos el calendario centralizado que ya soporta filtros y acciones
+import { AppointmentCalendar } from '../../management/calendar/AppointmentCalendar'; 
 
 export function StylistDashboard() {
   const { user, logout, refreshSession } = useAuth();
-  // Asumimos que appointments viene populated del backend
-  const { appointments, getUserNotifications, fetchData } = useData();
+  const { getUserNotifications, fetchData } = useData();
   const [showProfile, setShowProfile] = useState(false);
 
-  // ============================
-  // 🔄 Cargar datos y sesión viva
-  // ============================
   useEffect(() => {
     if (user) fetchData();
-    const interval = setInterval(() => {
-      refreshSession();
-    }, 10 * 60 * 1000);
+    const interval = setInterval(() => refreshSession(), 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData, refreshSession, user]);
 
-  // ============================
-  // 🔔 Notificaciones
-  // ============================
   const notifications = getUserNotifications(user?.id || '');
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // ============================
-  // 💇‍♂️ Citas del estilista
-  // ============================
-  // Filtramos asegurando que el objeto stylist coincida (puede venir como ID string o como objeto populated)
-  const myAppointments = appointments.filter((a) => {
-    const stylistId = typeof a.stylist === 'object' ? a.stylist?._id : a.stylist;
-    return stylistId === user?.id;
-  });
+  // CORRECCIÓN: Hacemos cast a string para evitar el error de tipado estricto
+  // cuando el backend devuelve 'ESTILISTA' en mayúsculas.
+  const userRole = user?.role as string | undefined;
 
-  const today = new Date().toISOString().split('T')[0];
-
-  const todayAppointments = myAppointments.filter(
-    (a) => a.start && a.start.split('T')[0] === today
-  );
-
-  // Estados basados en appointments.schemas.ts y controller (Español)
-  const pendingCount = myAppointments.filter(
-    (a) => a.status === 'PENDIENTE'
-  ).length;
-
-  const confirmedCount = myAppointments.filter(
-    (a) => a.status === 'CONFIRMADA'
-  ).length;
-
-  const completedTodayCount = todayAppointments.filter(
-    (a) => a.status === 'COMPLETED' || a.status === 'COMPLETADA'
-  ).length;
-
-  // ============================
-  // 🚫 Validar acceso por rol
-  // ============================
-  if (user?.role !== 'stylist') {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-black text-white gap-4">
-        <p className="text-xl">No tienes permisos para acceder a este panel.</p>
-        <p className="text-sm text-gray-500">
-          Rol detectado: {user?.role || 'Ninguno'}
-        </p>
-      </div>
-    );
+  if (userRole !== 'stylist' && userRole !== 'ESTILISTA') {
+    return <div className="p-10 text-white text-center">Acceso restringido.</div>;
   }
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HEADER */}
       <StylistHeader
         user={user}
         unreadCount={unreadCount}
@@ -84,23 +40,23 @@ export function StylistDashboard() {
         logout={logout}
       />
 
-      {/* MAIN CONTENT */}
-      <main className="p-6">
-        <div className="space-y-6">
-          {/* TARJETAS */}
-          <StylistStats
-            todayCount={todayAppointments.length}
-            pendingCount={pendingCount}
-            confirmedCount={confirmedCount}
-            completedTodayCount={completedTodayCount}
-          />
+      <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+        {/* Estadísticas Rápidas (Podríamos mejorarlas conectándolas a bookings reales luego) */}
+        <StylistStats
+            todayCount={0} // TODO: Conectar a myBookings count
+            pendingCount={0}
+            confirmedCount={0}
+            completedTodayCount={0}
+        />
 
-          {/* CALENDARIO Y LISTA */}
-          <StylistAppointments appointments={myAppointments} />
+        {/* Calendario Interactivo */}
+        <div className="space-y-2">
+            <h2 className="text-[#D4AF37] text-lg font-semibold pl-1">Gestión de Citas</h2>
+            {/* El calendario cargará las citas. El estilista puede filtrar por su nombre si lo desea */}
+            <AppointmentCalendar />
         </div>
       </main>
 
-      {/* PERFIL */}
       <UserProfile open={showProfile} onOpenChange={setShowProfile} />
     </div>
   );

@@ -2,20 +2,24 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/auth/index';
 import { useData } from '../../../contexts/data/index';
 
-// Sub-componentes importados
+// Sub-componentes UI
 import { AdminHeader } from './AdminHeader';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminOverview } from './AdminOverview';
 import { AdminView } from './types';
+import { UserProfile } from '../../UserProfile';
 
-// Componentes de Gestión (Rutas asumidas, ajusta si es necesario)
+// Módulos de Gestión
 import { StylistManagement } from '../../management/stylist/StylistManagement';
 import { ScheduleManagement } from '../../management/schedule/ScheduleManagement';
 import { ServiceManagement } from '../../management/services/ServiceManagement';
 import { ReportsAndStats } from '../../management/reports/ReportsAndStats';
 import { UserManagement } from '../../management/users/UserManagement';
 import { CategoryManagement } from '../../management/category/CategoryManagement';
-import { UserProfile } from '../../UserProfile';
+
+// Nuevos Módulos Integrados
+import { AppointmentCalendar } from '../../management/calendar/AppointmentCalendar'; // <--- NUEVO
+import { RatingsManagement } from '../../management/ratings/RatingsManagement';     // <--- NUEVO
 
 export function AdminDashboard() {
   const { user, logout, refreshSession } = useAuth();
@@ -25,44 +29,32 @@ export function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
 
-  // 🔄 Cargar datos iniciales
+  // 🔄 Cargar datos
   useEffect(() => {
     if (user && typeof fetchData === 'function') {
       fetchData();
     }
   }, [user, fetchData]);
 
-  // 🔁 Refrescar sesión (cada 10 minutos)
+  // 🔁 Refrescar sesión
   useEffect(() => {
-    if (typeof refreshSession !== 'function') {
-      console.warn('AuthContext: refreshSession is not a function', refreshSession);
-      return;
+    if (typeof refreshSession === 'function') {
+      const interval = setInterval(() => refreshSession(), 10 * 60 * 1000);
+      return () => clearInterval(interval);
     }
-    const interval = setInterval(() => {
-      refreshSession();
-    }, 10 * 60 * 1000);
-
-    return () => clearInterval(interval);
   }, [refreshSession]);
 
   // 🔔 Notificaciones
-  const notifications =
-    typeof getUserNotifications === 'function'
-      ? getUserNotifications(user?.id || '')
-      : [];
+  const notifications = typeof getUserNotifications === 'function' ? getUserNotifications(user?.id || '') : [];
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // 🚫 Validar acceso por rol
+  // 🚫 Validación
   if (user?.role !== 'admin' && user?.role !== 'manager') {
-    return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <p>No tienes permisos para acceder a este panel.</p>
-      </div>
-    );
+    return <div className="flex h-screen items-center justify-center bg-black text-white">Acceso denegado.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* HEADER */}
       <AdminHeader
         sidebarOpen={sidebarOpen}
@@ -73,8 +65,8 @@ export function AdminDashboard() {
         logout={logout}
       />
 
-      {/* LAYOUT */}
-      <div className="flex">
+      {/* LAYOUT PRINCIPAL */}
+      <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR */}
         <AdminSidebar
           currentView={currentView}
@@ -82,19 +74,30 @@ export function AdminDashboard() {
           isOpen={sidebarOpen}
         />
 
-        {/* CONTENIDO PRINCIPAL */}
-        <main className="flex-1 p-6">
-          {currentView === 'overview' && <AdminOverview />}
-          {currentView === 'users' && <UserManagement />}
-          {currentView === 'stylists' && <StylistManagement />}
-          {currentView === 'schedules' && <ScheduleManagement />}
-          {currentView === 'categories' && <CategoryManagement />}
-          {currentView === 'services' && <ServiceManagement />}
-          {currentView === 'reports' && <ReportsAndStats />}
+        {/* CONTENIDO SCROLLEABLE */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-black/50">
+          <div className="max-w-7xl mx-auto">
+            {currentView === 'overview' && <AdminOverview />}
+            
+            {/* Gestión Operativa */}
+            {currentView === 'calendar' && <AppointmentCalendar />}
+            {currentView === 'schedules' && <ScheduleManagement />}
+            
+            {/* Gestión Recursos */}
+            {currentView === 'users' && <UserManagement />}
+            {currentView === 'stylists' && <StylistManagement />}
+            
+            {/* Catálogo */}
+            {currentView === 'categories' && <CategoryManagement />}
+            {currentView === 'services' && <ServiceManagement />}
+            
+            {/* Análisis */}
+            {currentView === 'ratings' && <RatingsManagement />} {/* Ahora el Admin ve todos los ratings */}
+            {currentView === 'reports' && <ReportsAndStats />}
+          </div>
         </main>
       </div>
 
-      {/* MODAL PERFIL */}
       <UserProfile open={showProfile} onOpenChange={setShowProfile} />
     </div>
   );

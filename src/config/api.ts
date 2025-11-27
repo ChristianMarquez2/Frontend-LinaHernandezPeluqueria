@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
 
     // Google
     googleSignIn: "/auth/google",
+    me: "/auth/me", // Añadido por compatibilidad si se usa
   },
 
   users: {
@@ -39,17 +40,47 @@ export const API_ENDPOINTS = {
     update: "/users/me",    // PUT
   },
 
-  // Otros módulos
+  // Datos Estáticos
   services: "/services",
   stylists: "/stylists",
-  schedules: "/schedules",
-  appointments: "/bookings",
-  ratings: "/ratings",
-  notifications: "/notifications",
-  reports: "/reports",
+  
+  // 🔥 ACTUALIZADO: Objeto para soportar /business
+  schedules: {
+    base: "/schedules",
+    business: "/schedules/business",
+  },
 
+  // 🔥 ACTUALIZADO: Separación entre Citas Manuales (Admin) y Reservas (Cliente)
+  appointments: "/appointments", // Admin (Manuales)
+  
+  bookings: {
+    base: "/bookings",           // Crear (POST)
+    me: "/bookings/me",          // Mis reservas (Cliente)
+    availability: "/bookings/availability", // Consultar slots
+    detail: (id: string) => `/bookings/${id}`,
+    cancel: (id: string) => `/bookings/${id}/cancel`,
+    reschedule: (id: string) => `/bookings/${id}/reschedule`,
+  },
 
-  //Catalogos
+  // 🔥 ACTUALIZADO: Objeto para soportar /my
+  ratings: {
+    base: "/ratings",
+    my: "/ratings/my",
+  },
+  
+  // 🔥 ACTUALIZADO: Objeto para soportar /email (si existe)
+  notifications: {
+    base: "/notifications",
+    email: "/notifications/email",
+  },
+
+  // 🔥 ACTUALIZADO: Objeto para reportes
+  reports: {
+    base: "/reports",
+    summary: "/reports/summary",
+  },
+
+  // Catalogos (Tu estructura original mantenida)
   catalog: {
     base: "/catalog",
     // Rutas específicas basadas en tu catalog.routes.ts

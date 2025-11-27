@@ -10,7 +10,8 @@ import { DataContextType } from "./types";
 
 export function useData(): DataContextType {
   const { services, stylists, businessHours, refreshServices } = useServices();
-  const { appointments, refreshAppointments } = useAppointments();
+  // 🔥 CORRECCIÓN: Extraemos también 'myBookings' y 'refreshMyBookings'
+  const { appointments, myBookings, refreshAppointments, refreshMyBookings } = useAppointments();
   const { ratings, createRating, refreshRatings } = useRatings();
   const { notifications, getUserNotifications, refreshNotifications } = useNotifications();
   const { reports, fetchReports } = useReports();
@@ -21,19 +22,24 @@ export function useData(): DataContextType {
     await Promise.all([
       refreshServices(),
       refreshAppointments(),
+      refreshMyBookings(), // Agregamos el refresco de mis reservas
       refreshRatings(),
       refreshNotifications()
     ]);
-  }, [refreshServices, refreshAppointments, refreshRatings, refreshNotifications]);
+  }, [refreshServices, refreshAppointments, refreshMyBookings, refreshRatings, refreshNotifications]);
 
   return {
     services,
     stylists,
     businessHours,
-    appointments,
+    
+    appointments, // Citas manuales (Admin)
+    myBookings,   // 🔥 CORRECCIÓN: Agregamos la propiedad faltante (Cliente)
+
     ratings,
     notifications,
     reports,
+    
     fetchData,          // Versión combinada
     fetchReports,       // Directo del contexto
     getUserNotifications,

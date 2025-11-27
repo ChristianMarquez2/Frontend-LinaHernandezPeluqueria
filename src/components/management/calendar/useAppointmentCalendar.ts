@@ -1,91 +1,119 @@
-import { useState, useMemo } from 'react';
-import { useAuth } from '../../../contexts/auth/index';
-import { useData, Appointment } from '../../../contexts/data/index';
+import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
+import { dataService } from '../../../contexts/data/service';
+import { Booking } from '../../../contexts/data/index';
+import { useData } from '../../../contexts/data/index';
 
 export function useAppointmentCalendar() {
-  const { user } = useAuth();
-  const { appointments = [] } = useData();
+  const token = localStorage.getItem("accessToken");
+  const { stylists } = useData();
 
-  // Fecha seleccionada: hoy por defecto
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedStylistId, setSelectedStylistId] = useState<string>('ALL');
+  const [loading, setLoading] = useState(false);
 
-  // === Filtrado y ordenamiento ===
-  const appointmentsForDate = useMemo(() => {
-    if (!user?.id) return [];
+  // Cargar citas cuando cambian los filtros
+  const fetchBookings = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await dataService.fetchAllBookings(token, {
+        date: selectedDate, 
+        stylistId: selectedStylistId !== 'ALL' ? selectedStylistId : undefined
+      });
+      
+      // Filtrado de seguridad
+      const filtered = data.filter(b => b.inicio.startsWith(selectedDate));
+      setBookings(filtered);
 
-    return appointments
-      .filter((a) => {
-        // 1. Obtener ID del estilista de forma segura
-        // Según tus types, 'stylist' puede ser un string (ID) o un objeto (PopulatedStylist)
-        const appointmentStylistId = typeof a.stylist === 'object' 
-          ? a.stylist._id 
-          : a.stylist;
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+      toast.error("Error al cargar el calendario");
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedDate, selectedStylistId]);
 
-        // 2. Verificar si la cita es mía (comparando con user.id)
-        const isMyAppointment = String(appointmentStylistId) === String(user.id);
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
-        // 3. Verificar fecha (Usando 'start' en lugar de 'inicio')
-        // Nota: a.start viene en ISO. split('T')[0] funciona para fechas UTC/ISO estándar.
-        const appointmentDate = a.start.split('T')[0];
-        const isSelectedDate = appointmentDate === selectedDate;
-
-        return isMyAppointment && isSelectedDate;
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.start).getTime() - new Date(b.start).getTime()
-      );
-  }, [appointments, user, selectedDate]);
-
-  // === Helpers ===
-
-  // Corrección: Ahora una cita tiene un ARRAY de servicios (services: Service[])
-  // Ya no necesitamos buscar en la lista global por ID, el objeto ya viene dentro.
-  const getServiceNames = (appointment: Appointment) => {
-    if (!appointment.services || appointment.services.length === 0) return 'Sin servicio';
-    return appointment.services.map(s => s.nombre).join(', ');
+  // === ACCIONES ===
+  const handleConfirm = async (id: string) => {
+    if (!token) return;
+    try {
+      await dataService.updateBookingStatus(token, id, 'confirm');
+      toast.success("Cita confirmada");
+      fetchBookings();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
-  // Corrección: Manejo de Cliente Manual vs Registrado
-  const getClientLabel = (a: Appointment) => {
-    // Caso 1: Cliente manual (sin cuenta)
-    if (a.clientName) return `${a.clientName} (Manual)`;
-
-    // Caso 2: Cliente registrado populado
-    if (typeof a.clientId === 'object' && a.clientId !== null) {
-      return `${a.clientId.nombre} ${a.clientId.apellido}`;
+  const handleComplete = async (id: string, notes: string) => {
+    if (!token) return;
+    try {
+      await dataService.updateBookingStatus(token, id, 'complete', { notas: notes });
+      toast.success("Cita completada");
+      fetchBookings();
+    } catch (err: any) {
+      toast.error(err.message);
     }
+  };
 
-    // Caso 3: Fallback (solo tenemos ID o es null)
+  const handleCancel = async (id: string, motivo: string) => {
+    if (!token) return;
+    try {
+      await dataService.updateBookingStatus(token, id, 'cancel', { motivo });
+      toast.success("Cita cancelada");
+      fetchBookings();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  // === HELPERS DE FORMATO (Para la Vista) ===
+  
+  const formatTime = (isoDate: string) => 
+    new Date(isoDate).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  const formatDateLabel = (dateStr: string) => 
+    new Date(dateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Obtener nombre del servicio de forma segura
+  const getServiceName = (booking: Booking) => {
+    if (booking.servicio && typeof booking.servicio === 'object') {
+      return booking.servicio.nombre;
+    }
+    return 'Servicio';
+  };
+
+  // Obtener etiqueta del cliente (Backend popula clienteId)
+  const getClientLabel = (booking: Booking) => {
+    // Si clienteId viene populado como objeto
+    const c = booking.clienteId as any; 
+    if (c && c.nombre) {
+        return `${c.nombre} ${c.apellido || ''}`.trim();
+    }
     return 'Cliente Registrado';
   };
 
-  // Corrección: Usar 'start' en lugar de 'inicio'
-  const formatTime = (isoDate: string) =>
-    new Date(isoDate).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-
-  const formatDateLabel = (dateStr: string) =>
-    // Agregamos hora mediodía para evitar problemas de timezone al renderizar el label
-    new Date(dateStr + 'T12:00:00').toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-
   return {
-    user,
+    bookings,
+    loading,
     selectedDate,
     setSelectedDate,
-    appointmentsForDate,
-    getServiceNames, // Renombrado para reflejar que puede haber múltiples
-    getClientLabel,
+    selectedStylistId,
+    setSelectedStylistId,
+    stylists,
+    handleConfirm,
+    handleComplete,
+    handleCancel,
+    // Helpers exportados para la UI
     formatTime,
     formatDateLabel,
+    getServiceName,
+    getClientLabel
   };
 }

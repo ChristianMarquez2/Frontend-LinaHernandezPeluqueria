@@ -4,5 +4,7 @@ export type AdminView =
   | 'stylists'
   | 'schedules'
   | 'services'
-  | 'categories' // <--- NUEVO
-  | 'reports';
+  | 'categories'
+  | 'reports'
+  | 'calendar'  // <--- NUEVO: Agenda
+  | 'ratings';  // <--- NUEVO: Calificaciones

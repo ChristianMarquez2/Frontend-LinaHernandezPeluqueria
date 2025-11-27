@@ -45,23 +45,22 @@ export interface BusinessHours {
 
 // ==================== RESERVAS Y CITAS (CORE) ====================
 
-// 1. AvailabilitySlot: Lo que devuelve availability.service.ts
+// 1. AvailabilitySlot
 export interface AvailabilitySlot {
-  slotId: string;      // ID del ServiceSlot
-  stylistId: string;   // ID del Estilista
-  stylistName: string; // Nombre pre-formateado
-  start: string;       // ISO String
-  end: string;         // ISO String
+  slotId: string;
+  stylistId: string;
+  stylistName: string;
+  start: string;
+  end: string;
 }
 
-// 2. Booking: Reserva hecha por cliente (Sistema de Slots)
+// 2. Booking
 export interface Booking {
   _id: string;
   clienteId: string;
   estilistaId: string; 
   servicioId: string;
   
-  // Objetos populados (si el backend los devuelve, usualmente sí en los GET)
   servicio?: {
     _id: string;
     nombre: string;
@@ -74,8 +73,8 @@ export interface Booking {
     apellido: string;
   };
 
-  inicio: string; // ISO Date (Ojo: Backend usa 'inicio', no 'start')
-  fin: string;    // ISO Date (Ojo: Backend usa 'fin', no 'end')
+  inicio: string;
+  fin: string;
   
   estado: 
     | 'SCHEDULED' 
@@ -91,7 +90,7 @@ export interface Booking {
   createdAt: string;
 }
 
-// 3. Appointment: Cita Manual (Admin/Estilista)
+// 3. Appointment
 export interface Appointment {
   _id: string;
   stylist: PopulatedStylist | string; 
@@ -100,8 +99,8 @@ export interface Appointment {
   clientName?: string;
   clientPhone?: string;
 
-  start: string; // Backend usa 'start'
-  end: string;   // Backend usa 'end'
+  start: string;
+  end: string;
   
   status: "PENDIENTE" | "CONFIRMADA" | "CANCELADA" | "COMPLETADA" | string;
   
@@ -148,10 +147,9 @@ export interface Notification {
 
 // ==================== DTOs & PAYLOADS ====================
 
-// Payload para crear reserva
 export interface CreateBookingPayload {
   slotId: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   notas?: string;
 }
 
@@ -175,8 +173,8 @@ export interface DataContextType {
   stylists: Stylist[];
   businessHours: BusinessHours | null;
   
-  appointments: Appointment[]; // Citas manuales (Admin view)
-  myBookings: Booking[];       // Mis reservas (Client view)
+  appointments: Appointment[];
+  myBookings: Booking[];
 
   ratings: Rating[];
   notifications: Notification[];
@@ -203,4 +201,68 @@ export interface PaginationMeta {
   page: number;
   limit: number;
   total: number;
+}
+
+// 🔥🔥 NUEVAS INTERFACES FALTANTES 🔥🔥
+export interface CategoryListResponse {
+  data: Category[];
+  meta: PaginationMeta;
+}
+
+export interface CreateCategoryDTO {
+  nombre: string;
+  descripcion?: string;
+  imageUrl?: string;
+  activo?: boolean;
+  services?: string[]; // IDs de servicios
+}
+
+export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
+
+// ==================== HORARIOS Y SLOTS ====================
+
+// Días de la semana para UI y Backend
+export type DayOfWeekIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Domingo (Backend Schedule)
+export type WeekdayName = 'DOMINGO' | 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES' | 'SABADO';
+
+// Plantilla de Horario (StylistSchedule)
+export interface StylistSchedule {
+  _id?: string;
+  stylistId: string;
+  dayOfWeek: DayOfWeekIndex;
+  slots: { start: string; end: string }[]; // HH:mm
+  exceptions?: { 
+    date: string; 
+    closed?: boolean; 
+    blocks?: { start: string; end: string }[] 
+  }[];
+}
+
+// Payload para guardar plantilla
+export interface UpsertScheduleDTO {
+  stylistId: string;
+  dayOfWeek: DayOfWeekIndex;
+  slots: { start: string; end: string }[];
+  exceptions?: any[];
+}
+
+// Payload para generar Slots (CreateDaySlots)
+export interface GenerateSlotsDTO {
+  stylistId: string;
+  serviceId: string;
+  dayOfWeek: WeekdayName;
+  dayStart: string; // HH:00 o HH:30
+  dayEnd: string;   // HH:00 o HH:30
+  date: string;     // YYYY-MM-DD (Para referencia visual, aunque el backend pide dayOfWeek string)
+}
+
+// Slot generado (Respuesta de listSlots)
+export interface ServiceSlot {
+  id: string;
+  stylist: string | { _id: string; nombre: string; apellido: string };
+  service: string | { _id: string; nombre: string; duracionMin: number; precio: number };
+  dayOfWeek: WeekdayName;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
 }

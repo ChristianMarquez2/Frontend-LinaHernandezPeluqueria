@@ -1,145 +1,156 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useData } from '../../../contexts/data/index';
+import { dataService } from '../../../contexts/data/service';
+import { StylistSchedule, ServiceSlot } from '../../../contexts/data/types';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
-export const daysOfWeek = [
-  "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
-];
-
-export interface Day {
-  dayOfWeek: number;
-  open: string;
-  close: string;
-}
-
-export interface BusinessHoursResponse {
-  _id?: string;
-  days: Day[];
-  exceptions: any[];
-}
+// Mapeo de índices 0-6 a nombres de backend
+const DAY_NAMES = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as const;
 
 export function useScheduleLogic() {
-  const [businessHours, setBusinessHours] = useState<BusinessHoursResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("accessToken");
+  const { stylists, services } = useData();
 
-  // Generador de defaults
-  const createDefaultDays = (): Day[] => 
-    Array.from({ length: 7 }).map((_, i) => ({
-      dayOfWeek: i,
-      open: "09:00",
-      close: "18:00",
-    }));
-
-  // FETCH DATA
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${API_URL}/v1/schedules/business`);
-        
-        if (res.status === 200) {
-          const data: BusinessHoursResponse = await res.json();
-          if (data && data.days) {
-            setBusinessHours(data);
-          } else {
-            setBusinessHours({ days: createDefaultDays(), exceptions: [] });
-          }
-        } else if (res.status === 404) {
-          setBusinessHours({ days: createDefaultDays(), exceptions: [] });
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Error al cargar horarios");
-        setBusinessHours({ days: createDefaultDays(), exceptions: [] });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // HANDLERS
-  const handleTimeChange = (index: number, field: "open" | "close", value: string) => {
-    if (!businessHours) return;
-    const newDays = [...businessHours.days];
-    newDays[index][field] = value;
-    setBusinessHours({ ...businessHours, days: newDays });
-  };
-
-  const handleToggle = (index: number, closed: boolean) => {
-    if (!businessHours) return;
-    const newDays = [...businessHours.days];
-    if (closed) {
-      newDays[index].open = "";
-      newDays[index].close = "";
-    } else {
-      newDays[index].open = "09:00";
-      newDays[index].close = "18:00";
-    }
-    setBusinessHours({ ...businessHours, days: newDays });
-  };
-
-  // VALIDATIONS
-  const isValidTimeFormat = (time: string): boolean => /^([01]\d|2[0-3]):([0-5]\d)$/.test(time);
+  // Estados de Selección
+  const [selectedStylistId, setSelectedStylistId] = useState<string>('');
   
-  const isValidTimeRange = (open: string, close: string): boolean => {
-    if (!open || !close) return false;
-    const [oh, om] = open.split(':').map(Number);
-    const [ch, cm] = close.split(':').map(Number);
-    return (ch * 60 + cm) > (oh * 60 + om);
-  };
+  // === ESTADOS PARA PLANTILLA (Workflow 1) ===
+  const [schedules, setSchedules] = useState<StylistSchedule[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
 
-  // SAVE
-  const handleSave = async () => {
+  // === ESTADOS PARA GENERAR SLOTS (Workflow 2) ===
+  const [generationDate, setGenerationDate] = useState<string>(''); // YYYY-MM-DD
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('');
+  const [genStart, setGenStart] = useState('09:00');
+  const [genEnd, setGenEnd] = useState('18:00');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [existingSlots, setExistingSlots] = useState<ServiceSlot[]>([]);
+
+  // 1. Cargar Plantillas al seleccionar estilista
+  useEffect(() => {
+    if (!selectedStylistId || !token) {
+      setSchedules([]);
+      return;
+    }
+    const load = async () => {
+      setLoadingSchedules(true);
+      const data = await dataService.fetchStylistSchedules(token, selectedStylistId);
+      setSchedules(data);
+      setLoadingSchedules(false);
+    };
+    load();
+  }, [selectedStylistId, token]);
+
+  // 2. Guardar Plantilla de un día (Configuración Base)
+  const handleSaveDayConfig = async (dayIndex: number, start: string, end: string, isOff: boolean) => {
+    if (!token || !selectedStylistId) return;
+
     try {
-      if (!businessHours) return;
-
-      const daysToSave = businessHours.days
-        .filter(d => d.open && d.close)
-        .map(d => {
-          if (!isValidTimeFormat(d.open) || !isValidTimeFormat(d.close)) {
-            throw new Error(`Formato de hora inválido para ${daysOfWeek[d.dayOfWeek]}.`);
-          }
-          if (!isValidTimeRange(d.open, d.close)) {
-            throw new Error(`Horario inválido para ${daysOfWeek[d.dayOfWeek]}. Cierre debe ser mayor a apertura.`);
-          }
-          return { dayOfWeek: d.dayOfWeek, open: d.open, close: d.close };
+      if (isOff) {
+        // Si marca "descanso", borramos el horario de ese día
+        await dataService.deleteStylistScheduleDay(token, selectedStylistId, dayIndex);
+        toast.success(`Día ${DAY_NAMES[dayIndex]} marcado como libre`);
+      } else {
+        // Guardamos horario
+        await dataService.upsertStylistSchedule(token, {
+          stylistId: selectedStylistId,
+          dayOfWeek: dayIndex as any,
+          slots: [{ start, end }] // Tu backend soporta múltiples, por ahora UI simple de 1 turno
         });
-
-      if (daysToSave.length === 0) {
-        throw new Error("Debe configurar al menos un día con horario válido");
+        toast.success(`Horario guardado para ${DAY_NAMES[dayIndex]}`);
       }
+      
+      // Recargar
+      const data = await dataService.fetchStylistSchedules(token, selectedStylistId);
+      setSchedules(data);
 
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Token no encontrado");
-
-      const res = await fetch(`${API_URL}/v1/schedules/business`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          days: daysToSave,
-          exceptions: businessHours.exceptions || []
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
-
-      toast.success("Horarios guardados exitosamente");
     } catch (err: any) {
-      toast.error("Error al guardar", { description: err.message });
+      toast.error(err.message);
     }
   };
+
+  // 3. Generar Slots Reales (Acción Crítica)
+  const handleGenerateSlots = async () => {
+    if (!token || !selectedStylistId || !selectedServiceId || !generationDate) {
+      toast.error("Faltan datos para generar (Estilista, Servicio y Fecha son obligatorios)");
+      return;
+    }
+
+    // Calcular día de la semana basado en la fecha
+    const dateObj = new Date(generationDate + 'T00:00:00'); // Forzar local
+    const dayName = DAY_NAMES[dateObj.getDay()];
+
+    setIsGenerating(true);
+    try {
+      await dataService.generateDaySlots(token, {
+        stylistId: selectedStylistId,
+        serviceId: selectedServiceId,
+        date: generationDate, // Solo referencia
+        dayOfWeek: dayName,   // Lo que pide el backend
+        dayStart: genStart,
+        dayEnd: genEnd
+      });
+      
+      toast.success(`Disponibilidad generada para el ${dayName} (${generationDate})`);
+      
+      // Refrescar vista de slots generados
+      loadExistingSlots();
+
+    } catch (err: any) {
+      toast.error(err.message || "Error al generar slots");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // 4. Ver qué slots ya existen para esa fecha/estilista
+  const loadExistingSlots = useCallback(async () => {
+    if (!token || !selectedStylistId || !generationDate) return;
+    const slots = await dataService.listSlots(token, selectedStylistId, generationDate);
+    setExistingSlots(slots);
+  }, [token, selectedStylistId, generationDate]);
+
+  useEffect(() => {
+    loadExistingSlots();
+  }, [loadExistingSlots]);
+
+  // Helper para autocompletar horas de generación basado en la plantilla del día seleccionado
+  useEffect(() => {
+    if (generationDate && schedules.length > 0) {
+      const dateObj = new Date(generationDate + 'T00:00:00');
+      const dayIndex = dateObj.getDay();
+      const template = schedules.find(s => s.dayOfWeek === dayIndex);
+      
+      if (template && template.slots.length > 0) {
+        setGenStart(template.slots[0].start);
+        setGenEnd(template.slots[0].end);
+      }
+    }
+  }, [generationDate, schedules]);
 
   return {
-    businessHours,
-    loading,
-    handleTimeChange,
-    handleToggle,
-    handleSave,
+    stylists,
+    services,
+    
+    // Selección
+    selectedStylistId,
+    setSelectedStylistId,
+    
+    // Plantillas
+    schedules,
+    loadingSchedules,
+    handleSaveDayConfig,
+    
+    // Generación
+    generationDate, setGenerationDate,
+    selectedServiceId, setSelectedServiceId,
+    genStart, setGenStart,
+    genEnd, setGenEnd,
+    isGenerating,
+    handleGenerateSlots,
+    existingSlots,
+    
+    // Constantes
+    DAY_NAMES
   };
 }

@@ -165,9 +165,23 @@ export function ClientDashboard() {
     }
   };
 
-  if ((user?.role as string) !== "CLIENTE") {
-     // Fallback visual simple
-     return <div className="p-10 text-white">Acceso restringido.</div>;
+  // CORRECCIÓN: el role se normaliza en el AuthProvider a 'client' | 'stylist' | 'admin' | 'manager'
+  // Por eso la comparación debe usar el valor normalizado ('client'), no "CLIENTE".
+  if (!user) {
+    // Si no hay usuario, mostramos loader simple (evita render nulo)
+    return <div className="flex h-screen items-center justify-center bg-black text-[#9D8EC1]">Cargando...</div>;
+  }
+
+  if (user.role !== "client") {
+    // Fallback visible y claro (fondo oscuro para que el texto sea legible)
+    return (
+      <div className="flex h-screen items-center justify-center bg-black text-white p-8">
+        <div className="max-w-lg text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso restringido</h2>
+          <p className="text-gray-300">Tu cuenta no tiene permisos para ver este panel.</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

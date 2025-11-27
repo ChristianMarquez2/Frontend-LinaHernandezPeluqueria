@@ -3,7 +3,9 @@ import {
   Calendar,
   Scissors,
   BarChart3,
-  Layers, // <--- Importar Icono
+  Layers,
+  Star, // Para Ratings
+  Clock // Para Agenda
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { AdminView } from './types';
@@ -19,34 +21,45 @@ export function AdminSidebar({ currentView, setCurrentView, isOpen }: AdminSideb
 
   const menuItems = [
     { id: 'overview' as AdminView, label: 'Panel Principal', icon: BarChart3 },
-    { id: 'users' as AdminView, label: 'Gestión de Usuarios', icon: Users },
-    { id: 'stylists' as AdminView, label: 'Gestión de Estilistas', icon: Scissors },
-    { id: 'schedules' as AdminView, label: 'Horarios de Atención', icon: Calendar },
     
-    // Agregamos Categorías antes o después de Servicios
-    { id: 'categories' as AdminView, label: 'Categorías / Catálogo', icon: Layers }, // <--- NUEVO ITEM
+    // Gestión Operativa
+    { id: 'calendar' as AdminView, label: 'Agenda de Citas', icon: Clock }, // <--- NUEVO
+    { id: 'schedules' as AdminView, label: 'Turnos y Horarios', icon: Calendar },
+    
+    // Gestión de Recursos
+    { id: 'users' as AdminView, label: 'Usuarios', icon: Users },
+    { id: 'stylists' as AdminView, label: 'Estilistas', icon: Scissors },
+    
+    // Catálogo
+    { id: 'categories' as AdminView, label: 'Categorías', icon: Layers },
     { id: 'services' as AdminView, label: 'Servicios', icon: Scissors },
     
-    { id: 'reports' as AdminView, label: 'Reportes y Estadísticas', icon: BarChart3 },
+    // Análisis y Feedback
+    { id: 'ratings' as AdminView, label: 'Calificaciones', icon: Star }, // <--- NUEVO
+    { id: 'reports' as AdminView, label: 'Reportes', icon: BarChart3 },
   ];
 
   return (
-    <aside className="w-64 border-r border-gray-800 bg-black min-h-[calc(100vh-4rem)] p-4">
-      <nav className="space-y-2">
+    <aside className="w-64 border-r border-gray-800 bg-black min-h-[calc(100vh-4rem)] p-4 flex-shrink-0 transition-all duration-300">
+      <div className="mb-4 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        Menú
+      </div>
+      <nav className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
+          const isActive = currentView === item.id;
           return (
             <Button
               key={item.id}
-              variant={currentView === item.id ? 'secondary' : 'ghost'}
-              className={`w-full justify-start ${
-                currentView === item.id
-                  ? 'bg-[#9D8EC1] text-white hover:bg-[#9D8EC1]/90'
-                  : 'text-gray-300 hover:bg-gray-800'
+              variant={isActive ? 'secondary' : 'ghost'}
+              className={`w-full justify-start mb-1 ${
+                isActive
+                  ? 'bg-[#9D8EC1] text-black hover:bg-[#9D8EC1]/90 font-medium'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
               onClick={() => setCurrentView(item.id)}
             >
-              <Icon className="mr-2 h-4 w-4" />
+              <Icon className={`mr-3 h-4 w-4 ${isActive ? 'text-black' : 'text-gray-500'}`} />
               {item.label}
             </Button>
           );

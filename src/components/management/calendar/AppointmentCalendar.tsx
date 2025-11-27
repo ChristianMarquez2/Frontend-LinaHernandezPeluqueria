@@ -2,65 +2,92 @@ import { Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { useAppointmentCalendar } from './useAppointmentCalendar';
 import { AppointmentCard } from './AppointmentCard';
 
 export function AppointmentCalendar() {
   const {
-    user,
+    bookings,
+    loading,
     selectedDate,
     setSelectedDate,
-    appointmentsForDate,
+    selectedStylistId,
+    setSelectedStylistId,
+    stylists,
     formatDateLabel,
     formatTime,
-    // CORRECCIÓN: El nombre en el hook es getServiceNames (plural)
-    getServiceNames, 
+    getServiceName,
     getClientLabel,
+    handleConfirm,
+    handleCancel,
+    handleComplete
   } = useAppointmentCalendar();
 
-  if (!user) return null;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <Card className="bg-gray-900 border-gray-800">
-        <CardHeader className="flex items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <CardTitle className="text-white flex items-center gap-2">
             <Calendar className="h-5 w-5 text-[#D4AF37]" />
-            Mi calendario de citas
+            Calendario de Citas
           </CardTitle>
+          
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+             {/* Filtro Estilista */}
+             <div className="w-full sm:w-48">
+                <Select value={selectedStylistId} onValueChange={setSelectedStylistId}>
+                    <SelectTrigger className="bg-black border-gray-700 text-white">
+                        <SelectValue placeholder="Filtrar Estilista" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                        <SelectItem value="ALL">Todos</SelectItem>
+                        {stylists.map(s => (
+                            <SelectItem key={s._id} value={s._id}>{s.nombre} {s.apellido}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+             </div>
+
+             {/* Selector Fecha */}
+             <div className="w-full sm:w-auto">
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-black border-gray-700 text-white"
+                />
+             </div>
+          </div>
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Selector de Fecha */}
-          <div>
-            <Label className="text-gray-300">Seleccionar fecha</Label>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-black border-gray-700 text-white mt-1"
-            />
-          </div>
-
           <div className="space-y-4">
-            <h3 className="text-[#D4AF37] font-medium">
-              Citas para {formatDateLabel(selectedDate)}
+            <h3 className="text-[#D4AF37] font-medium text-sm uppercase tracking-wide">
+              Agenda para {formatDateLabel(selectedDate)}
             </h3>
 
-            {appointmentsForDate.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 border border-dashed border-gray-800 rounded-lg">
-                No hay citas programadas para esta fecha.
+            {loading ? (
+                <div className="text-center py-12 text-[#9D8EC1]">Cargando reservas...</div>
+            ) : bookings.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-800 rounded-lg">
+                No hay reservas programadas para este día.
               </div>
             ) : (
-              <div className="space-y-3">
-                {appointmentsForDate.map((appointment) => (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {bookings.map((booking) => (
                   <AppointmentCard
-                    key={appointment._id}
-                    appointment={appointment}
+                    key={booking._id}
+                    booking={booking}
                     formatTime={formatTime}
-                    // CORRECCIÓN: Pasamos la función con el nombre correcto
-                    getServiceNames={getServiceNames}
+                    getServiceName={getServiceName}
                     getClientLabel={getClientLabel}
+                    onConfirm={handleConfirm}
+                    onCancel={(id) => {
+                        const motivo = prompt("Motivo de la cancelación:");
+                        if (motivo) handleCancel(id, motivo);
+                    }}
+                    onComplete={(id) => handleComplete(id, "Completado desde panel")}
                   />
                 ))}
               </div>
