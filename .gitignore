@@ -1,0 +1,81 @@
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+._*
+
+# Archivos temporales/edición
+*.swp
+*~
+*.tmp
+*.temp
+
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-lock.yaml
+.pnpm-debug.log
+.npmrc
+
+# Locks / package managers caches
+package-lock.json  # opcional, quitar si quieres versionarlo
+.yarn-integrity
+
+# Builds / distribuciones
+dist/
+build/
+out/
+public/build/
+.vite/
+.vitepress/dist/
+.parcel-cache/
+.cache/
+.next/
+.nuxt/
+.astro/
+.svelte-kit/
+
+# Source maps (si los prefieres ignorar)
+*.map
+
+# Entornos / secretos
+.env
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.envrc
+
+# Logs / coverage
+logs/
+*.log
+coverage/
+coverage-final.json
+
+# IDEs y editores
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+*.iml
+.history/
+
+# SASS / caches
+.sass-cache/
+
+# Otros
+tmp/
+temp/
+.cache/
+bower_components/
+.DS_Store
+
+# Imágenes fuentes/editor (si aplica)
+*.psd
+*.ai
