@@ -79,7 +79,7 @@ export function UserFormDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const errors = validateForm(formData, !!userToEdit);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -204,17 +204,16 @@ export function UserFormDialog({
             />
             <Label htmlFor="active" className="text-gray-300">Activo</Label>
           </div>
-
           <DialogFooter className="flex gap-2">
             <Button
               type="button"
-              variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="border-gray-700 text-white hover:bg-gray-800"
+              className="btn-red"
             >
               Cancelar
             </Button>
+
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -223,6 +222,7 @@ export function UserFormDialog({
               Guardar
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

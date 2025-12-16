@@ -125,10 +125,9 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
           <DialogFooter className="pt-4">
             <Button
               type="button"
-              variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="border-gray-700 text-white hover:bg-gray-800"
+              className="btn-red"
             >
               Cancelar
             </Button>
@@ -141,6 +140,7 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
               {isSubmitting ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
+
 
         </form>
       </DialogContent>

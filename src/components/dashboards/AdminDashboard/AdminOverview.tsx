@@ -6,23 +6,36 @@ export function AdminOverview() {
   const { appointments, ratings, stylists, services } = useData();
 
   // ===========================
-  // 📅 Métricas y lógica
+  // 📅 Métricas y lógica de Fechas
   // ===========================
-  const today = new Date().toISOString().split('T')[0];
+  
+  // Helper robusto para comparar fechas ignorando hora y zona horaria UTC
+  const isSameDay = (date1: Date, date2: Date) => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  };
 
-  // 1. Cambio: inicio -> start
-  const todayAppointments = appointments.filter(
-    (a) => a.start && a.start.split('T')[0] === today
-  );
+  const now = new Date();
 
-  // 2. Cambio: estado -> status y valor 'PENDIENTE'
+  // 1. Filtrar Citas de Hoy
+  const todayAppointments = appointments.filter((a) => {
+    if (!a.start) return false;
+    return isSameDay(new Date(a.start), now);
+  });
+
+  // 2. Filtrar Pendientes (El Context ya asegura que el status venga en mayúsculas)
   const pendingAppointments = appointments.filter(
     (a) => a.status === 'PENDIENTE'
   );
 
+  // 3. Métricas simples
   const activeStylists = stylists.filter((s) => s.isActive);
   const activeServices = services.filter((s) => s.activo);
 
+  // 4. Promedio de estrellas (Manejo de división por cero)
   const avgRating =
     ratings.length > 0
       ? (ratings.reduce((acc, r) => acc + r.estrellas, 0) / ratings.length).toFixed(1)
@@ -32,43 +45,45 @@ export function AdminOverview() {
   // 🛠 Helpers de Renderizado
   // ===========================
 
-  // 3. Helper para manejar array de servicios
   const getServicesName = (apptServices: any[]) => {
     if (!apptServices || apptServices.length === 0) return 'Sin servicio';
-    // Une los nombres con comas
     return apptServices.map((s) => s.nombre).join(', ');
   };
 
-  // 4. Helper para obtener nombre del estilista (Maneja Objeto o ID string)
   const getStylistName = (stylistData: any) => {
-    // Si ya viene el objeto populated
+    // Caso 1: Objeto completo (Populated)
     if (typeof stylistData === 'object' && stylistData !== null) {
       return `${stylistData.nombre} ${stylistData.apellido}`;
     }
-    // Si viene solo el ID (fallback)
+    // Caso 2: Solo ID string (Buscar en la lista de estilistas)
     const s = stylists.find((sty) => sty._id === stylistData);
-    if (!s) return 'Estilista no encontrado';
+    if (!s) return 'Estilista no asignado';
     return `${s.nombre} ${s.apellido}`;
   };
 
   const formatDateTime = (iso: string) => {
+    if (!iso) return { date: '-', time: '-' };
     const d = new Date(iso);
     return {
-      date: d.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }),
+      date: d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
       time: d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
     };
   };
 
-  // 5. Mapeo de estados en ESPAÑOL
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    // Normalizamos por seguridad
+    const s = (status || '').toUpperCase();
+    switch (s) {
       case 'PENDIENTE':
         return <Badge className="bg-yellow-900 text-yellow-200 border-yellow-800">Pendiente</Badge>;
       case 'CONFIRMADA':
+      case 'CONFIRMED':
         return <Badge className="bg-green-900 text-green-200 border-green-800">Confirmada</Badge>;
       case 'COMPLETADA':
+      case 'COMPLETED':
         return <Badge className="bg-blue-900 text-blue-200 border-blue-800">Completada</Badge>;
       case 'CANCELADA':
+      case 'CANCELLED':
         return <Badge className="bg-red-900 text-red-200 border-red-800">Cancelada</Badge>;
       default:
         return <Badge className="bg-gray-800 text-gray-200">{status}</Badge>;
@@ -81,6 +96,7 @@ export function AdminOverview() {
 
       {/* CARDS DE ESTADÍSTICAS */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        
         {/* Citas Hoy */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader className="pb-3">
@@ -91,13 +107,12 @@ export function AdminOverview() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-400">
-              {/* Mostramos las confirmadas de hoy como dato útil */}
               {todayAppointments.filter(a => a.status === 'CONFIRMADA').length} confirmadas
             </p>
           </CardContent>
         </Card>
 
-        {/* Citas Pendientes (Total) */}
+        {/* Pendientes */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader className="pb-3">
             <CardDescription className="text-gray-400">Pendientes de Acción</CardDescription>
@@ -149,7 +164,7 @@ export function AdminOverview() {
             <div className="space-y-4">
               {appointments
                 .slice()
-                // Ordenar por fecha de inicio descendente (más recientes primero)
+                // Ordenar: Las más futuras o recientes primero
                 .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
                 .slice(0, 5)
                 .map((appointment) => {
@@ -167,7 +182,7 @@ export function AdminOverview() {
                         <p className="text-sm text-gray-400">Estilista: {stylistName}</p>
                         <p className="text-xs text-gray-500">{date} a las {time}</p>
                         {appointment.notes && (
-                          <p className="text-xs text-gray-400 mt-1 italic">
+                          <p className="text-xs text-gray-400 mt-1 italic line-clamp-1">
                             "{appointment.notes}"
                           </p>
                         )}

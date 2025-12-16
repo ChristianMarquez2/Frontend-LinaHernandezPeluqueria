@@ -43,7 +43,7 @@ export function StylistFormDialog({
   isOpen,
   onClose,
   stylistToEdit,
-  availableCatalogs, 
+  availableCatalogs,
   onSave,
   validateField,
   validateForm
@@ -69,7 +69,7 @@ export function StylistFormDialog({
       if (stylistToEdit) {
         // Lógica para extraer el ID del primer catálogo asignado
         let mainCatalogId = '';
-        
+
         // Verificamos si tiene catálogos asignados
         if (stylistToEdit.catalogs && stylistToEdit.catalogs.length > 0) {
           const firstCat = stylistToEdit.catalogs[0];
@@ -83,7 +83,7 @@ export function StylistFormDialog({
           cedula: stylistToEdit.cedula,
           phone: stylistToEdit.telefono,
           gender: (stylistToEdit.genero as any) || '',
-          catalog: mainCatalogId, 
+          catalog: mainCatalogId,
           email: stylistToEdit.email,
           password: '',
         });
@@ -294,21 +294,26 @@ export function StylistFormDialog({
           <DialogFooter className="pt-4">
             <Button
               type="button"
-              variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="border-gray-700 text-white hover:bg-gray-800"
+              className="btn-red"
             >
               Cancelar
             </Button>
+
             <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
-              {isSubmitting ? 'Procesando...' : (stylistToEdit ? 'Actualizar' : 'Crear Estilista')}
+              {isSubmitting
+                ? "Procesando..."
+                : stylistToEdit
+                  ? "Actualizar"
+                  : "Crear Estilista"}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

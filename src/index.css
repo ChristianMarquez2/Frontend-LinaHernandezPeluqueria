@@ -3628,3 +3628,100 @@ html {
     height: 0;
   }
 }
+
+.btn-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1.25rem;
+  border-radius: var(--radius, .75rem);
+  font-weight: var(--font-weight-semibold, 600);
+  background-color: #e02424;
+  background-color: var(--destructive, #e02424);
+  color: #fff;
+  color: var(--destructive-foreground, #fff);
+  box-shadow: 0 12px 30px -16px rgba(224, 36, 36, .7);
+  transition: background-color var(--default-transition-duration, .15s) var(--default-transition-timing-function, ease), transform var(--default-transition-duration, .15s) var(--default-transition-timing-function, ease), box-shadow var(--default-transition-duration, .15s) var(--default-transition-timing-function, ease);
+}
+
+.btn-red:hover {
+  background-color: color-mix(in oklab, var(--destructive, #e02424) 88%, black);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px -18px rgba(224, 36, 36, .75);
+}
+
+.btn-red:active {
+  background-color: color-mix(in oklab, var(--destructive, #e02424) 75%, black);
+  transform: translateY(0);
+  box-shadow: 0 8px 20px -14px rgba(224, 36, 36, .65);
+}
+
+.btn-red:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--destructive, #e02424) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.btn-red:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+
+
+
+.btn-purple-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  border-radius: .75rem;
+  font-weight: 600;
+  transition:
+    background-color .25s ease,
+    box-shadow .25s ease,
+    transform .2s ease,
+    color .25s ease;
+  position: relative;
+}
+
+.btn-purple-idle {
+  background-color: #3b0764;
+  color: #e9d5ff;
+  box-shadow: 0 0 0 rgba(168, 85, 247, 0);
+}
+
+.btn-purple-idle:hover {
+  background-color: #4c1d95;
+  box-shadow: 0 0 12px rgba(168, 85, 247, .35);
+  transform: translateY(-1px);
+}
+.btn-purple-neon {
+  background-color: #a855f7;
+  color: #fff;
+  box-shadow:
+    0 0 14px rgba(168, 85, 247, .9),
+    0 0 32px rgba(168, 85, 247, .6);
+  animation: neon-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 14px rgba(168, 85, 247, .9),
+      0 0 32px rgba(168, 85, 247, .6);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(168, 85, 247, 1),
+      0 0 48px rgba(168, 85, 247, .85);
+  }
+}
+
+.btn-purple-neon:hover {
+  transform: translateY(-1px) scale(1.03);
+}

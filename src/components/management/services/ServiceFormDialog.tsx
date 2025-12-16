@@ -283,22 +283,22 @@ export function ServiceFormDialog({
             <Label className="text-gray-300">Servicio activo</Label>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               onClick={onClose}
-              className="bg-red-400 hover:bg-red-500 text-white font-medium transition"
               disabled={isSubmitting}
+              className="btn-red"
             >
               Cancelar
             </Button>
 
             <Button
               type="submit"
-              className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
               disabled={isSubmitting}
+              className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
-              {isSubmitting ? "Guardando..." : (serviceToEdit ? "Actualizar" : "Crear")}
+              {isSubmitting ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </form>

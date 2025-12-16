@@ -148,7 +148,8 @@ export interface Notification {
 // ==================== DTOs & PAYLOADS ====================
 
 export interface CreateBookingPayload {
-  slotId: string;
+  slotId?: string;
+  slotIds?: string[];
   date: string;
   notas?: string;
 }
