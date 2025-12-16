@@ -57,9 +57,8 @@ export function StylistHeader({
 
           {/* Logout */}
           <Button
-            variant="outline"
             onClick={logout}
-            className="border-gray-700 text-white hover:bg-gray-800"
+            className="bg-gradient-to-r from-[#D4AF37] to-[#E8C962] text-black hover:shadow-lg hover:shadow-[#D4AF37]/50 transition-all"
           >
             Cerrar Sesión
           </Button>

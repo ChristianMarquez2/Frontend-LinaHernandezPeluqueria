@@ -1,15 +1,16 @@
-import { Clock, User } from "lucide-react";
+import { Clock, User, Scissors, CalendarDays } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardContent } from "../../ui/card";
 import { Check, X, CheckCircle } from "lucide-react";
-import type { Booking } from "../../../contexts/data/types"; // 🔥 Usamos Booking
+import type { Booking } from "../../../contexts/data/types";
 
 interface AppointmentCardProps {
   booking: Booking;
   formatTime: (iso: string) => string;
   getServiceName: (booking: Booking) => string;
   getClientLabel: (booking: Booking) => string;
+  getStylistLabel: (booking: Booking) => string;
   onConfirm: (id: string) => void;
   onCancel: (id: string) => void;
   onComplete: (id: string) => void;
@@ -20,6 +21,7 @@ export function AppointmentCard({
   formatTime,
   getServiceName,
   getClientLabel,
+  getStylistLabel,
   onConfirm,
   onCancel,
   onComplete,
@@ -27,62 +29,81 @@ export function AppointmentCard({
 
   const getStatusBadge = (estado: string) => {
     switch (estado) {
-      case "SCHEDULED":
-        return <Badge variant="outline" className="bg-yellow-900/40 text-yellow-200 border-yellow-800">Pendiente</Badge>;
-      case "CONFIRMED":
-        return <Badge variant="outline" className="bg-blue-900/40 text-blue-200 border-blue-800">Confirmada</Badge>;
-      case "COMPLETED":
-        return <Badge variant="outline" className="bg-green-900/40 text-green-200 border-green-800">Completada</Badge>;
-      case "CANCELLED":
-        return <Badge variant="outline" className="bg-red-900/40 text-red-200 border-red-800">Cancelada</Badge>;
-      case "PENDING_STYLIST_CONFIRMATION":
-        return <Badge variant="outline" className="bg-orange-900/40 text-orange-200 border-orange-800">Reprogramada</Badge>;
-      case "NO_SHOW":
-        return <Badge variant="outline" className="bg-gray-700 text-gray-300">No Asistió</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-800 text-gray-200 border-gray-700">{estado}</Badge>;
+      case "SCHEDULED": return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Pendiente</Badge>;
+      case "CONFIRMED": return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Confirmada</Badge>;
+      case "COMPLETED": return <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Completada</Badge>;
+      case "CANCELLED": return <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">Cancelada</Badge>;
+      case "PENDING_STYLIST_CONFIRMATION": return <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">Por Confirmar</Badge>;
+      case "IN_PROGRESS": return <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">En Curso</Badge>;
+      default: return <Badge variant="outline" className="text-gray-400">{estado}</Badge>;
     }
   };
 
   const isActive = ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(booking.estado);
+  
+  // Usamos booking.inicio directamente
+  const dateObj = new Date(booking.inicio);
+  const dateLabel = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 
   return (
-    <Card className="bg-black border-gray-800 hover:border-gray-700 transition-colors">
-      <CardContent className="pt-4 pb-3 px-4">
+    <Card className="bg-black border-gray-800 hover:border-gray-700 transition-colors group relative overflow-hidden">
+      {/* Barra lateral de color según estado (opcional, detalle visual) */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+          booking.estado === 'CONFIRMED' ? 'bg-blue-500' : 
+          booking.estado === 'COMPLETED' ? 'bg-green-500' : 
+          booking.estado === 'CANCELLED' ? 'bg-red-900' : 'bg-yellow-500'
+      } opacity-50`} />
+
+      <CardContent className="pt-4 pb-3 px-5">
         <div className="flex flex-col gap-3">
           
-          {/* Header: Hora y Estado */}
+          {/* Header */}
           <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2 text-white font-medium">
-              <Clock className="h-4 w-4 text-[#D4AF37]" />
-              <span>
-                {formatTime(booking.inicio)} - {formatTime(booking.fin)}
-              </span>
+            <div className="flex flex-col">
+                <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                    <CalendarDays className="h-3 w-3" />
+                    <span>{dateLabel}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white font-medium">
+                    <Clock className="h-3.5 w-3.5 text-[#D4AF37]" />
+                    <span>
+                        {formatTime(booking.inicio)} - {formatTime(booking.fin)}
+                    </span>
+                </div>
             </div>
             {getStatusBadge(booking.estado)}
           </div>
 
           {/* Info Principal */}
           <div>
-            <p className="text-white font-semibold text-lg leading-tight">
+            <p className="text-white font-semibold text-lg leading-tight mb-2 truncate">
               {getServiceName(booking)}
             </p>
-            <div className="flex items-center gap-2 mt-1 text-sm text-gray-400">
-                <User className="h-3 w-3" />
-                {getClientLabel(booking)}
+            
+            <div className="space-y-1.5">
+                {/* Cliente */}
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <User className="h-3.5 w-3.5 text-gray-500" />
+                    <span className="truncate font-medium">{getClientLabel(booking)}</span>
+                </div>
+                {/* Estilista */}
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Scissors className="h-3.5 w-3.5 text-gray-600" />
+                    <span className="italic truncate">Estilista: {getStylistLabel(booking)}</span>
+                </div>
             </div>
           </div>
 
           {/* Notas */}
           {booking.notas && (
-            <div className="text-xs text-gray-500 italic bg-gray-900/50 p-2 rounded border border-gray-800/50">
+            <div className="text-xs text-gray-400 italic bg-gray-900 p-2 rounded border border-gray-800 mt-1">
               "{booking.notas}"
             </div>
           )}
 
           {/* Acciones */}
           {isActive && (
-            <div className="flex gap-2 mt-2 pt-3 border-t border-gray-800">
+            <div className="flex gap-2 mt-2 pt-3 border-t border-gray-800 opacity-90 group-hover:opacity-100 transition-opacity">
               {booking.estado !== 'CONFIRMED' && (
                 <Button size="sm" variant="ghost" className="h-8 flex-1 bg-blue-900/10 text-blue-400 hover:bg-blue-900/30 hover:text-blue-300" onClick={() => onConfirm(booking._id)}>
                   <Check className="h-4 w-4 mr-1" /> Confirmar

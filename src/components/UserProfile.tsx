@@ -200,8 +200,18 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
 
         <Tabs defaultValue="profile" className="w-full mt-4">
           <TabsList className="grid grid-cols-2 bg-black/50">
-            <TabsTrigger value="profile">Datos Personales</TabsTrigger>
-            <TabsTrigger value="password">Seguridad</TabsTrigger>
+            <TabsTrigger
+              value="profile"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
+            >
+              Datos Personales
+            </TabsTrigger>
+            <TabsTrigger
+              value="password"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
+            >
+              Seguridad
+            </TabsTrigger>
           </TabsList>
 
           {/* ---------- TAB PERFIL ---------- */}

@@ -1,7 +1,17 @@
-// src/components/management/category/CategoryForm.tsx
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import { CreateCategoryDTO, Category } from "../../../contexts/data/types";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Button } from "../../ui/button";
 
 interface Props {
   initialData?: Category | null;
@@ -17,7 +27,6 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Resetear o rellenar formulario al abrir
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -37,17 +46,17 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsSubmitting(true);
+    setError(null);
 
     try {
       await onSubmit({
         nombre,
         descripcion,
         imageUrl,
-        // Nota: Si necesitas gestionar servicios aquí, necesitarás un selector múltiple.
-        // Por ahora mantenemos los servicios existentes si es edición, o vacíos si es nuevo.
-        services: initialData?.services.map((s: any) => typeof s === 'string' ? s : s._id) || []
+        services: initialData?.services?.map((s: any) =>
+          typeof s === "string" ? s : s._id
+        ) || [],
       });
       onClose();
     } catch (err: any) {
@@ -58,78 +67,83 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-gray-900 border border-gray-800 w-full max-w-md rounded-lg shadow-2xl animate-in fade-in zoom-in duration-200">
-        
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-800">
-          <h2 className="text-xl font-semibold text-white">
-            {initialData ? "Editar Categoría" : "Nueva Categoría"}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X size={24} />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-gray-900 border-gray-800 text-white max-h-[90vh] overflow-y-auto">
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <DialogHeader>
+          <DialogTitle className="text-[#D4AF37]">
+            {initialData ? "Editar Categoría" : "Nueva Categoría"}
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            Complete los datos de la categoría para el catálogo de servicios.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
           {error && (
-            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-200 text-sm">
+            <p className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-300 text-sm">
               {error}
-            </div>
+            </p>
           )}
 
+          {/* NOMBRE */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Nombre</label>
-            <input
-              type="text"
+            <Label className="text-gray-300">Nombre</Label>
+            <Input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
-              className="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] outline-none"
+              className="bg-black border-gray-700 text-white mt-1.5"
               placeholder="Ej. Corte de Cabello"
             />
           </div>
 
+          {/* DESCRIPCIÓN */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Descripción</label>
+            <Label className="text-gray-300">Descripción</Label>
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              className="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] outline-none h-24 resize-none"
+              className="w-full bg-black border border-gray-700 rounded p-2 text-white mt-1.5 h-24 resize-none focus:border-[#D4AF37] outline-none"
               placeholder="Breve descripción..."
             />
           </div>
 
+          {/* IMAGEN */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">URL de Imagen (Opcional)</label>
-            <input
+            <Label className="text-gray-300">URL de Imagen (Opcional)</Label>
+            <Input
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] outline-none"
-              placeholder="https://..."
+              className="bg-black border-gray-700 text-white mt-1.5"
+              placeholder="Función no disponible de momento"
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
+          <DialogFooter className="pt-4">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition"
+              disabled={isSubmitting}
+              className="border-gray-700 text-white hover:bg-gray-800"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-[#D4AF37] text-black font-bold rounded hover:bg-[#b5952f] transition disabled:opacity-50"
+              className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
               {isSubmitting ? "Guardando..." : "Guardar"}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
+
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -29,7 +29,7 @@ interface LoginDialogProps {
 
 export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogProps) {
   const { login, register, sendVerificationEmail } = useAuth();
-  
+
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     firstName: "",
@@ -60,7 +60,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
       toast.success("¡Bienvenido!", {
         description: "Has iniciado sesión correctamente.",
       });
-      
+
       onOpenChange(false);
       if (onLoginSuccess) onLoginSuccess();
 
@@ -68,7 +68,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
       // 3. Capturar error del backend
       console.error("Login Dialog Error:", err);
       const mensaje = err.response?.data?.message || err.message || "Credenciales incorrectas.";
-      
+
       toast.error("Error al iniciar sesión", {
         description: mensaje,
       });
@@ -132,13 +132,16 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
         description: "El email o la cédula ya están registrados, o hubo un error de conexión.",
       });
     }
-    
+
     setIsSubmitting(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] border-[#D4AF37]/30 text-white">
+      <DialogContent
+        className="sm:max-w-[500px] bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] border-[#D4AF37]/30 text-white
+                 max-h-[80vh] overflow-y-auto"
+      >
         <DialogHeader>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Sparkles className="w-6 h-6" style={{ color: "#D4AF37" }} />
@@ -155,13 +158,13 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
           <TabsList className="grid w-full grid-cols-2 bg-black/50">
             <TabsTrigger
               value="login"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
             >
               Iniciar Sesión
             </TabsTrigger>
             <TabsTrigger
               value="register"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D4AF37] data-[state=active]:to-[#F4E5C2] data-[state=active]:text-black"
             >
               Registrarse
             </TabsTrigger>
@@ -247,7 +250,14 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                     type="text"
                     required
                     value={registerData.firstName}
-                    onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                    maxLength={20} // 1. Límite visual de 20 caracteres
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // 2. Validación: Solo letras (a-z), acentos, Ñ y espacios
+                      if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                        setRegisterData({ ...registerData, firstName: value });
+                      }
+                    }}
                     className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
                     placeholder="Nombre"
                   />
@@ -262,7 +272,14 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                     type="text"
                     required
                     value={registerData.lastName}
-                    onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
+                    maxLength={20}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Validación: Solo letras, tildes y espacios
+                      if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                        setRegisterData({ ...registerData, lastName: value });
+                      }
+                    }}
                     className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
                     placeholder="Apellido"
                   />
@@ -275,10 +292,18 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                 </label>
                 <Input
                   id="register-cedula"
-                  type="text"
+                  type="text" // Usamos 'text' para controlar mejor el regex, 'number' a veces deja poner 'e' o signos
                   required
                   value={registerData.cedula}
-                  onChange={(e) => setRegisterData({ ...registerData, cedula: e.target.value })}
+                  maxLength={10} // Bloquea escribir más de 10
+                  minLength={10} // Validación HTML para avisar si faltan números
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Validación: Solo permite dígitos numéricos (0-9)
+                    if (/^\d*$/.test(value)) {
+                      setRegisterData({ ...registerData, cedula: value });
+                    }
+                  }}
                   className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
                   placeholder="Número de cédula"
                 />

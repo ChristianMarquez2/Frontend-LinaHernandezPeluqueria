@@ -226,7 +226,7 @@ export function Header() {
                           setIsMobileMenuOpen(false);
                         }}
                         variant="outline"
-                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 w-full"
+                        className="bg-gradient-to-r from-[#D4AF37] to-[#E8C962] text-black hover:shadow-lg hover:shadow-[#D4AF37]/50 transition-all"
                       >
                         <LogOut className="w-4 h-4 mr-2" />
                         Cerrar Sesión

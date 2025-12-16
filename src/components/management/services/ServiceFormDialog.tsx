@@ -32,7 +32,7 @@ export function ServiceFormDialog({
   existingServices,
   onSave,
 }: ServiceFormDialogProps) {
-  
+
   // Estado Inicial
   const initialFormState: ServiceFormData = {
     nombre: "",
@@ -114,7 +114,7 @@ export function ServiceFormDialog({
       if (category) {
         const categoryInitial = category.nombre.charAt(0).toUpperCase();
         const serviceInitial = formData.nombre.charAt(0).toUpperCase();
-        
+
         // Lógica de conteo
         const existingCodes = existingServices
           .filter(s => s.codigo && s.codigo.startsWith(categoryInitial + serviceInitial))
@@ -125,7 +125,7 @@ export function ServiceFormDialog({
 
         const nextNumber = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
         const newCode = `${categoryInitial}${serviceInitial}${nextNumber.toString().padStart(3, '0')}`;
-        
+
         setFormData(prev => ({ ...prev, codigo: newCode }));
       }
     }
@@ -133,7 +133,7 @@ export function ServiceFormDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar todo antes de enviar
     const fieldsToValidate = ["nombre", "precio", "duracionMin", "descripcion"];
     const newErrors: any = {};
@@ -167,7 +167,7 @@ export function ServiceFormDialog({
     setIsSubmitting(true);
     const success = await onSave(formData, serviceToEdit ? serviceToEdit._id : null);
     setIsSubmitting(false);
-    
+
     if (success) onClose();
   };
 
@@ -182,7 +182,7 @@ export function ServiceFormDialog({
             Completa los datos del servicio
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* CATEGORÍA */}
           <div>
@@ -286,13 +286,13 @@ export function ServiceFormDialog({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
               onClick={onClose}
-              className="border-gray-700 text-white hover:bg-gray-800"
+              className="bg-red-400 hover:bg-red-500 text-white font-medium transition"
               disabled={isSubmitting}
             >
               Cancelar
             </Button>
+
             <Button
               type="submit"
               className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"

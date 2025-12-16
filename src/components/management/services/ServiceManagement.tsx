@@ -9,13 +9,13 @@ import { useServiceLogic } from "./useServiceLogic";
 import { Service } from "./types";
 
 export function ServiceManagement() {
-  const { 
-    services, 
-    categories, 
-    loading, 
-    handleSaveService, 
-    handleDeleteService, 
-    getCategoryName 
+  const {
+    services,
+    categories,
+    loading,
+    handleSaveService,
+    handleDeleteService,
+    getCategoryName
   } = useServiceLogic();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,11 +57,12 @@ export function ServiceManagement() {
         </div>
         <Button
           onClick={handleCreate}
-          className="bg-[#D4AF37] text-black hover:bg-[#b5952f] font-medium"
+          className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 font-medium text-white"
         >
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Servicio
         </Button>
+
       </div>
 
       <Card className="bg-gray-900 border-gray-800 shadow-xl">
@@ -78,7 +79,7 @@ export function ServiceManagement() {
         </CardHeader>
 
         <CardContent>
-          <ServiceTable 
+          <ServiceTable
             services={filteredServices}
             getCategoryName={getCategoryName}
             onEdit={handleEdit}

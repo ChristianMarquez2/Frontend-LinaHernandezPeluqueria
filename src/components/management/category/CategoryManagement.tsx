@@ -8,15 +8,15 @@ import { CategoryFilters } from "./CategoryFilters";
 import { CategoryForm } from "./CategoryForm";
 
 export function CategoryManagement() {
-  const { 
-    categories, 
-    meta, 
-    loading, 
-    refreshCategories, 
-    createCategory, 
-    updateCategory, 
-    deleteCategory, 
-    toggleCategoryStatus 
+  const {
+    categories,
+    meta,
+    loading,
+    refreshCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    toggleCategoryStatus
   } = useCategoriesContext();
 
   const [search, setSearch] = useState("");
@@ -69,11 +69,12 @@ export function CategoryManagement() {
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black font-bold rounded-lg hover:bg-[#b5952f] transition shadow-lg shadow-yellow-900/20"
+          className="flex items-center gap-2 px-4 py-2 bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 text-white font-medium rounded-lg transition"
         >
-          <Plus size={20} />
+          <Plus size={20} className="mr-1" />
           Nueva Categoría
         </button>
+
       </div>
 
       <CategoryFilters search={search} onSearchChange={setSearch} />
