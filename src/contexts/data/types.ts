@@ -267,3 +267,102 @@ export interface ServiceSlot {
   endTime: string;
   isActive: boolean;
 }
+
+// ==================== REPORTES (NUEVO) ====================
+
+export interface ReportRangeParams {
+  from: string; // YYYY-MM-DD
+  to: string;   // YYYY-MM-DD
+  stylistId?: string;
+}
+
+// 1. Estructura del Dashboard General (endpoint /summary)
+export interface DashboardSummary {
+  range: { from: string; to: string; label: string };
+  totals: {
+    totalRevenue: number;
+    totalPaidBookings: number;
+  };
+  revenueByDay: { day: string; total: number; count: number }[];
+  revenueByStylist: { 
+    _id: string; 
+    stylistName: string; 
+    totalRevenue: number; 
+    bookingsCount: number 
+  }[];
+  topServices: { 
+    _id: string; 
+    serviceName: string; 
+    totalRevenue: number; 
+    bookingsCount: number 
+  }[];
+  bookingsByStatus: { _id: string; count: number }[];
+  ratingsByStylist: { 
+    _id: string; 
+    stylistName: string; 
+    avgRating: number; 
+    ratingsCount: number 
+  }[];
+}
+
+// 2. Estructura del Reporte Detallado de Estilista (endpoint /stylists o /my)
+export interface StylistDetailedReport {
+  stylist: {
+    id: string;
+    name: string;
+    email: string | null;
+    isActive: boolean;
+  };
+  earnings: {
+    totalRevenue: number;
+    paidBookings: number;
+    avgTicket: number;
+  };
+  ratings: {
+    avgRating: number;
+    ratingsCount: number;
+    distribution: { stars: number; count: number }[];
+    latestComments: {
+      estrellas: number;
+      commentText: string;
+      createdAt: string;
+      clientName: string;
+    }[];
+  };
+  appointmentsNotes: {
+    date: string;
+    estado: string;
+    servicio: string;
+    cliente: string;
+    notas: string;
+  }[];
+  topServices: {
+    _id: string;
+    serviceName: string;
+    totalRevenue: number;
+    bookingsCount: number;
+  }[];
+  bookingsByStatus: { _id: string; count: number }[];
+  extra: {
+    totalBookings: number;
+    uniqueClients: number;
+    cancelRatePct: number;
+    completionRatePct: number;
+    peakHour: string | null;
+    peakWeekday: string | null;
+  };
+}
+
+export interface StylistReportResponse {
+  range: { from: string; to: string; label: string };
+  count: number;
+  reports: StylistDetailedReport[];
+}
+
+// Interfaz antigua (fallback)
+export interface ReportSummaryOld {
+  topServices: { _id: string; count: number }[];
+  ratingsByStylist: { _id: string; avg: number; count: number }[];
+  bookingsByStatus: { _id: string; count: number }[];
+  revenueByMonth: { _id: string; total: number }[];
+}

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#D4AF37', '#9D8EC1', '#B8A9D4', '#C0C0C0', '#FFD700'];
+const COLORS = ['#10B981', '#D4AF37', '#EF4444', '#6B7280', '#3B82F6', '#9D8EC1'];
 
 interface StatusChartProps {
   data: { name: string; value: number }[];
@@ -25,7 +25,7 @@ export function StatusChart({ data }: StatusChartProps) {
               paddingAngle={5}
               dataKey="value"
             >
-              {data.map((_, index) => (
+              {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>

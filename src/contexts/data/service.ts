@@ -13,7 +13,10 @@ import {
   StylistSchedule,
   UpsertScheduleDTO,
   GenerateSlotsDTO,
-  ServiceSlot
+  ServiceSlot,
+  ReportRangeParams,
+  DashboardSummary,
+  StylistReportResponse
 } from "./types";
 
 const getHeaders = (token: string) => ({
@@ -266,39 +269,7 @@ export const dataService = {
   // 📊 REPORTES (CON FALLBACK LOCAL)
   // ============================================================
 
-  fetchReports: async (token: string): Promise<ReportSummary | null> => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/reports/summary`, { headers: getHeaders(token) });
-
-      // Si el servidor falla (500), lanzamos error para que entre al catch
-      if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-
-      return await res.json();
-    } catch (error) {
-      console.warn("⚠️ API Reportes falló (500). Usando datos simulados para evitar bloqueo UI.");
-
-      // 🔥 FALLBACK DATA: Si el backend falla, devolvemos esto para que el dashboard cargue
-      return {
-        topServices: [
-          { _id: "Corte Caballero", count: 15 },
-          { _id: "Barba Express", count: 12 },
-          { _id: "Tinte Completo", count: 8 },
-          { _id: "Manicura", count: 5 }
-        ],
-        ratingsByStylist: [],
-        bookingsByStatus: [
-          { _id: "COMPLETED", count: 25 },
-          { _id: "SCHEDULED", count: 10 },
-          { _id: "CANCELLED", count: 2 }
-        ],
-        revenueByMonth: [
-          { _id: "2023-10", total: 1200 },
-          { _id: "2023-11", total: 1850 },
-          { _id: "2023-12", total: 2100 }
-        ]
-      };
-    }
-  },
+  
 
   // 🔄 CARGA INICIAL
   fetchInitialData: async (token: string) => {
@@ -306,4 +277,75 @@ export const dataService = {
       services: [], stylists: [], businessHours: null, appointments: [], ratings: [], notifications: []
     };
   },
+
+
+  // 1. Dashboard General (Admin/Gerente)
+  fetchDashboardSummary: async (token: string, params: ReportRangeParams): Promise<DashboardSummary | null> => {
+    try {
+      const q = new URLSearchParams({ from: params.from, to: params.to });
+      const res = await fetch(`${API_BASE_URL}/reports/summary?${q.toString()}`, { headers: getHeaders(token) });
+      if (!res.ok) throw new Error("Error fetching summary");
+      return await res.json();
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
+  // 2. Reporte Detallado de Estilistas (Admin ve todos, Estilista ve el suyo si usa /my)
+  fetchStylistReports: async (token: string, params: ReportRangeParams, isPersonal: boolean = false): Promise<StylistReportResponse | null> => {
+    try {
+      const q = new URLSearchParams({ from: params.from, to: params.to });
+      if (params.stylistId && !isPersonal) q.append("stylistId", params.stylistId);
+      
+      const endpoint = isPersonal ? "/reports/my" : "/reports/stylists";
+      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { headers: getHeaders(token) });
+      
+      if (!res.ok) throw new Error("Error fetching stylist reports");
+      return await res.json();
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
+  // 3. Descarga de PDF General
+  downloadGeneralReportPDF: async (token: string, params: ReportRangeParams): Promise<Blob | null> => {
+    try {
+      const q = new URLSearchParams({ from: params.from, to: params.to });
+      const res = await fetch(`${API_BASE_URL}/reports/pdf?${q.toString()}`, { headers: getHeaders(token) });
+      if (!res.ok) throw new Error("Error downloading PDF");
+      return await res.blob();
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
+  // 4. Descarga de PDF Estilistas
+  downloadStylistReportPDF: async (token: string, params: ReportRangeParams, isPersonal: boolean = false): Promise<Blob | null> => {
+    try {
+      const q = new URLSearchParams({ from: params.from, to: params.to });
+      if (params.stylistId && !isPersonal) q.append("stylistId", params.stylistId);
+      
+      const endpoint = isPersonal ? "/reports/my/pdf" : "/reports/stylists/pdf";
+      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { headers: getHeaders(token) });
+      
+      if (!res.ok) throw new Error("Error downloading PDF");
+      return await res.blob();
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
+  // Mantenemos fetchReports original como alias o fallback si lo usabas en componentes viejos, 
+  // pero ahora debería redirigir a fetchDashboardSummary con fechas por defecto.
+  fetchReports: async (token: string): Promise<any> => {
+    // Fallback a "este mes" si se llama sin params
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    return await dataService.fetchDashboardSummary(token, { from: start, to: end });
+  }
 };

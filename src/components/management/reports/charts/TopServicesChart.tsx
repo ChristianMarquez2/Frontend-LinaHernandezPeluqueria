@@ -10,18 +10,18 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
     <Card className="bg-gray-900 border-gray-800 col-span-2 lg:col-span-1">
       <CardHeader>
         <CardTitle className="text-white">Servicios Más Populares</CardTitle>
-        <CardDescription>Top 10 servicios solicitados</CardDescription>
+        <CardDescription>Top 10 servicios por volumen</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} layout="vertical">
+          <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
             <XAxis type="number" tick={{ fill: '#9ca3af' }} />
             <YAxis
               dataKey="name"
               type="category"
-              width={120}
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              width={130}
+              tick={{ fill: '#9ca3af', fontSize: 11 }}
             />
             <Tooltip
               cursor={{ fill: '#374151', opacity: 0.2 }}
