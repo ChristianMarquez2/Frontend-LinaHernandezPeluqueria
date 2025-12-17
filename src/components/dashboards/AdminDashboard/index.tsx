@@ -25,7 +25,17 @@ export function AdminDashboard() {
   const { user, logout, refreshSession } = useAuth();
   const { getUserNotifications, fetchData } = useData();
 
-  const [currentView, setCurrentView] = useState<AdminView>('overview');
+  // Recuperar vista guardada de localStorage o usar 'overview' por defecto
+  const [currentView, setCurrentViewState] = useState<AdminView>(() => {
+    const saved = localStorage.getItem('adminCurrentView');
+    return (saved as AdminView) || 'overview';
+  });
+
+  // Wrapper para guardar en localStorage cuando cambia
+  const setCurrentView = (view: AdminView) => {
+    setCurrentViewState(view);
+    localStorage.setItem('adminCurrentView', view);
+  };
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
 

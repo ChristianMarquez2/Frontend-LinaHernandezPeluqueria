@@ -152,10 +152,14 @@ export function ClientDashboard() {
         });
       }
 
-      // Éxito
+      // Éxito - Recargar datos antes de cerrar el modal
       await refreshMyBookings();
+      
+      // Opcional: También refrescar datos generales por si hay cambios en disponibilidad
+      await fetchData();
+      
       setShowBooking(false);
-      // alert(editingAppointmentId ? "Cita reprogramada con éxito" : "¡Cita agendada con éxito!");
+      alert(editingAppointmentId ? "Cita reprogramada con éxito" : "¡Cita agendada con éxito!");
 
     } catch (err: any) {
       console.error(err);

@@ -92,7 +92,7 @@ export function StylistTable({ stylists, onEdit, onDelete }: StylistTableProps) 
                   </Button>
 
                   {/* Botón de Horarios */}
-                  <StylistScheduleButton stylistId={s._id} />
+                  
 
                   <Button
                     variant="ghost"

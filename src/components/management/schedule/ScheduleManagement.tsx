@@ -1,3 +1,4 @@
+import { useMemo } from 'react'; // 1. Importar useMemo
 import { useScheduleLogic } from './useScheduleLogic';
 import { DayRow } from './DayRow';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
@@ -25,6 +26,25 @@ export function ScheduleManagement() {
     
     DAY_NAMES
   } = useScheduleLogic();
+
+  // 2. Lógica para filtrar servicios según el estilista seleccionado
+  const filteredServices = useMemo(() => {
+    if (!selectedStylistId) return [];
+
+    const stylist = stylists.find(s => s._id === selectedStylistId);
+    
+    // Si el estilista no tiene la propiedad servicesOffered o está vacía, retornamos vacío
+    if (!stylist || !stylist.servicesOffered) return [];
+
+    // Obtenemos los IDs de los servicios que ofrece el estilista
+    // (Manejamos el caso de que servicesOffered sea un array de strings o de objetos)
+    const offeredIds = stylist.servicesOffered.map(s => 
+      typeof s === 'string' ? s : s._id
+    );
+
+    // Filtramos la lista maestra de servicios
+    return services.filter(service => offeredIds.includes(service._id));
+  }, [selectedStylistId, stylists, services]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -126,12 +146,19 @@ export function ScheduleManagement() {
                     <SelectTrigger className="mt-1 bg-gray-900 border-gray-700 text-white">
                       <SelectValue placeholder="Selecciona el servicio..." />
                     </SelectTrigger>
+                    {/* 3. Usamos filteredServices aquí */}
                     <SelectContent className="bg-gray-900 border-gray-800 text-white max-h-60">
-                      {services.map(svc => (
-                        <SelectItem key={svc._id} value={svc._id}>
-                          {svc.nombre} ({svc.duracionMin} min)
-                        </SelectItem>
-                      ))}
+                      {filteredServices.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500 text-center">
+                          Este estilista no tiene servicios asignados.
+                        </div>
+                      ) : (
+                        filteredServices.map(svc => (
+                          <SelectItem key={svc._id} value={svc._id}>
+                            {svc.nombre} ({svc.duracionMin} min)
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

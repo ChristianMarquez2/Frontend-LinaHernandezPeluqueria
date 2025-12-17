@@ -19,7 +19,17 @@ export function ManagerDashboard() {
   const { user, logout, refreshSession } = useAuth();
   const { getUserNotifications, fetchData } = useData();
 
-  const [currentView, setCurrentView] = useState<ManagerView>('overview');
+  // Recuperar vista guardada de localStorage o usar 'overview' por defecto
+  const [currentView, setCurrentViewState] = useState<ManagerView>(() => {
+    const saved = localStorage.getItem('managerCurrentView');
+    return (saved as ManagerView) || 'overview';
+  });
+
+  // Wrapper para guardar en localStorage cuando cambia
+  const setCurrentView = (view: ManagerView) => {
+    setCurrentViewState(view);
+    localStorage.setItem('managerCurrentView', view);
+  };
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
 
