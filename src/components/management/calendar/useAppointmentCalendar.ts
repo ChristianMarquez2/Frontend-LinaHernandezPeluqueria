@@ -115,10 +115,17 @@ export function useAppointmentCalendar() {
   const handleConfirm = async (id: string) => { 
       if (!token) return;
       try {
-        await dataService.updateBookingStatus(token, id, 'confirm'); 
+        // CORRECCIÓN AQUÍ:
+        // Añadimos un objeto vacío {} como cuarto argumento.
+        // Muchos backends esperan un body JSON vacío en lugar de "null" o "undefined".
+        await dataService.updateBookingStatus(token, id, 'confirm', {}); 
+        
         toast.success("Cita confirmada");
         fetchBookings();
-      } catch(e) { toast.error("Error al confirmar"); }
+      } catch(e) { 
+        console.error("Error confirmando:", e); // Añade esto para ver el error real en consola
+        toast.error("Error al confirmar, el estilista asignado debe confirmar la cita"); 
+      }
   };
 
   const handleComplete = async (id: string, notes: string) => { 
@@ -127,7 +134,7 @@ export function useAppointmentCalendar() {
         await dataService.updateBookingStatus(token, id, 'complete', { notas: notes });
         toast.success("Cita completada");
         fetchBookings();
-      } catch(e) { toast.error("Error al completar"); }
+      } catch(e) { toast.error("Error al completar, el estilista asignado debe completar la cita"); }
   };
 
   const handleCancel = async (id: string, motivo: string) => { 

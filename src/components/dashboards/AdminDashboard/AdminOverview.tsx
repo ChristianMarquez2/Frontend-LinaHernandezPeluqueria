@@ -1,45 +1,59 @@
+import React, { useMemo } from 'react';
 import { useData } from '../../../contexts/data/index';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
+// Importamos iconos para darle vida visual (opcional, asumiendo lucide-react)
+import { CalendarDays, AlertCircle, Users, Star, TrendingUp } from 'lucide-react';
 
 export function AdminOverview() {
-  const { appointments, ratings, stylists, services } = useData();
+  // Aseguramos valores por defecto para evitar crash si el contexto aún carga
+  const { appointments = [], ratings = [], stylists = [], services = [] } = useData();
 
   // ===========================
-  // 📅 Métricas y lógica de Fechas
+  // 🧠 Lógica y Cálculos (Memoized)
   // ===========================
-  
-  // Helper robusto para comparar fechas ignorando hora y zona horaria UTC
-  const isSameDay = (date1: Date, date2: Date) => {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    // Normalizamos la fecha de hoy a string local (YYYY-MM-DD) para comparar fácil
+    const todayString = now.toLocaleDateString('en-CA'); // Formato ISO local
+
+    // 1. Citas de Hoy
+    const todayAppts = appointments.filter((a) => {
+      if (!a.start) return false;
+      const apptDate = new Date(a.start).toLocaleDateString('en-CA');
+      return apptDate === todayString;
+    });
+
+    // 2. Pendientes (Normalizamos a mayúsculas para asegurar coincidencia)
+    const pendingAppts = appointments.filter(
+      (a) => a.status?.toUpperCase() === 'PENDIENTE'
     );
-  };
 
-  const now = new Date();
+    // 3. Confirmadas de hoy (para el desglose)
+    const confirmedToday = todayAppts.filter(
+      (a) => a.status?.toUpperCase() === 'CONFIRMADA' || a.status?.toUpperCase() === 'CONFIRMED'
+    ).length;
 
-  // 1. Filtrar Citas de Hoy
-  const todayAppointments = appointments.filter((a) => {
-    if (!a.start) return false;
-    return isSameDay(new Date(a.start), now);
-  });
+    // 4. Promedio de estrellas
+    const totalStars = ratings.reduce((acc, r) => acc + (Number(r.estrellas) || 0), 0);
+    const avgRating = ratings.length > 0 ? (totalStars / ratings.length).toFixed(1) : '0.0';
 
-  // 2. Filtrar Pendientes (El Context ya asegura que el status venga en mayúsculas)
-  const pendingAppointments = appointments.filter(
-    (a) => a.status === 'PENDIENTE'
-  );
+    // 5. Citas Recientes (Ordenadas)
+    const recentAppts = [...appointments]
+      .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
+      .slice(0, 5);
 
-  // 3. Métricas simples
-  const activeStylists = stylists.filter((s) => s.isActive);
-  const activeServices = services.filter((s) => s.activo);
-
-  // 4. Promedio de estrellas (Manejo de división por cero)
-  const avgRating =
-    ratings.length > 0
-      ? (ratings.reduce((acc, r) => acc + r.estrellas, 0) / ratings.length).toFixed(1)
-      : '0.0';
+    return {
+      todayAppts,
+      pendingAppts,
+      confirmedToday,
+      avgRating,
+      recentAppts,
+      activeStylistsCount: stylists.filter(s => s.isActive).length,
+      activeServicesCount: services.filter(s => s.activo).length
+    };
+  }, [appointments, ratings, stylists, services]);
 
   // ===========================
   // 🛠 Helpers de Renderizado
@@ -51,14 +65,12 @@ export function AdminOverview() {
   };
 
   const getStylistName = (stylistData: any) => {
-    // Caso 1: Objeto completo (Populated)
-    if (typeof stylistData === 'object' && stylistData !== null) {
-      return `${stylistData.nombre} ${stylistData.apellido}`;
+    if (!stylistData) return 'Sin asignar';
+    if (typeof stylistData === 'object' && stylistData.nombre) {
+      return `${stylistData.nombre} ${stylistData.apellido || ''}`;
     }
-    // Caso 2: Solo ID string (Buscar en la lista de estilistas)
     const s = stylists.find((sty) => sty._id === stylistData);
-    if (!s) return 'Estilista no asignado';
-    return `${s.nombre} ${s.apellido}`;
+    return s ? `${s.nombre} ${s.apellido}` : 'Desconocido';
   };
 
   const formatDateTime = (iso: string) => {
@@ -71,83 +83,82 @@ export function AdminOverview() {
   };
 
   const getStatusBadge = (status: string) => {
-    // Normalizamos por seguridad
     const s = (status || '').toUpperCase();
-    switch (s) {
-      case 'PENDIENTE':
-        return <Badge className="bg-yellow-900 text-yellow-200 border-yellow-800">Pendiente</Badge>;
-      case 'CONFIRMADA':
-      case 'CONFIRMED':
-        return <Badge className="bg-green-900 text-green-200 border-green-800">Confirmada</Badge>;
-      case 'COMPLETADA':
-      case 'COMPLETED':
-        return <Badge className="bg-blue-900 text-blue-200 border-blue-800">Completada</Badge>;
-      case 'CANCELADA':
-      case 'CANCELLED':
-        return <Badge className="bg-red-900 text-red-200 border-red-800">Cancelada</Badge>;
-      default:
-        return <Badge className="bg-gray-800 text-gray-200">{status}</Badge>;
-    }
+    const badgeStyles: Record<string, string> = {
+        PENDIENTE: "bg-yellow-900 text-yellow-200 border-yellow-800 hover:bg-yellow-900",
+        CONFIRMADA: "bg-green-900 text-green-200 border-green-800 hover:bg-green-900",
+        CONFIRMED: "bg-green-900 text-green-200 border-green-800 hover:bg-green-900",
+        COMPLETADA: "bg-blue-900 text-blue-200 border-blue-800 hover:bg-blue-900",
+        COMPLETED: "bg-blue-900 text-blue-200 border-blue-800 hover:bg-blue-900",
+        CANCELADA: "bg-red-900 text-red-200 border-red-800 hover:bg-red-900",
+        CANCELLED: "bg-red-900 text-red-200 border-red-800 hover:bg-red-900",
+    };
+
+    return (
+        <Badge className={badgeStyles[s] || "bg-gray-800 text-gray-200"}>
+            {s.charAt(0) + s.slice(1).toLowerCase()}
+        </Badge>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-[#D4AF37] text-xl font-semibold">Resumen General</h2>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <h2 className="text-[#D4AF37] text-xl font-semibold flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" /> Resumen General
+        </h2>
+      </div>
 
       {/* CARDS DE ESTADÍSTICAS */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         
         {/* Citas Hoy */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader className="pb-3">
+        <Card className="bg-gray-900 border-gray-800 hover:border-[#D4AF37]/50 transition-colors">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <CardDescription className="text-gray-400">Citas Hoy</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {todayAppointments.length}
-            </CardTitle>
+            <CalendarDays className="h-4 w-4 text-[#D4AF37]" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-400">
-              {todayAppointments.filter(a => a.status === 'CONFIRMADA').length} confirmadas
+            <div className="text-3xl font-bold text-white">{stats.todayAppts.length}</div>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.confirmedToday} confirmadas para hoy
             </p>
           </CardContent>
         </Card>
 
         {/* Pendientes */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader className="pb-3">
-            <CardDescription className="text-gray-400">Pendientes de Acción</CardDescription>
-            <CardTitle className="text-yellow-500 text-3xl font-bold">
-              {pendingAppointments.length}
-            </CardTitle>
+        <Card className="bg-gray-900 border-gray-800 hover:border-yellow-500/50 transition-colors">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardDescription className="text-gray-400">Por Aprobar</CardDescription>
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-400">Requieren confirmación</p>
+            <div className="text-3xl font-bold text-yellow-500">{stats.pendingAppts.length}</div>
+            <p className="text-xs text-gray-500 mt-1">Requieren acción inmediata</p>
           </CardContent>
         </Card>
 
         {/* Estilistas */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader className="pb-3">
-            <CardDescription className="text-gray-400">Estilistas Activos</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {activeStylists.length}
-            </CardTitle>
+        <Card className="bg-gray-900 border-gray-800 hover:border-blue-500/50 transition-colors">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardDescription className="text-gray-400">Equipo Activo</CardDescription>
+            <Users className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-400">De {stylists.length} registrados</p>
+            <div className="text-3xl font-bold text-white">{stats.activeStylistsCount}</div>
+            <p className="text-xs text-gray-500 mt-1">Estilistas disponibles</p>
           </CardContent>
         </Card>
 
         {/* Calificaciones */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader className="pb-3">
-            <CardDescription className="text-gray-400">Calificación Media</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {avgRating}
-            </CardTitle>
+        <Card className="bg-gray-900 border-gray-800 hover:border-purple-500/50 transition-colors">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <CardDescription className="text-gray-400">Calidad</CardDescription>
+            <Star className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-400">{ratings.length} reseñas totales</p>
+            <div className="text-3xl font-bold text-white">{stats.avgRating}</div>
+            <p className="text-xs text-gray-500 mt-1">Basado en {ratings.length} reseñas</p>
           </CardContent>
         </Card>
       </div>
@@ -155,44 +166,47 @@ export function AdminOverview() {
       {/* LISTA DE CITAS RECIENTES */}
       <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
-          <CardTitle className="text-white text-lg font-semibold">Citas Recientes</CardTitle>
+          <CardTitle className="text-white text-lg font-semibold">Actividad Reciente</CardTitle>
+          <CardDescription className="text-gray-500">Últimas 5 citas registradas en el sistema</CardDescription>
         </CardHeader>
         <CardContent>
-          {appointments.length === 0 ? (
-            <p className="text-gray-400 text-sm">No hay citas registradas.</p>
+          {stats.recentAppts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+                No hay datos de citas disponibles.
+            </div>
           ) : (
             <div className="space-y-4">
-              {appointments
-                .slice()
-                // Ordenar: Las más futuras o recientes primero
-                .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
-                .slice(0, 5)
-                .map((appointment) => {
-                  const { date, time } = formatDateTime(appointment.start);
-                  const serviceName = getServicesName(appointment.services);
-                  const stylistName = getStylistName(appointment.stylist);
+              {stats.recentAppts.map((appointment) => {
+                const { date, time } = formatDateTime(appointment.start);
+                const serviceName = getServicesName(appointment.services);
+                const stylistName = getStylistName(appointment.stylist);
 
-                  return (
-                    <div
-                      key={appointment._id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 pb-3 last:border-0 gap-3 sm:gap-0"
-                    >
-                      <div>
-                        <p className="text-white font-medium">{serviceName}</p>
-                        <p className="text-sm text-gray-400">Estilista: {stylistName}</p>
-                        <p className="text-xs text-gray-500">{date} a las {time}</p>
-                        {appointment.notes && (
-                          <p className="text-xs text-gray-400 mt-1 italic line-clamp-1">
-                            "{appointment.notes}"
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex-shrink-0">
-                        {getStatusBadge(appointment.status)}
-                      </div>
+                return (
+                  <div
+                    key={appointment._id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 pb-4 last:border-0 last:pb-0 gap-3 sm:gap-0"
+                  >
+                    <div className="flex gap-4">
+                        {/* Avatar o indicador visual simple */}
+                        <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full bg-gray-800 text-[#D4AF37] font-bold">
+                            {stylistName.charAt(0)}
+                        </div>
+                        <div>
+                            <p className="text-white font-medium">{serviceName}</p>
+                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <span>{stylistName}</span>
+                                <span className="text-gray-600">•</span>
+                                <span>{date} - {time}</span>
+                            </div>
+                        </div>
                     </div>
-                  );
-                })}
+                    
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                      {getStatusBadge(appointment.status)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

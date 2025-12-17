@@ -347,5 +347,26 @@ export const dataService = {
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
     return await dataService.fetchDashboardSummary(token, { from: start, to: end });
-  }
+  },
+
+  fetchAllRatings: async (token: string): Promise<any[]> => {
+    try {
+      // Asume que GET /ratings trae lista completa si eres admin
+      const res = await fetch(`${API_BASE_URL}/ratings?limit=100`, { headers: getHeaders(token) });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? json : (json.data || []);
+    } catch (error) { return []; }
+  },
+
+  // Para el ESTILISTA (o filtro admin): Traer por ID de estilista
+  fetchRatingsByStylist: async (token: string, stylistId: string): Promise<any[]> => {
+    try {
+      // Asume que el backend soporta filtro ?stylistId=...
+      const res = await fetch(`${API_BASE_URL}/ratings?stylistId=${stylistId}&limit=100`, { headers: getHeaders(token) });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? json : (json.data || []);
+    } catch (error) { return []; }
+  },
 };

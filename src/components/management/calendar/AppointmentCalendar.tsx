@@ -1,16 +1,19 @@
+import { useEffect } from 'react'; // Importamos useEffect
 import { Calendar as CalendarIcon, Filter, XCircle, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-// Eliminamos Popover y Calendar de Shadcn, ya no hacen falta
 import { cn } from '../../ui/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { useAppointmentCalendar } from './useAppointmentCalendar';
 import { AppointmentCard } from './AppointmentCard';
+import { useAuth } from '../../../contexts/auth/index'; // 🔥 Importamos Auth
 
 export function AppointmentCalendar() {
+   const { user } = useAuth(); // 🔥 Obtenemos el usuario actual
+   
    const {
       bookings,
       loading,
@@ -24,17 +27,31 @@ export function AppointmentCalendar() {
       handleConfirm, handleCancel, handleComplete
    } = useAppointmentCalendar();
 
-   // Helper para manejar el cambio del input nativo (YYYY-MM-DD) a Date object
+   // 🔥 LÓGICA DE PERMISOS
+   // Determinamos si el usuario es un estilista para restringir la vista
+   const isStylist = user?.role === 'stylist';
+
+   // 🔥 EFECTO DE AUTO-SELECCIÓN
+   // Si es estilista, forzamos que la variable selectedStylistId sea SIEMPRE su propio ID
+   useEffect(() => {
+      if (isStylist && user?.id) {
+         // Si no está seleccionado o está seleccionado otro, lo forzamos a él mismo
+         if (selectedStylistId !== user.id) {
+            setSelectedStylistId(user.id);
+         }
+      }
+   }, [isStylist, user, selectedStylistId, setSelectedStylistId]);
+
+
+   // Helper para manejar el cambio del input nativo
    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.value) {
-         // Agregamos T12:00:00 para evitar problemas de zona horaria que cambien el día
          setSelectedDate(new Date(`${e.target.value}T12:00:00`));
       } else {
          setSelectedDate(undefined as any);
       }
    };
 
-   // Helper para valor del input (Date -> YYYY-MM-DD)
    const dateValue = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
 
    return (
@@ -52,28 +69,22 @@ export function AppointmentCalendar() {
                   <Button
                      size="sm"
                      onClick={() => setViewAllDates(!viewAllDates)}
-                     className={`btn-purple-base ${viewAllDates ? "btn-purple-neon" : "btn-purple-idle"
-                        }`}
+                     className={`btn-purple-base ${viewAllDates ? "btn-purple-neon" : "btn-purple-idle"}`}
                   >
                      {viewAllDates ? "Mostrando Todo" : "Modo: Por Fecha"}
                   </Button>
-
-
                </div>
 
                {/* Barra de Herramientas (Filtros) */}
                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
 
-                  {/* 1. Selector de Fecha (INPUT NATIVO) */}
+                  {/* 1. Selector de Fecha */}
                   {!viewAllDates && (
                      <div className="md:col-span-4">
                         <div className="relative">
-                           {/* Icono decorativo flotante */}
                            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                               <CalendarIcon className="h-4 w-4 text-[#D4AF37]" />
                            </div>
-
-                           {/* INPUT NATIVO - Igual al de ScheduleManagement */}
                            <input
                               type="date"
                               value={dateValue}
@@ -81,31 +92,39 @@ export function AppointmentCalendar() {
                               className={cn(
                                  "w-full bg-black border border-gray-700 text-white rounded-md pl-10 pr-3 py-2",
                                  "focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all",
-                                 "text-sm h-10 placeholder-gray-500" // h-10 para igualar altura de los Selects
+                                 "text-sm h-10 placeholder-gray-500"
                               )}
-                              style={{ colorScheme: 'dark' }} // Fuerza al navegador a usar el picker oscuro
+                              style={{ colorScheme: 'dark' }}
                            />
                         </div>
                      </div>
                   )}
 
-                  {/* 2. Filtro Estilista */}
-                  <div className={`${viewAllDates ? 'md:col-span-6' : 'md:col-span-4'}`}>
-                     <Select value={selectedStylistId} onValueChange={setSelectedStylistId}>
-                        <SelectTrigger className="bg-black border-gray-700 text-white w-full h-10">
-                           <SelectValue placeholder="Filtrar por Estilista" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                           <SelectItem value="ALL">Todos los Estilistas</SelectItem>
-                           {stylists.map(s => (
-                              <SelectItem key={s._id} value={s._id}>{s.nombre} {s.apellido}</SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
+                  {/* 2. Filtro Estilista (OCULTO PARA ESTILISTAS) */}
+                  {/* 🔥 Solo mostramos este select si NO es estilista */}
+                  {!isStylist && (
+                     <div className={`${viewAllDates ? 'md:col-span-6' : 'md:col-span-4'}`}>
+                        <Select value={selectedStylistId} onValueChange={setSelectedStylistId}>
+                           <SelectTrigger className="bg-black border-gray-700 text-white w-full h-10">
+                              <SelectValue placeholder="Filtrar por Estilista" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                              <SelectItem value="ALL">Todos los Estilistas</SelectItem>
+                              {stylists.map(s => (
+                                 <SelectItem key={s._id} value={s._id}>{s.nombre} {s.apellido}</SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
+                  )}
 
                   {/* 3. Filtro Estado */}
-                  <div className={`${viewAllDates ? 'md:col-span-6' : 'md:col-span-4'}`}>
+                  {/* 🔥 Ajustamos el tamaño de la columna dinámicamente si el filtro de estilista está oculto */}
+                  <div className={`${
+                     viewAllDates 
+                        ? (isStylist ? 'md:col-span-12' : 'md:col-span-6') // Si ve todo y es estilista, ocupa todo el ancho
+                        : (isStylist ? 'md:col-span-8' : 'md:col-span-4')  // Si ve fecha y es estilista, ocupa el resto
+                  }`}>
                      <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                         <SelectTrigger className="bg-black border-gray-700 text-white w-full h-10">
                            <div className="flex items-center gap-2">

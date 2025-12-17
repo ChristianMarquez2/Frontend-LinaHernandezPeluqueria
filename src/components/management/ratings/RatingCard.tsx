@@ -1,9 +1,9 @@
 import { Card, CardContent } from '../../ui/card';
 import { StarRating } from './StarRating';
-import { Rating } from '../../../contexts/data/index'; // Usamos los tipos centralizados
+import { Rating } from '../../../contexts/data/index';
 
 interface RatingCardProps {
-  rating: Rating;
+  rating: Rating & { clienteNombre?: string }; // Extendemos tipo localmente
   serviceName: string; 
   stylistName: string; 
 }
@@ -15,7 +15,10 @@ export function RatingCard({ rating, serviceName, stylistName }: RatingCardProps
         <div className="space-y-3">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-white font-medium text-lg">{serviceName}</p>
+              {/* Si tenemos el nombre del cliente (Admin view), lo mostramos. Si no, mostramos el servicio */}
+              <p className="text-white font-medium text-lg">
+                 {rating.clienteNombre ? `Cliente: ${rating.clienteNombre}` : serviceName}
+              </p>
               <p className="text-sm text-gray-400">Atendido por <span className="text-gray-300">{stylistName}</span></p>
             </div>
             <StarRating rating={rating.estrellas} />
@@ -31,7 +34,7 @@ export function RatingCard({ rating, serviceName, stylistName }: RatingCardProps
             {new Date(rating.createdAt).toLocaleDateString('es-ES', {
               year: 'numeric',
               month: 'long',
-              day: 'numeric',
+              day: 'numeric'
             })}
           </p>
         </div>

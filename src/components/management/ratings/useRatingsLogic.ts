@@ -1,36 +1,56 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../../../contexts/auth/index';
-import { useData } from '../../../contexts/data/index'; // Para stylists y createRating
-import { useAppointments } from '../../../contexts/data/index'; // 🔥 Para myBookings
+import { useData } from '../../../contexts/data/index';
+import { useAppointments } from '../../../contexts/data/index';
 import { Booking } from '../../../contexts/data/types';
 import { toast } from 'sonner';
 
 export function useRatingsLogic() {
   const { user } = useAuth();
   const { ratings, stylists, createRating } = useData();
-  const { myBookings } = useAppointments(); // Usamos las reservas del cliente
+  const { myBookings } = useAppointments();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // 1. Filtrar mis ratings (Historial)
-  // Como 'ratings' viene del backend filtrado por usuario (si es cliente), esto es seguro
-  const myRatings = ratings; 
+  // Estados para filtros (Solo Admin)
+  const [filterStar, setFilterStar] = useState<string>('ALL');
+  const [filterStylist, setFilterStylist] = useState<string>('ALL');
 
-  // 2. Obtener IDs de citas ya calificadas
-  const ratedBookingIds = myRatings.map(r => r.bookingId);
+  const role = (user?.role || '').toString().toUpperCase();
+  const isAdmin = role === 'ADMIN' || role === 'GERENTE';
+  const isClient = role === 'CLIENTE' || role === 'CLIENT';
 
-  // 3. Filtrar citas disponibles para calificar
-  // Deben estar COMPLETADAS y NO estar en la lista de ratedBookingIds
-  const unratedBookings = myBookings.filter((booking) => {
+  // 1. Lógica de Visualización (Filtered Ratings)
+  const visibleRatings = useMemo(() => {
+    let result = ratings;
+
+    // Si es admin, aplicamos filtros de UI
+    if (isAdmin) {
+      if (filterStar !== 'ALL') {
+        result = result.filter(r => r.estrellas === Number(filterStar));
+      }
+      if (filterStylist !== 'ALL') {
+        result = result.filter(r => r.estilistaId === filterStylist);
+      }
+    }
+    
+    return result;
+  }, [ratings, isAdmin, filterStar, filterStylist]);
+
+  // 2. Lógica de Creación (Solo Clientes)
+  // Obtenemos IDs de citas ya calificadas por el usuario actual
+  // Nota: Si ratings trae TODAS las del sistema (admin), esto podría fallar.
+  // Pero para el cliente, el context solo trae las suyas, así que funciona.
+  const ratedBookingIds = isClient ? ratings.map(r => r.bookingId) : [];
+
+  const unratedBookings = isClient ? myBookings.filter((booking) => {
     return (
-      booking.estado === 'COMPLETED' &&     // Estado del backend
-      !ratedBookingIds.includes(booking._id) // No calificada aún
+      booking.estado === 'COMPLETED' && 
+      !ratedBookingIds.includes(booking._id)
     );
-  });
+  }) : [];
 
   // === Helpers ===
-
-  // Obtener nombre del servicio (Booking trae objeto servicio populado)
   const getBookingTitle = (booking: Booking) => {
     if (booking.servicio && typeof booking.servicio === 'object') {
         return booking.servicio.nombre;
@@ -38,17 +58,13 @@ export function useRatingsLogic() {
     return 'Servicio General';
   };
 
-  // Obtener nombre del estilista para el historial
-  // (En el historial solo tenemos estilistaId en el rating, buscamos en la lista global de stylists)
   const getStylistNameById = (id: string) => {
     const s = stylists.find((stylist) => stylist._id === id);
     return s ? `${s.nombre} ${s.apellido}` : 'Estilista';
   };
 
-  // Handler para crear
   const handleCreateRating = async (data: { bookingId: string; estrellas: number; comentario: string }) => {
     const success = await createRating(data);
-
     if (success) {
       toast.success('¡Gracias por tu calificación!');
       setIsDialogOpen(false);
@@ -56,12 +72,19 @@ export function useRatingsLogic() {
   };
 
   return {
-    myRatings,
-    unratedBookings, // Usamos Bookings
+    visibleRatings,      // Usar esto en lugar de myRatings
+    unratedBookings,
     isDialogOpen,
     setIsDialogOpen,
     getBookingTitle, 
     getStylistNameById,
     handleCreateRating,
+    
+    // Filtros y Roles
+    isAdmin,
+    isClient,
+    filterStar, setFilterStar,
+    filterStylist, setFilterStylist,
+    stylists, // Para llenar el select de estilistas
   };
 }
