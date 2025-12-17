@@ -5,7 +5,8 @@ import {
   BarChart3,
   Layers,
   Star, // Para Ratings
-  Clock // Para Agenda
+  Clock, // Para Agenda
+  Tag
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { AdminView } from './types';
@@ -32,7 +33,7 @@ export function AdminSidebar({ currentView, setCurrentView, isOpen }: AdminSideb
     
     // Catálogo
     { id: 'categories' as AdminView, label: 'Categorías', icon: Layers },
-    { id: 'services' as AdminView, label: 'Servicios', icon: Scissors },
+    { id: 'services' as AdminView, label: 'Servicios', icon: Tag },
     
     // Análisis y Feedback
     { id: 'ratings' as AdminView, label: 'Calificaciones', icon: Star }, // <--- NUEVO

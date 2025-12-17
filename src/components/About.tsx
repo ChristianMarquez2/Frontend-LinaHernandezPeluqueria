@@ -1,3 +1,5 @@
+
+import LinaHernandez from "../imagenes/LinaHernandez.jpeg";
 import { motion } from "motion/react";
 import { Target, Eye, Award } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -32,7 +34,7 @@ export function About() {
           >
             <div className="aspect-[3/4] rounded-2xl overflow-hidden border-2 border-[#D4AF37]/30 shadow-2xl shadow-[#D4AF37]/20">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1737063935340-f9af0940c4c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmZW1hbGUlMjBoYWlyc3R5bGlzdCUyMHByb2Zlc3Npb25hbHxlbnwxfHx8fDE3NjEyMzEwNzR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src={LinaHernandez}
                 alt="Lina Hernández"
                 className="w-full h-full object-cover"
               />

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/auth/index"; 
 import { DataProvider } from "./contexts/data/index";
 // 1. Importar el nuevo Provider
@@ -21,6 +23,15 @@ import { Toaster } from "./components/ui/sonner";
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Redirect any deep link back to home when the user is not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
 
   if (isAuthenticated) {
     return <DashboardRouter />;

@@ -11,22 +11,16 @@ const faqs = [
     question: "¿Cómo puedo reservar una cita?",
     answer: "Puedes reservar tu cita a través de nuestro formulario de contacto en esta página, por WhatsApp o llamando directamente a nuestro número de teléfono. Te confirmaremos la disponibilidad inmediatamente.",
   },
-  {
-    question: "¿Cuál es la política de cancelación?",
-    answer: "Solicitamos que las cancelaciones se realicen con al menos 24 horas de anticipación. Las cancelaciones con menos de 24 horas pueden estar sujetas a un cargo del 50% del servicio. Apreciamos tu comprensión.",
-  },
+
   {
     question: "¿Qué métodos de pago aceptan?",
-    answer: "Aceptamos efectivo, tarjetas de débito y crédito (Visa, Mastercard), y transferencias bancarias. También trabajamos con billeteras digitales como Nequi y Daviplata.",
+    answer: "Aceptamos efectivo, tarjetas de débito y crédito (Visa, Mastercard), y transferencias bancarias. También trabajamos con billeteras digitales como DeUna.",
   },
   {
     question: "¿Cuánto tiempo dura cada servicio?",
     answer: "Los tiempos varían según el servicio: cortes (30-45 min), color/tinte (1.5-2 hrs), keratina (3 hrs), peinados (1 hr). Te informaremos el tiempo estimado al momento de la reserva.",
   },
-  {
-    question: "¿Hacen servicios a domicilio?",
-    answer: "Sí, ofrecemos servicios a domicilio para eventos especiales como peinados y maquillaje. Consulta disponibilidad y tarifas adicionales al momento de reservar.",
-  },
+
   {
     question: "¿Los productos son de calidad profesional?",
     answer: "Absolutamente. Trabajamos únicamente con productos profesionales de alta gama reconocidos en la industria, garantizando resultados excepcionales y cuidado óptimo de tu cabello.",

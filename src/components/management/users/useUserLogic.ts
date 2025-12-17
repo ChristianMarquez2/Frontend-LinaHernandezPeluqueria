@@ -158,9 +158,8 @@ export function useUserLogic() {
           throw new Error(body || "Error creando usuario");
         }
 
-        const created = await res.json();
-        const newUser = created.data ?? created;
-        setUsers((prev) => [newUser, ...prev]);
+        // Refrescamos desde el backend para evitar filas transitorias vacías
+        await fetchUsers();
         toast.success("Usuario creado");
       }
       return true;

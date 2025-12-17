@@ -26,8 +26,8 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
   const refreshAppointments = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await dataService.fetchInitialData(token);
-      if (data.appointments) setAppointments(data.appointments);
+      const appts = await dataService.fetchManualAppointments(token);
+      setAppointments(appts);
     } catch (err) {
       console.error("❌ Error al cargar citas manuales:", err);
     }
