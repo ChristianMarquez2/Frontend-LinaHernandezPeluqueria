@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/auth/index';
-import { useAppointments } from '../../../contexts/data/index'; // 🔥 Importamos directo el contexto
-import { useData } from '../../../contexts/data/index'; // Para servicios y stylists
+import { useAppointments } from '../../../contexts/data/index'; 
+import { useData } from '../../../contexts/data/index'; 
 import { UserProfile } from '../../UserProfile';
 import { API_BASE_URL } from '../../../config/api';
 
@@ -17,7 +17,6 @@ import { dataService } from '../../../contexts/data/service';
 export function ClientDashboard() {
   const { user, logout, refreshSession } = useAuth();
   
-  // Usamos useAppointments para obtener myBookings (que viene de /bookings/me)
   const { myBookings, refreshMyBookings } = useAppointments();
   
   const {
@@ -25,14 +24,12 @@ export function ClientDashboard() {
     stylists,
     ratings,
     getUserNotifications,
-    fetchData, // Para refrescar datos generales
+    fetchData,
   } = useData();
 
-  // Estados de UI
   const [showRatings, setShowRatings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   
-  // Estados Modal
   const [showBooking, setShowBooking] = useState(false);
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
@@ -42,13 +39,12 @@ export function ClientDashboard() {
 
   const userId = extractId(user);
 
-  // Carga inicial
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        await fetchData(); // Carga servicios, estilistas, etc.
-        await refreshMyBookings(); // Carga reservas específicas
+        await fetchData();
+        await refreshMyBookings();
       } catch (err) {
         console.error("Error loading dashboard:", err);
       } finally {
@@ -57,25 +53,20 @@ export function ClientDashboard() {
     };
     load();
 
-    // Refresco de sesión silencioso
     const interval = setInterval(() => refreshSession(), 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData, refreshMyBookings, refreshSession]);
 
-  // Notificaciones
   const notifications = getUserNotifications(userId);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Estadísticas derivadas de myBookings
   const upcomingCount = myBookings.filter(a => 
     ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(a.estado)
   ).length;
 
   const completedCount = myBookings.filter(a => a.estado === "COMPLETED").length;
-  // Pending en tu lógica puede ser las agendadas a futuro o pendientes de pago/confirmación
   const pendingCount = myBookings.filter(a => a.estado === "SCHEDULED").length;
 
-  // Acciones
   const openNewBooking = () => {
     setEditingAppointmentId(null);
     setEditingData(null);
@@ -89,7 +80,7 @@ export function ClientDashboard() {
   };
 
   const handleCancelAppointment = async (id: string) => {
-    if (!confirm("¿Estás seguro que deseas cancelar esta cita? Esta acción podría tener penalizaciones si es muy próxima.")) return;
+    if (!confirm("¿Estás seguro que deseas cancelar esta cita?")) return;
     
     try {
       const token = localStorage.getItem("accessToken");
@@ -119,7 +110,6 @@ export function ClientDashboard() {
     }
   };
 
-  // Guardar Reserva (Create o Reschedule)
   const handleSaveBooking = async ({ slotId, date, notes }: { slotId: string, date: string, notes?: string }) => {
     setBookingLoading(true);
     const token = localStorage.getItem("accessToken");
@@ -127,24 +117,20 @@ export function ClientDashboard() {
 
     try {
       if (editingAppointmentId) {
-        // --- MODO EDICIÓN (PUT /reschedule) ---
-        // Tu backend espera { slotId, date } en el body para reprogramar
         const res = await fetch(`${API_BASE_URL}/bookings/${editingAppointmentId}/reschedule`, {
           method: "PUT",
           headers: {
              "Content-Type": "application/json",
              "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ slotId, date }) // El backend reprograma en base al nuevo slot
+          body: JSON.stringify({ slotId, date })
         });
 
         if (!res.ok) {
             const errorData = await res.json();
             throw new Error(errorData.message || "Error al reprogramar");
         }
-
       } else {
-        // --- MODO CREACIÓN (POST /) ---
         await dataService.createBooking(token, {
           slotId,
           date,
@@ -152,10 +138,7 @@ export function ClientDashboard() {
         });
       }
 
-      // Éxito - Recargar datos antes de cerrar el modal
       await refreshMyBookings();
-      
-      // Opcional: También refrescar datos generales por si hay cambios en disponibilidad
       await fetchData();
       
       setShowBooking(false);
@@ -169,15 +152,11 @@ export function ClientDashboard() {
     }
   };
 
-  // CORRECCIÓN: el role se normaliza en el AuthProvider a 'client' | 'stylist' | 'admin' | 'manager'
-  // Por eso la comparación debe usar el valor normalizado ('client'), no "CLIENTE".
   if (!user) {
-    // Si no hay usuario, mostramos loader simple (evita render nulo)
     return <div className="flex h-screen items-center justify-center bg-black text-[#9D8EC1]">Cargando...</div>;
   }
 
   if (user.role !== "client") {
-    // Fallback visible y claro (fondo oscuro para que el texto sea legible)
     return (
       <div className="flex h-screen items-center justify-center bg-black text-white p-8">
         <div className="max-w-lg text-center">
@@ -193,7 +172,7 @@ export function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white selection:bg-[#9D8EC1]/30">
       <ClientHeader
         user={user}
         unreadCount={unreadCount}
@@ -202,21 +181,34 @@ export function ClientDashboard() {
         onLogout={logout}
       />
 
-      <main className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-        <ClientStats
-          upcomingCount={upcomingCount}
-          pendingCount={pendingCount}
-          completedCount={completedCount}
-          ratingsCount={ratings.length}
-        />
+      {/* CAMBIO CLAVE: Se aumentó el espaciado (py-12 y space-y-16) 
+          y se agregaron separadores sutiles para que el panel respire.
+      */}
+      <main className="px-4 py-12 md:px-8 max-w-7xl mx-auto space-y-16">
+        
+        {/* Sección de Estadísticas con animación de entrada */}
+        <section className="animate-in fade-in slide-in-from-top-4 duration-700">
+          <ClientStats
+            upcomingCount={upcomingCount}
+            pendingCount={pendingCount}
+            completedCount={completedCount}
+            ratingsCount={ratings.length}
+          />
+        </section>
 
-        <ClientAppointments
-          showRatings={showRatings}
-          setShowRatings={setShowRatings}
-          appointments={myBookings} // Pasamos la data real
-          onEdit={openEditBooking}
-          onCancel={handleCancelAppointment}
-        />
+        {/* Separador visual sutil */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
+
+        {/* Sección de Citas / Calificaciones */}
+        <section className="pb-20">
+          <ClientAppointments
+            showRatings={showRatings}
+            setShowRatings={setShowRatings}
+            appointments={myBookings}
+            onEdit={openEditBooking}
+            onCancel={handleCancelAppointment}
+          />
+        </section>
       </main>
 
       <ClientBookingModal

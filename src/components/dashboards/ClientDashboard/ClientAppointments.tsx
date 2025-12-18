@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Button } from '../../ui/button';
-import { Card, CardContent } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { RatingsManagement } from '../../management/ratings/RatingsManagement';
 import { safeParseDate, safeParseTime } from './utils';
 import { Booking } from '../../../contexts/data/types';
+import { useData } from '../../../contexts/data/index'; // Importamos useData
 import {
   CalendarDays,
   Clock,
@@ -29,45 +29,14 @@ interface ClientAppointmentsProps {
   onCancel: (id: string) => void;
 }
 
-// ==================================================================================
-// CONFIGURACIÓN DE ESTADOS (Mapeo a tus clases CSS personalizadas)
-// ==================================================================================
 const STATUS_CONFIG: Record<string, { label: string; className: string; borderClass: string }> = {
-  ALL: {
-    label: "Todas",
-    className: "status-badge-default",
-    borderClass: "bg-gray-700"
-  },
-  SCHEDULED: {
-    label: "Programada",
-    className: "status-badge-scheduled",
-    borderClass: "bg-blue-500"
-  },
-  CONFIRMED: {
-    label: "Confirmada",
-    className: "status-badge-confirmed",
-    borderClass: "bg-[#D4AF37]"
-  },
-  PENDING_STYLIST_CONFIRMATION: {
-    label: "Pendiente",
-    className: "status-badge-pending",
-    borderClass: "bg-orange-500"
-  },
-  COMPLETED: {
-    label: "Completada",
-    className: "status-badge-completed",
-    borderClass: "bg-emerald-500"
-  },
-  CANCELLED: {
-    label: "Cancelada",
-    className: "status-badge-cancelled",
-    borderClass: "bg-red-500"
-  },
-  NO_SHOW: {
-    label: "No Asistió",
-    className: "status-badge-noshow",
-    borderClass: "bg-gray-500"
-  },
+  ALL: { label: "Todas", className: "status-badge-default", borderClass: "bg-gray-700" },
+  SCHEDULED: { label: "Programada", className: "status-badge-scheduled", borderClass: "bg-blue-500" },
+  CONFIRMED: { label: "Confirmada", className: "status-badge-confirmed", borderClass: "bg-[#D4AF37]" },
+  PENDING_STYLIST_CONFIRMATION: { label: "Pendiente", className: "status-badge-pending", borderClass: "bg-orange-500" },
+  COMPLETED: { label: "Completada", className: "status-badge-completed", borderClass: "bg-emerald-500" },
+  CANCELLED: { label: "Cancelada", className: "status-badge-cancelled", borderClass: "bg-red-500" },
+  NO_SHOW: { label: "No Asistió", className: "status-badge-noshow", borderClass: "bg-gray-500" },
 };
 
 export function ClientAppointments({
@@ -77,14 +46,34 @@ export function ClientAppointments({
   onEdit,
   onCancel,
 }: ClientAppointmentsProps) {
-
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const { services, stylists } = useData(); // Obtenemos datos globales para buscar nombres
 
-  const getServiceName = (booking: Booking) =>
-    typeof booking.servicio === 'object' ? booking.servicio.nombre : "Servicio";
+  // --- HELPERS DE BÚSQUEDA ---
 
-  const getStylistName = (booking: Booking) =>
-    typeof booking.estilista === 'object' ? `${booking.estilista.nombre} ${booking.estilista.apellido}` : "Estilista asignado";
+  const getServiceName = (booking: Booking) => {
+    // 1. Si ya viene como objeto populado
+    if (booking.servicio && typeof booking.servicio === 'object') return booking.servicio.nombre;
+    
+    // 2. Si viene como ID string, buscamos en la lista global de servicios
+    const serviceId = typeof booking.servicioId === 'string' ? booking.servicioId : (booking as any).servicio;
+    const found = services.find(s => s._id === serviceId);
+    return found ? found.nombre : "Servicio";
+  };
+
+  const getStylistName = (booking: Booking) => {
+    // 1. Si ya viene como objeto populado
+    if (booking.estilista && typeof booking.estilista === 'object') {
+      return `${booking.estilista.nombre} ${booking.estilista.apellido}`;
+    }
+    
+    // 2. Si viene como ID string, buscamos en la lista global de estilistas
+    const stylistId = typeof booking.estilistaId === 'string' ? booking.estilistaId : (booking as any).estilista;
+    const found = stylists.find(s => s._id === stylistId);
+    return found ? `${found.nombre} ${found.apellido}` : "Estilista asignado";
+  };
+
+  // --- LÓGICA DE FILTRADO ---
 
   const filteredAppointments = useMemo(() => {
     let data = [...appointments];
@@ -94,14 +83,10 @@ export function ClientAppointments({
     return data.sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
   }, [appointments, filterStatus]);
 
-  // Renderizado de Badge usando CLASES CSS
   const renderStatusBadge = (status: string) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.ALL;
     return (
-      <Badge
-        variant="outline"
-        className={`status-badge ${config.className}`}
-      >
+      <Badge variant="outline" className={`status-badge ${config.className}`}>
         {config.label}
       </Badge>
     );
@@ -109,24 +94,17 @@ export function ClientAppointments({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-
       {/* --- TABS --- */}
       <div className="flex items-center justify-between bg-black/40 p-1.5 rounded-xl border border-gray-800 w-full sm:w-fit backdrop-blur-sm">
         <button
           onClick={() => setShowRatings(false)}
-          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!showRatings
-            ? "bg-[#9D8EC1] text-black shadow-[0_0_15px_rgba(157,142,193,0.2)]"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
+          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${!showRatings ? "bg-[#9D8EC1] text-black shadow-[0_0_15px_rgba(157,142,193,0.2)]" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
         >
           Mis Citas
         </button>
         <button
           onClick={() => setShowRatings(true)}
-          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${showRatings
-            ? "bg-[#9D8EC1] text-black shadow-[0_0_15px_rgba(157,142,193,0.2)]"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
+          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${showRatings ? "bg-[#9D8EC1] text-black shadow-[0_0_15px_rgba(157,142,193,0.2)]" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
         >
           Calificaciones
         </button>
@@ -134,7 +112,6 @@ export function ClientAppointments({
 
       {!showRatings ? (
         <div className="space-y-6">
-
           {/* Header y Filtros */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-800 pb-4">
             <div>
@@ -150,10 +127,7 @@ export function ClientAppointments({
                 <button
                   key={statusKey}
                   onClick={() => setFilterStatus(statusKey)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterStatus === statusKey
-                    ? "bg-gray-800 text-white border-[#9D8EC1] shadow-[0_0_10px_rgba(157,142,193,0.1)]"
-                    : "bg-transparent text-gray-500 border-gray-800 hover:border-gray-600 hover:text-gray-300"
-                    }`}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterStatus === statusKey ? "bg-gray-800 text-white border-[#9D8EC1] shadow-[0_0_10px_rgba(157,142,193,0.1)]" : "bg-transparent text-gray-500 border-gray-800 hover:border-gray-600 hover:text-gray-300"}`}
                 >
                   {STATUS_CONFIG[statusKey].label}
                 </button>
@@ -169,11 +143,6 @@ export function ClientAppointments({
               </div>
               <h3 className="text-gray-300 font-medium text-lg">No hay citas</h3>
               <p className="text-gray-500 text-sm mt-1">No se encontraron reservas con el filtro seleccionado.</p>
-              {filterStatus !== 'ALL' && (
-                <Button variant="link" onClick={() => setFilterStatus('ALL')} className="text-[#9D8EC1] mt-2">
-                  Ver todas las citas
-                </Button>
-              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
@@ -181,21 +150,12 @@ export function ClientAppointments({
                 const fecha = safeParseDate(booking.inicio);
                 const hora = safeParseTime(booking.inicio);
                 const isActive = ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(booking.estado);
-
-                // Obtenemos la configuración basada en el estado
                 const statusConfig = STATUS_CONFIG[booking.estado] || STATUS_CONFIG.ALL;
 
                 return (
-                  <div
-                    key={booking._id}
-                    // AQUI ESTAN TUS CLASES APLICADAS: bg-gray-900, border-gray-800, hover:bg-gray-800/50
-                    className="group relative h-full text-card-foreground flex flex-col gap-6 rounded-xl border bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors overflow-hidden"
-                  >
-                    {/* Borde Superior de Color */}
+                  <div key={booking._id} className="group relative h-full text-card-foreground flex flex-col gap-6 rounded-xl border bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors overflow-hidden">
                     <div className={`absolute top-0 left-0 right-0 h-1.5 ${statusConfig.borderClass}`} />
-
                     <div className="p-6 flex flex-col h-full">
-                      {/* Cabecera: Badge + ID */}
                       <div className="flex justify-between items-start mb-4">
                         {renderStatusBadge(booking.estado)}
                         <span className="text-[10px] text-gray-600 font-mono bg-gray-900 px-2 py-1 rounded-md border border-gray-800">
@@ -203,7 +163,6 @@ export function ClientAppointments({
                         </span>
                       </div>
 
-                      {/* Info Principal */}
                       <div className="mb-6">
                         <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 leading-tight">
                           {getServiceName(booking)}
@@ -216,73 +175,35 @@ export function ClientAppointments({
                         </div>
                       </div>
 
-                      {/* Bloque de Fecha y Hora */}
                       <div className="mt-auto mb-6 bg-gray-900/50 rounded-xl p-3 border border-gray-800 flex items-center justify-between group-hover:border-gray-700 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="bg-[#9D8EC1]/10 p-2 rounded-lg">
                             <CalendarDays className="h-4 w-4 text-[#9D8EC1]" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-[10px] uppercase text-[#D4AF37] font-bold tracking-wider">
-                              Fecha
-                            </span>
+                            <span className="text-[10px] uppercase text-[#D4AF37] font-bold tracking-wider">Fecha</span>
                             <span className="text-white font-medium text-sm">{fecha}</span>
                           </div>
                         </div>
-                        <div className="h-8 w-px bg-gray-800"></div> {/* Separador vertical */}
+                        <div className="h-8 w-px bg-gray-800"></div>
                         <div className="flex items-center gap-3 pr-2">
                           <div className="flex flex-col items-end">
-                            <span className="text-[10px] uppercase text-[#D4AF37] font-bold tracking-wider">
-                              Hora
-                            </span>
+                            <span className="text-[10px] uppercase text-[#D4AF37] font-bold tracking-wider">Hora</span>
                             <span className="text-white font-medium text-sm">{hora}</span>
                           </div>
                           <Clock className="h-4 w-4 text-gray-600" />
                         </div>
                       </div>
 
-                      {/* Footer de Acciones */}
                       <div className="pt-4 border-t border-gray-800/50 flex items-center gap-3">
                         {isActive ? (
                           <>
-                            <Button
-                              variant="outline"
-                              onClick={() => onEdit(booking)}
-                              // Usamos la nueva clase CSS + clases de utilidad para tamaño
-                              className="btn-green-outline flex-1 h-10"
-                            >
+                            <Button variant="outline" onClick={() => onEdit(booking)} className="btn-green-outline flex-1 h-10">
                               Reprogramar
                             </Button>
-
-                            <Button
-                              variant="ghost"
-                              onClick={() => onCancel(booking._id)}
-                              className="btn-red"
-                            >
+                            <Button variant="ghost" onClick={() => onCancel(booking._id)} className="btn-red">
                               Cancelar
                             </Button>
-
-                            {/* Dropdown para Móvil */}
-                            <div className="sm:hidden">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-white transition-colors">
-                                    {/* Aquí está el icono de la ruedita */}
-                                    <Settings className="h-5 w-5" />
-                                    <div className="sr-only">Abrir menú</div>
-                                  </Button>
-                                </DropdownMenuTrigger>
-
-                                <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800 text-white">
-                                  <DropdownMenuItem onClick={() => onEdit(booking)}>
-                                    Reprogramar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => onCancel(booking._id)} className="text-red-400 focus:text-red-400">
-                                    Cancelar Cita
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
                           </>
                         ) : (
                           <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
