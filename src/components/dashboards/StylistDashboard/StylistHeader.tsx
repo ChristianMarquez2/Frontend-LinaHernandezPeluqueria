@@ -50,7 +50,8 @@ export function StylistHeader({
             onClick={() => setShowProfile(true)}
           >
             <p className="text-sm hover:text-[#D4AF37] transition-colors">
-              {user?.firstName} {user?.lastName}
+              {/* CAMBIO: Usamos nombre y apellido que es lo que viene de la DB */}
+              {user?.nombre} {user?.apellido}
             </p>
             <p className="text-xs text-gray-400">Estilista</p>
           </div>

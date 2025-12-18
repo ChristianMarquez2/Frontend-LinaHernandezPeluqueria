@@ -30,7 +30,7 @@ export function useStylistLogic() {
 
       const data = await res.json();
       setStylists(Array.isArray(data) ? data : (data.data || []));
-      
+
     } catch (err: any) {
       console.error('❌ Error al cargar estilistas:', err);
       if (err.message !== 'No autorizado') {
@@ -79,7 +79,7 @@ export function useStylistLogic() {
     password: (value: string, isEditing: boolean) => {
       if (isEditing && !value) return null;
       if (!isEditing && !value) return 'La contraseña es requerida';
-      
+
       if (value) {
         if (value.length < 8) return 'Mínimo 8 caracteres';
         if (!/(?=.*[a-z])/.test(value)) return 'Falta minúscula';
@@ -119,7 +119,7 @@ export function useStylistLogic() {
     try {
       if (editingId) {
         // --- MODO EDICIÓN ---
-        
+
         // 1. Actualizar Datos Personales (Endpoint /users)
         const userPayload = {
           nombre: formData.firstName,
@@ -128,6 +128,8 @@ export function useStylistLogic() {
           telefono: formData.phone,
           cedula: formData.cedula,
           genero: formData.gender,
+          // IMPORTANTE: Tu backend pide 'catalogs' como array de IDs
+          catalogs: [formData.catalog]
         };
 
         const resUser = await fetch(`${API_BASE_URL}/users/${editingId}`, {
@@ -139,23 +141,37 @@ export function useStylistLogic() {
           body: JSON.stringify(userPayload),
         });
 
+        const createPayload = {
+          nombre: formData.firstName,
+          apellido: formData.lastName,
+          cedula: formData.cedula,
+          telefono: formData.phone,
+          genero: formData.gender,
+          email: formData.email,
+          password: formData.password,
+          role: "ESTILISTA", // Forzamos el rol para el backend
+          catalogs: [formData.catalog] // Enviamos el ID dentro de un array
+
+        };
+        
+
         if (!resUser.ok) throw new Error('Error al actualizar datos personales');
 
         // 2. Actualizar Catálogos (Endpoint /stylists/:id/services)
         // 🔥 CORRECCIÓN: Enviamos 'catalogs' (array)
         const resServices = await fetch(`${API_BASE_URL}/stylists/${editingId}/services`, {
-           method: "PUT",
-           headers: {
-             "Content-Type": "application/json",
-             Authorization: `Bearer ${token}`,
-           },
-           body: JSON.stringify({ catalogs: [formData.catalog] }),
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ catalogs: [formData.catalog] }),
         });
-        
+
         if (!resServices.ok) {
-           const errData = await resServices.json();
-           console.warn('Backend error:', errData);
-           throw new Error(errData.message || 'Error al actualizar catálogos');
+          const errData = await resServices.json();
+          console.warn('Backend error:', errData);
+          throw new Error(errData.message || 'Error al actualizar catálogos');
         }
 
         toast.success('Estilista actualizado correctamente');
@@ -177,7 +193,7 @@ export function useStylistLogic() {
             email: formData.email,
             password: formData.password,
             // 🔥 CORRECCIÓN: Enviamos 'catalogs' (array), no servicesOffered
-            catalogs: [formData.catalog], 
+            catalogs: [formData.catalog],
           }),
         });
 
@@ -213,7 +229,7 @@ export function useStylistLogic() {
       });
 
       if (!res.ok) throw new Error('Error al desactivar');
-      
+
       toast.success('Estilista desactivado');
       fetchStylists();
     } catch (err) {
@@ -225,7 +241,7 @@ export function useStylistLogic() {
   return {
     stylists,
     loading,
-    validateField, 
+    validateField,
     validateForm,
     handleSaveStylist,
     handleDeleteStylist

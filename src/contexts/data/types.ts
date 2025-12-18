@@ -3,13 +3,24 @@
 export interface Service {
   _id: string;
   nombre: string;
-  codigo?: string;
+  codigo?: string; // El signo '?' permite que sea undefined
   descripcion: string;
   precio: number;
   duracionMin: number;
   activo: boolean;
+  categoria?: string | any; // Añadimos esto para la relación con catálogo
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ServiceFormData {
+  nombre: string;
+  codigo: string;
+  descripcion: string;
+  precio: string;       // Se maneja como string en el form para los inputs
+  duracionMin: string;  // Se maneja como string en el form para los inputs
+  activo: boolean;
+  categoria: string;
 }
 
 export interface Stylist {
@@ -61,6 +72,7 @@ export interface Booking {
   estilistaId: string; 
   servicioId: string;
   
+  // 🔥 AÑADIMOS ESTOS CAMPOS (Populated del backend)
   servicio?: {
     _id: string;
     nombre: string;
@@ -75,19 +87,24 @@ export interface Booking {
 
   inicio: string;
   fin: string;
-  
-  estado: 
-    | 'SCHEDULED' 
-    | 'CONFIRMED' 
-    | 'IN_PROGRESS' 
-    | 'COMPLETED' 
-    | 'CANCELLED' 
-    | 'NO_SHOW' 
-    | 'PENDING_STYLIST_CONFIRMATION';
-    
+  estado: string; 
   notas?: string;
   precio?: number;
+  paymentStatus?: 'UNPAID' | 'PAID';
+  paymentMethod?: 'CARD' | 'TRANSFER_PICHINCHA';
+  paidAt?: string | null;
+  invoiceNumber?: string | null;
   createdAt: string;
+}
+
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
 }
 
 // 3. Appointment
@@ -207,7 +224,11 @@ export interface PaginationMeta {
 // 🔥🔥 NUEVAS INTERFACES FALTANTES 🔥🔥
 export interface CategoryListResponse {
   data: Category[];
-  meta: PaginationMeta;
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
 }
 
 export interface CreateCategoryDTO {
@@ -329,6 +350,7 @@ export interface StylistDetailedReport {
       clientName: string;
     }[];
   };
+  
   appointmentsNotes: {
     date: string;
     estado: string;
@@ -348,9 +370,10 @@ export interface StylistDetailedReport {
     uniqueClients: number;
     cancelRatePct: number;
     completionRatePct: number;
-    peakHour: string | null;
-    peakWeekday: string | null;
+    peakHour: string | null;     // Ej: "14:00"
+    peakWeekday: string | null;  // Ej: "MIE"
   };
+  
 }
 
 export interface StylistReportResponse {

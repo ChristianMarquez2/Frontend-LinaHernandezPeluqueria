@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 
 interface RevenueChartProps {
-  data: { date: string; revenue: number }[]; // date en vez de month
+  data: { date: string; revenue: number }[];
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
@@ -19,23 +19,23 @@ export function RevenueChart({ data }: RevenueChartProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-            <YAxis tick={{ fill: '#9ca3af' }} />
+          <LineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+            <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
-              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Ingresos']}
+              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff', borderRadius: '8px' }}
+              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Ingresos Confirmados']}
             />
-            <Legend wrapperStyle={{ color: '#9ca3af' }} />
+            <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: '20px', fontSize: '12px' }} />
             <Line
               type="monotone"
               dataKey="revenue"
               stroke="#10B981"
-              name="Ingresos Diarios"
+              name="Venta Diaria"
               strokeWidth={3}
-              dot={{ r: 3, fill: '#10B981' }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#111827' }}
+              activeDot={{ r: 6, strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>

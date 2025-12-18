@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../auth/AuthContext"; // Ajusta ruta si es necesario
-import { catalogService } from "../../../services/catalog.service"; // Ajusta ruta
+import { useAuth } from "../../auth/index"; // Ajustado a tu ruta de Auth
+import { dataService } from "../service"; // Usamos el dataService central
 import { Category, PaginationMeta, CreateCategoryDTO, UpdateCategoryDTO } from "../types";
 
 interface CategoriesContextType {
@@ -8,8 +8,6 @@ interface CategoriesContextType {
   meta: PaginationMeta | null;
   loading: boolean;
   error: string | null;
-  
-  // Acciones
   refreshCategories: (page?: number, search?: string) => Promise<void>;
   createCategory: (data: CreateCategoryDTO) => Promise<void>;
   updateCategory: (id: string, data: UpdateCategoryDTO) => Promise<void>;
@@ -33,7 +31,7 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
     if (!token) return;
     setLoading(true);
     try {
-      const response = await catalogService.getAll(token, page, search);
+      const response = await dataService.fetchCategories(token, page, search);
       setCategories(response.data);
       setMeta(response.meta);
       setError(null);
@@ -45,28 +43,30 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
     }
   }, [token]);
 
-  // Carga inicial
   useEffect(() => {
-    if (user) refreshCategories();
-  }, [user, refreshCategories]);
+    if (user && token) refreshCategories();
+  }, [user, token, refreshCategories]);
 
   // --- ACCIONES DE ESCRITURA ---
-  
   const createCategory = async (data: CreateCategoryDTO) => {
     if (!token) return;
     try {
-      await catalogService.create(token, data);
-      await refreshCategories(); // Recargar lista
+      await dataService.saveCategory(token, data);
+      await refreshCategories();
     } catch (err: any) {
-      throw err; // Re-lanzar para que el Formulario muestre el error
+      throw err;
     }
   };
 
   const updateCategory = async (id: string, data: UpdateCategoryDTO) => {
     if (!token) return;
     try {
-      await catalogService.update(token, id, data);
-      await refreshCategories(); 
+      // Limpieza de campos undefined para cumplir con el esquema del backend
+      const payload = Object.fromEntries(
+        Object.entries(data).filter(([_, v]) => v !== undefined)
+      );
+      await dataService.saveCategory(token, payload, id);
+      await refreshCategories();
     } catch (err) {
       throw err;
     }
@@ -75,8 +75,7 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
   const deleteCategory = async (id: string) => {
     if (!token) return;
     try {
-      await catalogService.delete(token, id);
-      // Optimistic update: eliminar de la lista local sin recargar todo
+      await dataService.deleteCategory(token, id);
       setCategories(prev => prev.filter(c => c._id !== id));
     } catch (err) {
       throw err;
@@ -86,10 +85,7 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
   const toggleCategoryStatus = async (id: string, currentStatus: boolean) => {
     if (!token) return;
     try {
-      // Invertir estado (si era true, llamar a deactivate)
-      const updatedCat = await catalogService.toggleStatus(token, id, !currentStatus);
-      
-      // Actualización local optimista o reemplazo
+      const updatedCat = await dataService.toggleCategoryStatus(token, id, !currentStatus);
       setCategories(prev => prev.map(c => c._id === id ? updatedCat : c));
     } catch (err) {
       throw err;
@@ -97,10 +93,10 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <CategoriesContext.Provider value={{ 
-      categories, 
-      meta, 
-      loading, 
+    <CategoriesContext.Provider value={{
+      categories,
+      meta,
+      loading,
       error,
       refreshCategories,
       createCategory,

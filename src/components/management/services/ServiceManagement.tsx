@@ -6,7 +6,7 @@ import { Input } from "../../ui/input";
 import { ServiceTable } from "./ServiceTable";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useServiceLogic } from "./useServiceLogic";
-import { Service } from "./types";
+import { Service } from "../../../contexts/data/types";;
 
 export function ServiceManagement() {
   const {
@@ -22,13 +22,22 @@ export function ServiceManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
-  // Filtrado mejorado (seguro contra nulos)
-  const filteredServices = services.filter(
-    (s) =>
-      s.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.codigo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getCategoryName(s.categoria || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 🔥 MEJORA DE FILTRADO: 
+  // 1. Manejo de 'categoria' como string o como objeto (el backend a veces lo popula).
+  // 2. Fallback para 'codigo' opcional.
+  const filteredServices = services.filter((s) => {
+    const search = searchTerm.toLowerCase();
+    
+    // Extraemos el ID de la categoría independientemente de si viene como objeto o ID string
+    const categoryId = typeof s.categoria === 'object' ? (s.categoria as any)?._id : s.categoria;
+    const categoryName = getCategoryName(categoryId || "");
+
+    return (
+      s.nombre.toLowerCase().includes(search) ||
+      (s.codigo || "").toLowerCase().includes(search) ||
+      categoryName.toLowerCase().includes(search)
+    );
+  });
 
   const handleCreate = () => {
     setEditingService(null);
@@ -57,20 +66,19 @@ export function ServiceManagement() {
         </div>
         <Button
           onClick={handleCreate}
-          className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 font-medium text-white"
+          className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 font-medium text-white transition-colors"
         >
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Servicio
         </Button>
-
       </div>
 
-      <Card className="bg-gray-900 border-gray-800 shadow-xl">
+      <Card className="bg-gray-900 border-gray-800 shadow-xl overflow-hidden">
         <CardHeader className="pb-4">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Buscar servicio..."
+              placeholder="Buscar por nombre, código o categoría..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-black/50 border-gray-700 text-white focus:ring-[#D4AF37] focus:border-[#D4AF37]"
@@ -79,12 +87,19 @@ export function ServiceManagement() {
         </CardHeader>
 
         <CardContent>
-          <ServiceTable
-            services={filteredServices}
-            getCategoryName={getCategoryName}
-            onEdit={handleEdit}
-            onDelete={handleDeleteService}
-          />
+          {/* Si el backend devolvió una lista vacía, mostramos un mensaje amigable */}
+          {filteredServices.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              No se encontraron servicios que coincidan con la búsqueda.
+            </div>
+          ) : (
+            <ServiceTable
+              services={filteredServices}
+              getCategoryName={getCategoryName}
+              onEdit={handleEdit}
+              onDelete={handleDeleteService}
+            />
+          )}
         </CardContent>
       </Card>
 

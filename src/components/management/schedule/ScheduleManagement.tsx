@@ -14,7 +14,7 @@ export function ScheduleManagement() {
     selectedStylistId, setSelectedStylistId,
     schedules,
     handleSaveDayConfig,
-    
+
     // Generación
     generationDate, setGenerationDate,
     selectedServiceId, setSelectedServiceId,
@@ -23,7 +23,7 @@ export function ScheduleManagement() {
     isGenerating,
     handleGenerateSlots,
     existingSlots,
-    
+
     DAY_NAMES
   } = useScheduleLogic();
 
@@ -32,13 +32,13 @@ export function ScheduleManagement() {
     if (!selectedStylistId) return [];
 
     const stylist = stylists.find(s => s._id === selectedStylistId);
-    
+
     // Si el estilista no tiene la propiedad servicesOffered o está vacía, retornamos vacío
     if (!stylist || !stylist.servicesOffered) return [];
 
     // Obtenemos los IDs de los servicios que ofrece el estilista
     // (Manejamos el caso de que servicesOffered sea un array de strings o de objetos)
-    const offeredIds = stylist.servicesOffered.map(s => 
+    const offeredIds = stylist.servicesOffered.map(s =>
       typeof s === 'string' ? s : s._id
     );
 
@@ -48,7 +48,7 @@ export function ScheduleManagement() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      
+
       {/* 1. SELECCIÓN DE ESTILISTA */}
       <div className="flex items-center justify-between">
         <h2 className="text-[#D4AF37] text-2xl font-semibold">Gestión de Horarios</h2>
@@ -74,7 +74,7 @@ export function ScheduleManagement() {
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-8">
-          
+
           {/* COLUMNA IZQ: PLANTILLA SEMANAL */}
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader>
@@ -111,12 +111,13 @@ export function ScheduleManagement() {
 
           {/* COLUMNA DER: GENERADOR DE DISPONIBILIDAD */}
           <div className="space-y-6">
-            
+
             {/* Panel de Generación */}
             <Card className="bg-black border border-gray-800 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-[#D4AF37] flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                  {/* Se añade la clase text-[#D4AF37] al icono */}
+                  <Calendar className="h-5 w-5 glow-gold" />
                   Generar Disponibilidad Real
                 </CardTitle>
                 <CardDescription>
@@ -128,12 +129,12 @@ export function ScheduleManagement() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                
+
                 {/* Inputs de Generación */}
                 <div>
                   <Label className="text-gray-300">Fecha a generar</Label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={generationDate}
                     onChange={(e) => setGenerationDate(e.target.value)}
                     className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
@@ -166,8 +167,8 @@ export function ScheduleManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-gray-300">Hora Inicio</Label>
-                    <input 
-                      type="time" 
+                    <input
+                      type="time"
                       value={genStart}
                       onChange={(e) => setGenStart(e.target.value)}
                       className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
@@ -175,8 +176,8 @@ export function ScheduleManagement() {
                   </div>
                   <div>
                     <Label className="text-gray-300">Hora Fin</Label>
-                    <input 
-                      type="time" 
+                    <input
+                      type="time"
                       value={genEnd}
                       onChange={(e) => setGenEnd(e.target.value)}
                       className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
@@ -184,8 +185,8 @@ export function ScheduleManagement() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleGenerateSlots} 
+                <Button
+                  onClick={handleGenerateSlots}
                   disabled={isGenerating}
                   className="w-full bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 text-black font-semibold"
                 >

@@ -13,8 +13,8 @@ export interface StylistFormData {
   lastName: string;
   cedula: string;
   phone: string;
-  gender: '' | 'M' | 'F' | 'O';
-  catalog: string; // 👈 CAMBIO: Antes 'service', ahora 'catalog'
+  gender: 'M' | 'F' | 'O' | ''; 
+  catalog: string; 
   email: string;
   password: string;
 }

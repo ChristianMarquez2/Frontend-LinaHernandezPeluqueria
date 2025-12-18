@@ -10,19 +10,20 @@ export function RatingsChart({ data }: RatingsChartProps) {
     <Card className="bg-gray-900 border-gray-800 col-span-2 lg:col-span-1">
       <CardHeader>
         <CardTitle className="text-white">Satisfacción por Estilista</CardTitle>
-        <CardDescription>Promedio de calificación recibida</CardDescription>
+        <CardDescription>Promedio de calificación recibida según reseñas confirmadas</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-            <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-            <YAxis domain={[0, 5]} tick={{ fill: '#9ca3af' }} />
+            <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 5]} tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} tickCount={6} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
+              cursor={{ fill: '#374151', opacity: 0.2 }}
+              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff', borderRadius: '8px' }}
               formatter={(value: number) => [`${value} ⭐`, 'Promedio']}
             />
-            <Bar dataKey="rating" fill="#FFD700" name="Calificación Promedio" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="rating" fill="#FFD700" name="Calificación Promedio" radius={[4, 4, 0, 0]} barSize={40} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

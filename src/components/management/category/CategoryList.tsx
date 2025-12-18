@@ -56,8 +56,8 @@ export function CategoryList({
                 <td className="p-4 text-center">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                     cat.activo 
-                      ? "bg-green-900/30 text-green-400 border-green-900" 
-                      : "bg-red-900/30 text-red-400 border-red-900"
+                      ? "bg-green-900 text-green-200" 
+                      : "bg-red-900 text-red-200"
                   }`}>
                     {cat.activo ? "Activo" : "Inactivo"}
                   </span>

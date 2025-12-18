@@ -16,7 +16,11 @@ import {
   ServiceSlot,
   ReportRangeParams,
   DashboardSummary,
-  StylistReportResponse
+  StylistReportResponse,
+  Category,
+  CategoryListResponse,
+  CreateCategoryDTO,
+  UpdateCategoryDTO
 } from "./types";
 
 const getHeaders = (token: string) => ({
@@ -65,47 +69,76 @@ export const dataService = {
   fetchAllBookings: async (token: string, filters: { date?: string; stylistId?: string; status?: string }): Promise<Booking[]> => {
     const params = new URLSearchParams();
 
-    // 🔴 ANTES (Daba Error 500):
-    // if (filters.date) params.append("date", filters.date);
-
-    // 🟢 AHORA (Solución Frontend):
-    // Convertimos la fecha única (ej: "2025-12-16") en el rango que el backend espera.
+    // El backend usa dateFrom y dateTo en listAllBookings
     if (filters.date) {
-      // Le decimos al backend: "Dame todo desde el inicio hasta el final de este día"
-      // Formato ISO estricto para que Joi no se queje
       params.append("dateFrom", `${filters.date}T00:00:00.000Z`);
       params.append("dateTo", `${filters.date}T23:59:59.999Z`);
     }
-
     if (filters.stylistId) params.append("stylistId", filters.stylistId);
     if (filters.status) params.append("status", filters.status);
-
-    // Mantenemos el límite
     params.append("limit", "100");
 
-    try {
-      // 1. Intentamos ruta general
-      let url = `${API_BASE_URL}/bookings?${params.toString()}`;
-      let res = await fetch(url, { headers: getHeaders(token) });
+    const res = await fetch(`${API_BASE_URL}/bookings?${params.toString()}`, {
+      headers: getHeaders(token)
+    });
 
-      // 2. Manejo de fallback para Estilistas (Error 403)
-      if (res.status === 403) {
-        url = `${API_BASE_URL}/bookings/mystyle?${params.toString()}`;
-        res = await fetch(url, { headers: getHeaders(token) });
-      }
-
-      if (!res.ok) {
-        console.warn(`Error fetching bookings: ${res.status}`);
-        return [];
-      }
-
-      const json = await res.json();
-      return Array.isArray(json) ? json : (json.data || []);
-    } catch (e) {
-      console.error("Network error fetching bookings:", e);
-      return [];
+    // Si es 403 (es estilista), intentamos su ruta propia
+    if (res.status === 403) {
+      const resSty = await fetch(`${API_BASE_URL}/bookings/mystyle?${params.toString()}`, {
+        headers: getHeaders(token)
+      });
+      const json = await resSty.json();
+      return json.data || [];
     }
+
+    const json = await res.json();
+    // Importante: El backend devuelve { data: [...], meta: {...} }
+    return json.data || [];
   },
+
+  // CORRECCIÓN: Tu backend recibe 'motivo' en el body para cancelar
+  cancelBooking: async (token: string, bookingId: string, motivo: string) => {
+    const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
+      method: "POST",
+      headers: getHeaders(token),
+      body: JSON.stringify({ motivo }),
+    });
+    if (!res.ok) throw new Error("Error al cancelar");
+    return await res.json();
+  },
+
+  // ============================================================
+  // 🕒 SLOTS (HORARIOS DISPONIBLES)
+  // ============================================================
+
+  // Tu backend tiene un controlador específico para generar slots de un día
+  generateDaySlots: async (token: string, data: GenerateSlotsDTO): Promise<ServiceSlot[]> => {
+    const res = await fetch(`${API_BASE_URL}/slots/day`, {
+      method: "POST",
+      headers: getHeaders(token),
+      body: JSON.stringify(data), // { stylistId, serviceId, dayOfWeek, dayStart, dayEnd }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Error generando slots");
+    }
+    return await res.json(); // Devuelve el array de slots generados
+  },
+
+  // Listar slots disponibles (Público o Privado)
+  listSlots: async (token: string, filters: { stylistId?: string; serviceId?: string; dayOfWeek?: string }): Promise<ServiceSlot[]> => {
+    const params = new URLSearchParams();
+    if (filters.stylistId) params.append("stylistId", filters.stylistId);
+    if (filters.serviceId) params.append("serviceId", filters.serviceId);
+    if (filters.dayOfWeek) params.append("dayOfWeek", filters.dayOfWeek);
+
+    const res = await fetch(`${API_BASE_URL}/slots?${params.toString()}`, {
+      headers: getHeaders(token),
+    });
+    const json = await res.json();
+    return json.data || [];
+  },
+
 
   // Agrego también la función de reprogramar que faltaba y es necesaria para el modal
   rescheduleBooking: async (token: string, bookingId: string, payload: { slotId: string; date: string }) => {
@@ -181,36 +214,7 @@ export const dataService = {
     return true;
   },
 
-  generateDaySlots: async (token: string, data: GenerateSlotsDTO): Promise<ServiceSlot[]> => {
-    const res = await fetch(`${API_BASE_URL}/slots/day`, {
-      method: "POST",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Error generando slots");
-    }
-    return await res.json();
-  },
 
-  listSlots: async (token: string, stylistId?: string, dateStr?: string): Promise<ServiceSlot[]> => {
-    const params = new URLSearchParams();
-    if (stylistId) params.append("stylistId", stylistId);
-
-    if (dateStr) {
-      const days = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
-      const d = new Date(dateStr + 'T00:00:00');
-      params.append("dayOfWeek", days[d.getDay()]);
-    }
-
-    const res = await fetch(`${API_BASE_URL}/slots?${params.toString()}`, {
-      headers: getHeaders(token),
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.data || [];
-  },
 
   // ============================================================
   // 📅 CLIENTE & RATINGS
@@ -269,7 +273,7 @@ export const dataService = {
   // 📊 REPORTES (CON FALLBACK LOCAL)
   // ============================================================
 
-  
+
 
   // 🔄 CARGA INICIAL
   fetchInitialData: async (token: string) => {
@@ -283,11 +287,13 @@ export const dataService = {
   fetchDashboardSummary: async (token: string, params: ReportRangeParams): Promise<DashboardSummary | null> => {
     try {
       const q = new URLSearchParams({ from: params.from, to: params.to });
-      const res = await fetch(`${API_BASE_URL}/reports/summary?${q.toString()}`, { headers: getHeaders(token) });
+      const res = await fetch(`${API_BASE_URL}/reports/summary?${q.toString()}`, { 
+        headers: getHeaders(token) 
+      });
       if (!res.ok) throw new Error("Error fetching summary");
       return await res.json();
     } catch (error) {
-      console.error(error);
+      console.error("Dashboard Error:", error);
       return null;
     }
   },
@@ -296,47 +302,35 @@ export const dataService = {
   fetchStylistReports: async (token: string, params: ReportRangeParams, isPersonal: boolean = false): Promise<StylistReportResponse | null> => {
     try {
       const q = new URLSearchParams({ from: params.from, to: params.to });
+      // Si un admin busca un estilista específico, añade el ID
       if (params.stylistId && !isPersonal) q.append("stylistId", params.stylistId);
       
       const endpoint = isPersonal ? "/reports/my" : "/reports/stylists";
-      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { headers: getHeaders(token) });
+      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { 
+        headers: getHeaders(token) 
+      });
       
       if (!res.ok) throw new Error("Error fetching stylist reports");
       return await res.json();
     } catch (error) {
-      console.error(error);
+      console.error("Stylist Report Error:", error);
       return null;
     }
   },
 
   // 3. Descarga de PDF General
   downloadGeneralReportPDF: async (token: string, params: ReportRangeParams): Promise<Blob | null> => {
-    try {
-      const q = new URLSearchParams({ from: params.from, to: params.to });
-      const res = await fetch(`${API_BASE_URL}/reports/pdf?${q.toString()}`, { headers: getHeaders(token) });
-      if (!res.ok) throw new Error("Error downloading PDF");
-      return await res.blob();
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
+    const q = new URLSearchParams({ from: params.from, to: params.to });
+    const res = await fetch(`${API_BASE_URL}/reports/pdf?${q.toString()}`, { headers: getHeaders(token) });
+    return res.ok ? await res.blob() : null;
   },
 
   // 4. Descarga de PDF Estilistas
   downloadStylistReportPDF: async (token: string, params: ReportRangeParams, isPersonal: boolean = false): Promise<Blob | null> => {
-    try {
-      const q = new URLSearchParams({ from: params.from, to: params.to });
-      if (params.stylistId && !isPersonal) q.append("stylistId", params.stylistId);
-      
-      const endpoint = isPersonal ? "/reports/my/pdf" : "/reports/stylists/pdf";
-      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { headers: getHeaders(token) });
-      
-      if (!res.ok) throw new Error("Error downloading PDF");
-      return await res.blob();
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
+    const q = new URLSearchParams({ from: params.from, to: params.to });
+    const endpoint = isPersonal ? "/reports/my/pdf" : "/reports/stylists/pdf";
+    const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { headers: getHeaders(token) });
+    return res.ok ? await res.blob() : null;
   },
 
   // Mantenemos fetchReports original como alias o fallback si lo usabas en componentes viejos, 
@@ -369,4 +363,52 @@ export const dataService = {
       return Array.isArray(json) ? json : (json.data || []);
     } catch (error) { return []; }
   },
+
+  fetchCategories: async (token: string, page = 1, q = ""): Promise<CategoryListResponse> => {
+    const params = new URLSearchParams({ 
+      page: String(page), 
+      limit: "20", 
+      includeServices: "true" 
+    });
+    if (q) params.append("q", q);
+
+    const res = await fetch(`${API_BASE_URL}/catalog?${params.toString()}`, {
+      headers: getHeaders(token),
+    });
+    if (!res.ok) throw new Error("Error obteniendo categorías");
+    return await res.json();
+  },
+
+  saveCategory: async (token: string, data: any, id?: string): Promise<Category> => {
+    const url = id ? `${API_BASE_URL}/catalog/${id}` : `${API_BASE_URL}/catalog`;
+    const method = id ? "PUT" : "POST";
+    
+    const res = await fetch(url, {
+      method,
+      headers: getHeaders(token),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Error al guardar categoría");
+    return await res.json();
+  },
+
+  // Tu backend usa PATCH para activar/desactivar
+  toggleCategoryStatus: async (token: string, id: string, active: boolean): Promise<Category> => {
+    const action = active ? 'activate' : 'deactivate';
+    const res = await fetch(`${API_BASE_URL}/catalog/${id}/${action}`, {
+      method: "PATCH",
+      headers: getHeaders(token),
+    });
+    if (!res.ok) throw new Error("Error al cambiar estado de categoría");
+    const json = await res.json();
+    return json.category; // Tu controlador devuelve { message, category }
+  },
+  
+  deleteCategory: async (token: string, id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/catalog/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(token),
+    });
+    if (!res.ok) throw new Error("No se pudo eliminar la categoría");
+  }
 };

@@ -71,8 +71,8 @@ export function StylistTable({ stylists, onEdit, onDelete }: StylistTableProps) 
                 <Badge
                   className={
                     s.isActive
-                      ? '!bg-green-900/40 !text-green-300 !border-green-800'
-                      : '!bg-red-900/40 !text-red-300 !border-red-800'
+                      ? 'bg-green-900 text-green-200'
+                      : 'bg-red-900 text-red-200'
                   }
                 >
                   {s.isActive ? 'Activo' : 'Inactivo'}

@@ -13,14 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../ui/dialog";
-import { Service, Category, ServiceFormData } from "./types";
+import { Service, Category, ServiceFormData } from "../../../contexts/data/types";;
 
 interface ServiceFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  serviceToEdit: Service | null; // Si es null, es modo creación
+  serviceToEdit: Service | null;
   categories: Category[];
-  existingServices: Service[]; // Necesario para generar código
+  existingServices: Service[];
   onSave: (data: ServiceFormData, id: string | null) => Promise<boolean>;
 }
 
@@ -33,7 +33,6 @@ export function ServiceFormDialog({
   onSave,
 }: ServiceFormDialogProps) {
 
-  // Estado Inicial
   const initialFormState: ServiceFormData = {
     nombre: "",
     codigo: "",
@@ -48,18 +47,22 @@ export function ServiceFormDialog({
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Cargar datos al abrir
   useEffect(() => {
     if (isOpen) {
       if (serviceToEdit) {
+        // Manejamos si categoria viene como objeto populado o string
+        const catId = typeof serviceToEdit.categoria === 'object'
+          ? (serviceToEdit.categoria as any)?._id
+          : serviceToEdit.categoria;
+
         setFormData({
           nombre: serviceToEdit.nombre,
-          codigo: serviceToEdit.codigo,
+          codigo: serviceToEdit.codigo || "",
           descripcion: serviceToEdit.descripcion || "",
           precio: serviceToEdit.precio.toString(),
           duracionMin: serviceToEdit.duracionMin.toString(),
           activo: serviceToEdit.activo,
-          categoria: serviceToEdit.categoria || "",
+          categoria: catId || "",
         });
       } else {
         setFormData(initialFormState);
@@ -68,33 +71,28 @@ export function ServiceFormDialog({
     }
   }, [isOpen, serviceToEdit]);
 
-  // VALIDACIONES
-  const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]{1,20}$/;
-
-  const validateField = (field: string, value: string) => {
+  // VALIDACIONES (Alineadas con Joi y Lógica de Negocio del Backend)
+  const validateField = (field: string, value: any) => {
     switch (field) {
       case "nombre":
-        if (!value || !value.trim()) return "Requerido";
-        if (!nameRegex.test(value)) return "Solo letras y espacios, máx 20 caracteres";
+        if (!value || !value.trim()) return "El nombre es requerido";
+        if (value.length > 50) return "Máximo 50 caracteres";
         return "";
       case "precio": {
-        if (!value && value !== "0") return "Requerido";
         const n = parseFloat(value);
-        if (Number.isNaN(n) || n <= 0) return "Debe ser un número positivo";
+        if (isNaN(n) || n < 0) return "Precio inválido (mínimo 0)";
         return "";
       }
       case "duracionMin": {
-        if (!value && value !== "0") return "Requerido";
         const n = parseInt(value, 10);
-        if (Number.isNaN(n) || n <= 4) return "Debe ser mayor a 4 minutos";
+        if (isNaN(n) || n < 30) return "Mínimo 30 minutos";
+        // 🔥 CRÍTICO: El backend requiere múltiplos de 30 para los SLOTS
+        if (n % 30 !== 0) return "Debe ser múltiplo de 30 (30, 60, 90...)";
         return "";
       }
-      case "descripcion": {
-        if (!value) return "";
-        const words = value.trim().split(/\s+/).filter(Boolean);
-        if (words.length > 50) return "Máximo 50 palabras";
+      case "categoria":
+        if (!value) return "Selecciona una categoría";
         return "";
-      }
       default:
         return "";
     }
@@ -106,25 +104,17 @@ export function ServiceFormDialog({
     setFormErrors(prev => ({ ...prev, [field]: err || "" }));
   };
 
-  // GENERAR CÓDIGO AUTOMÁTICO
+  // GENERAR CÓDIGO AUTOMÁTICO (Solo en creación)
   useEffect(() => {
-    // Solo generar si es nuevo registro, tenemos categoría y nombre, y no estamos editando código manualmente
-    if (!serviceToEdit && formData.categoria && formData.nombre) {
+    if (!serviceToEdit && formData.categoria && formData.nombre && formData.nombre.length >= 2) {
       const category = categories.find(cat => cat._id === formData.categoria);
       if (category) {
-        const categoryInitial = category.nombre.charAt(0).toUpperCase();
-        const serviceInitial = formData.nombre.charAt(0).toUpperCase();
+        const prefix = (category.nombre.substring(0, 2) + formData.nombre.substring(0, 2)).toUpperCase();
 
-        // Lógica de conteo
-        const existingCodes = existingServices
-          .filter(s => s.codigo && s.codigo.startsWith(categoryInitial + serviceInitial))
-          .map(s => {
-            const match = s.codigo.match(/\d+$/);
-            return match ? parseInt(match[0]) : 0;
-          });
-
-        const nextNumber = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
-        const newCode = `${categoryInitial}${serviceInitial}${nextNumber.toString().padStart(3, '0')}`;
+        const count = existingServices.filter(s =>
+          s.codigo && s.codigo.startsWith(prefix) // 👈 Verificamos que s.codigo exista
+        ).length;
+        const newCode = `${prefix}${(count + 1).toString().padStart(3, '0')}`;
 
         setFormData(prev => ({ ...prev, codigo: newCode }));
       }
@@ -134,33 +124,15 @@ export function ServiceFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar todo antes de enviar
-    const fieldsToValidate = ["nombre", "precio", "duracionMin", "descripcion"];
-    const newErrors: any = {};
-    let hasError = false;
-
-    fieldsToValidate.forEach((f) => {
-      const val = (formData as any)[f] ?? "";
-      const err = validateField(f, val);
-      if (err) {
-        newErrors[f] = err;
-        hasError = true;
-      }
+    const errors: any = {};
+    Object.keys(formData).forEach(key => {
+      const err = validateField(key, (formData as any)[key]);
+      if (err) errors[key] = err;
     });
 
-    setFormErrors(newErrors);
-    if (hasError) {
-      toast.error("Corrige los errores del formulario");
-      return;
-    }
-
-    if (!formData.categoria) {
-      toast.error("Selecciona una categoría");
-      return;
-    }
-
-    if (!formData.codigo) {
-      toast.error("Error en generación de código");
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Revisa los errores en el formulario");
       return;
     }
 
@@ -172,133 +144,124 @@ export function ServiceFormDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#D4AF37]">
+          <DialogTitle className="text-[#D4AF37] flex items-center gap-2">
             {serviceToEdit ? "Editar Servicio" : "Nuevo Servicio"}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Completa los datos del servicio
+            Los servicios con duraciones exactas permiten una mejor generación de turnos.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* CATEGORÍA */}
-          <div>
-            <Label htmlFor="categoria" className="text-gray-300">Categoría *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="categoria">Categoría *</Label>
             <select
               id="categoria"
               value={formData.categoria}
               onChange={(e) => handleChange("categoria", e.target.value)}
-              className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#9D8EC1] mt-1"
+              className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 focus:ring-2 focus:ring-[#D4AF37] outline-none"
             >
-              <option value="">Seleccionar categoría</option>
-              {categories.filter(cat => cat.activo).map((cat) => (
+              <option value="">Seleccione una categoría</option>
+              {categories.filter(c => c.activo).map(cat => (
                 <option key={cat._id} value={cat._id}>{cat.nombre}</option>
               ))}
             </select>
-            {categories.length === 0 && (
-              <p className="text-xs text-yellow-400 mt-1">
-                No hay categorías activas. Crea una primero.
-              </p>
-            )}
+            {formErrors.categoria && <p className="text-red-400 text-xs">{formErrors.categoria}</p>}
           </div>
 
-          {/* NOMBRE */}
-          <div>
-            <Label htmlFor="nombre" className="text-gray-300">Nombre del Servicio *</Label>
-            <Input
-              id="nombre"
-              value={formData.nombre}
-              onChange={(e) => handleChange("nombre", e.target.value)}
-              className="bg-black border-gray-700 text-white mt-1"
-              placeholder="Ej: Corte Urbano"
-            />
-            {formErrors.nombre && <p className="text-red-400 text-sm mt-1">{formErrors.nombre}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre *</Label>
+              <Input
+                id="nombre"
+                value={formData.nombre}
+                onChange={(e) => handleChange("nombre", e.target.value)}
+                className="bg-black border-gray-700"
+                placeholder="Corte..."
+              />
+              {formErrors.nombre && <p className="text-red-400 text-xs">{formErrors.nombre}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="codigo">Código</Label>
+              <Input
+                id="codigo"
+                value={formData.codigo}
+                readOnly
+                className="bg-gray-800 border-gray-700 font-mono text-gray-400"
+              />
+            </div>
           </div>
 
-          {/* CÓDIGO */}
-          <div>
-            <Label htmlFor="codigo" className="text-gray-300">Código (Auto)</Label>
-            <Input
-              id="codigo"
-              value={formData.codigo}
-              readOnly
-              className="bg-gray-800 border-gray-700 text-gray-300 font-mono mt-1"
-              placeholder="Se generará automáticamente"
-            />
-          </div>
-
-          {/* DESCRIPCIÓN */}
-          <div>
-            <Label htmlFor="descripcion" className="text-gray-300">Descripción</Label>
+          <div className="space-y-2">
+            <Label htmlFor="descripcion">Descripción</Label>
             <Textarea
               id="descripcion"
               value={formData.descripcion}
               onChange={(e) => handleChange("descripcion", e.target.value)}
-              className="bg-black border-gray-700 text-white mt-1"
-              rows={3}
-              placeholder="Opcional..."
+              className="bg-black border-gray-700 resize-none"
+              placeholder="Detalles del servicio..."
             />
-            {formErrors.descripcion && <p className="text-red-400 text-sm mt-1">{formErrors.descripcion}</p>}
           </div>
 
-          {/* PRECIO Y DURACIÓN */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="precio" className="text-gray-300">Precio *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="precio">Precio ($) *</Label>
               <Input
                 id="precio"
                 type="number"
-                min="0"
                 step="0.01"
                 value={formData.precio}
                 onChange={(e) => handleChange("precio", e.target.value)}
-                className="bg-black border-gray-700 text-white mt-1"
+                className="bg-black border-gray-700"
               />
-              {formErrors.precio && <p className="text-red-400 text-sm mt-1">{formErrors.precio}</p>}
+              {formErrors.precio && <p className="text-red-400 text-xs">{formErrors.precio}</p>}
             </div>
-            <div>
-              <Label htmlFor="duracionMin" className="text-gray-300">Duración (min) *</Label>
-              <Input
+            <div className="space-y-2">
+              <Label htmlFor="duracionMin">Duración *</Label>
+              <select
                 id="duracionMin"
-                type="number"
-                min="1"
                 value={formData.duracionMin}
                 onChange={(e) => handleChange("duracionMin", e.target.value)}
-                className="bg-black border-gray-700 text-white mt-1"
-              />
-              {formErrors.duracionMin && <p className="text-red-400 text-sm mt-1">{formErrors.duracionMin}</p>}
+                className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 outline-none"
+              >
+                <option value="">Elegir...</option>
+                <option value="30">30 min</option>
+                <option value="60">1 hora</option>
+                <option value="90">1h 30 min</option>
+                <option value="120">2 horas</option>
+              </select>
+              {formErrors.duracionMin && <p className="text-red-400 text-xs">{formErrors.duracionMin}</p>}
             </div>
           </div>
 
-          {/* ACTIVO */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2 bg-black/30 p-3 rounded-lg border border-gray-800">
             <Switch
+              id="activo"
               checked={formData.activo}
-              onCheckedChange={(checked) => handleChange("activo", checked)}
-              className="data-[state=checked]:bg-[#9D8EC1]"
+              onCheckedChange={(val) => handleChange("activo", val)}
             />
-            <Label className="text-gray-300">Servicio activo</Label>
+            <Label htmlFor="activo">Disponible para el público</Label>
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
+              variant="ghost"
               onClick={onClose}
-              disabled={isSubmitting}
               className="btn-red"
             >
               Cancelar
             </Button>
-
             <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
-              {isSubmitting ? "Guardando..." : "Guardar"}
+              {isSubmitting ? "Guardando..." : "Confirmar Cambios"}
             </Button>
           </DialogFooter>
         </form>

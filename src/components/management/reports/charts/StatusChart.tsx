@@ -20,19 +20,24 @@ export function StatusChart({ data }: StatusChartProps) {
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={5}
+              innerRadius={70}
+              outerRadius={90}
+              paddingAngle={8}
               dataKey="value"
+              stroke="none"
             >
-              {data.map((entry, index) => (
+              {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
+              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff', borderRadius: '8px' }}
             />
-            <Legend verticalAlign="bottom" height={36} />
+            <Legend 
+              verticalAlign="bottom" 
+              iconType="circle"
+              wrapperStyle={{ fontSize: '12px', color: '#9ca3af' }} 
+            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

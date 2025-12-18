@@ -4,44 +4,49 @@ import { useAppointments } from "../data/context/AppointmentsContext";
 import { useRatings } from "../data/context/RatingsContext";
 import { useNotifications } from "../data/context/NotificationsContext";
 import { useReports } from "../data/context/ReportsContext";
-
-// Interface para mantener compatibilidad exacta con lo que esperaban tus componentes
 import { DataContextType } from "./types"; 
 
 export function useData(): DataContextType {
+  // 1. Inyectamos todos los sub-contextos
   const { services, stylists, businessHours, refreshServices } = useServices();
-  // 🔥 CORRECCIÓN: Extraemos también 'myBookings' y 'refreshMyBookings'
   const { appointments, myBookings, refreshAppointments, refreshMyBookings } = useAppointments();
   const { ratings, createRating, refreshRatings } = useRatings();
   const { notifications, getUserNotifications, refreshNotifications } = useNotifications();
-  const { reports, fetchReports } = useReports();
+  const { dashboardData, refreshReports } = useReports();
 
-  // Reconstruimos la función fetchData "monolítica" para compatibilidad
+  // 2. Función monolítica para recargar TODO (útil para "pull-to-refresh")
   const fetchData = useCallback(async () => {
-    // Disparamos todas las cargas en paralelo
-    await Promise.all([
+    // Ejecutamos en paralelo para máxima velocidad
+    await Promise.allSettled([
       refreshServices(),
       refreshAppointments(),
-      refreshMyBookings(), // Agregamos el refresco de mis reservas
+      refreshMyBookings(),
       refreshRatings(),
-      refreshNotifications()
+      refreshNotifications(),
+      refreshReports()
     ]);
-  }, [refreshServices, refreshAppointments, refreshMyBookings, refreshRatings, refreshNotifications]);
+  }, [
+    refreshServices, 
+    refreshAppointments, 
+    refreshMyBookings, 
+    refreshRatings, 
+    refreshNotifications, 
+    refreshReports
+  ]);
 
+  // 3. Devolvemos el objeto plano que esperan tus componentes antiguos
   return {
     services,
     stylists,
     businessHours,
-    
-    appointments, // Citas manuales (Admin)
-    myBookings,   // 🔥 CORRECCIÓN: Agregamos la propiedad faltante (Cliente)
-
+    appointments,
+    myBookings,
     ratings,
     notifications,
-    reports,
-    
-    fetchData,          // Versión combinada
-    fetchReports,       // Directo del contexto
+    // Mantenemos 'reports' apuntando a dashboardData para no romper tipos
+    reports: dashboardData as any, 
+    fetchData,
+    fetchReports: refreshReports, // Alias por compatibilidad
     getUserNotifications,
     createRating,
   };
