@@ -83,6 +83,53 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validaciones
+    if (!registerData.firstName.trim()) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+
+    if (!registerData.lastName.trim()) {
+      toast.error("El apellido es requerido");
+      return;
+    }
+
+    if (registerData.cedula.length !== 10) {
+      toast.error("La cédula debe tener exactamente 10 dígitos");
+      return;
+    }
+
+    if (!registerData.gender) {
+      toast.error("Debes seleccionar un género");
+      return;
+    }
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registerData.email)) {
+      toast.error("Por favor ingresa un email válido");
+      return;
+    }
+
+    // Validar teléfono: solo números, exactamente 10 dígitos
+    if (!/^\d{10}$/.test(registerData.phone)) {
+      toast.error("El teléfono debe tener exactamente 10 dígitos");
+      return;
+    }
+
+    // Validar contraseña: mínimo 8 caracteres
+    if (registerData.password.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+
+    // Validar que la contraseña tenga mayúsculas, minúsculas y números
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(registerData.password)) {
+      toast.error("La contraseña debe contener mayúsculas, minúsculas y números");
+      return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
       toast.error("Las contraseñas no coinciden");
       return;
@@ -286,109 +333,124 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="register-cedula" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Cédula
-                </label>
-                <Input
-                  id="register-cedula"
-                  type="text" // Usamos 'text' para controlar mejor el regex, 'number' a veces deja poner 'e' o signos
-                  required
-                  value={registerData.cedula}
-                  maxLength={10} // Bloquea escribir más de 10
-                  minLength={10} // Validación HTML para avisar si faltan números
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Validación: Solo permite dígitos numéricos (0-9)
-                    if (/^\d*$/.test(value)) {
-                      setRegisterData({ ...registerData, cedula: value });
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="register-cedula" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Cédula
+                  </label>
+                  <Input
+                    id="register-cedula"
+                    type="text"
+                    required
+                    value={registerData.cedula}
+                    maxLength={10}
+                    minLength={10}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*$/.test(value)) {
+                        setRegisterData({ ...registerData, cedula: value });
+                      }
+                    }}
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    placeholder="Número de cédula"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="register-gender" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Género
+                  </label>
+                  <Select
+                    value={registerData.gender}
+                    onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}
+                    required
+                  >
+                    <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white">
+                      <SelectValue placeholder="Selecciona tu género" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1A1A1A] border-[#D4AF37]/30 text-white">
+                      <SelectItem value="femenino">Femenino</SelectItem>
+                      <SelectItem value="masculino">Masculino</SelectItem>
+                      <SelectItem value="otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="register-email" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Email
+                  </label>
+                  <Input
+                    id="register-email"
+                    type="email"
+                    required
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    placeholder="tu@email.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="register-phone" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Teléfono
+                  </label>
+                  <Input
+                    id="register-phone"
+                    type="tel"
+                    required
+                    value={registerData.phone}
+                    maxLength={10}
+                    minLength={10}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Solo permite dígitos numéricos
+                      if (/^\d*$/.test(value)) {
+                        setRegisterData({ ...registerData, phone: value });
+                      }
+                    }}
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    placeholder="9999999999"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">10 dígitos sin espacios ni caracteres especiales</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="register-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Contraseña
+                  </label>
+                  <Input
+                    id="register-password"
+                    type="password"
+                    required
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    placeholder="••••••••"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Mín. 8 caracteres, mayúsculas, minúsculas y números</p>
+                </div>
+
+                <div>
+                  <label htmlFor="register-confirm" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
+                    Confirmar contraseña
+                  </label>
+                  <Input
+                    id="register-confirm"
+                    type="password"
+                    required
+                    value={registerData.confirmPassword}
+                    onChange={(e) =>
+                      setRegisterData({ ...registerData, confirmPassword: e.target.value })
                     }
-                  }}
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
-                  placeholder="Número de cédula"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="register-gender" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Género
-                </label>
-                <Select
-                  value={registerData.gender}
-                  onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}
-                  required
-                >
-                  <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white">
-                    <SelectValue placeholder="Selecciona tu género" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1A1A1A] border-[#D4AF37]/30 text-white">
-                    <SelectItem value="femenino">Femenino</SelectItem>
-                    <SelectItem value="masculino">Masculino</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label htmlFor="register-email" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Email
-                </label>
-                <Input
-                  id="register-email"
-                  type="email"
-                  required
-                  value={registerData.email}
-                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
-                  placeholder="tu@email.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="register-phone" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Teléfono
-                </label>
-                <Input
-                  id="register-phone"
-                  type="tel"
-                  required
-                  value={registerData.phone}
-                  onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
-                  placeholder="+593 999 999 999"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="register-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Contraseña
-                </label>
-                <Input
-                  id="register-password"
-                  type="password"
-                  required
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="register-confirm" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
-                  Confirmar contraseña
-                </label>
-                <Input
-                  id="register-confirm"
-                  type="password"
-                  required
-                  value={registerData.confirmPassword}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, confirmPassword: e.target.value })
-                  }
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
-                  placeholder="••••••••"
-                />
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    placeholder="••••••••"
+                  />
+                </div>
               </div>
 
               <Button

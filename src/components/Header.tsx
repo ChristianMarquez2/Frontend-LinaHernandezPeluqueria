@@ -48,25 +48,30 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-black/95 backdrop-blur-md shadow-lg shadow-black/20" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-black/95 backdrop-blur-md shadow-lg shadow-black/20" : "bg-transparent"
+        }`}
     >
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo */}
+        {/* Logo Ajustado */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2"
+          whileHover={{ scale: 1.05 }}
+          className="flex items-center cursor-pointer"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          <Sparkles className="w-6 h-6" style={{ color: "#D4AF37" }} />
-          <span className="bg-gradient-to-r from-[#D4AF37] to-[#E5E4E2] bg-clip-text text-transparent">
-            Lina Hernández Peluquería
-          </span>
+          <img
+            src="/logo.png"
+            alt="Lina Hernández Peluquería"
+            /* Aumentamos de h-12 a h-20 en móvil y h-32 en escritorio.
+               Añadimos drop-shadow para que resalte el dorado sobre el fondo oscuro.
+            */
+            className="h-20 md:h-32 w-auto transition-all duration-300 drop-shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+          />
         </motion.div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-8">
           {menuItems.map((item, index) => (
             <motion.a
               key={item.href}
@@ -78,7 +83,7 @@ export function Header() {
                 scrollToSection(item.href);
               }}
               href={item.href}
-              className="text-gray-300 hover:text-[#D4AF37] transition-colors cursor-pointer"
+              className="text-gray-300 font-medium hover:text-[#D4AF37] transition-colors cursor-pointer text-lg"
             >
               {item.label}
             </motion.a>
@@ -153,10 +158,10 @@ export function Header() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-white p-2"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
         </button>
       </nav>
 
@@ -239,9 +244,9 @@ export function Header() {
           </motion.div>
         )}
       </AnimatePresence>
-      
-      <LoginDialog 
-        open={isLoginOpen} 
+
+      <LoginDialog
+        open={isLoginOpen}
         onOpenChange={setIsLoginOpen}
       />
       <UserProfile open={isProfileOpen} onOpenChange={setIsProfileOpen} />

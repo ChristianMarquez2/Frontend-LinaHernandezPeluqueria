@@ -10,8 +10,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ArrowLeft, Mail, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 
 type Step = "email" | "code" | "newPassword" | "success";
 
@@ -48,7 +47,7 @@ export function ForgotPasswordDialog({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${API_URL}/v1/auth/forgot-password`, {
+      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.forgotPassword}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -74,7 +73,7 @@ export function ForgotPasswordDialog({
   const handleResendCode = async () => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/v1/auth/forgot-password`, {
+      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.forgotPassword}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -124,7 +123,7 @@ export function ForgotPasswordDialog({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/v1/auth/reset-password`, {
+      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.resetPassword}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
