@@ -16,7 +16,7 @@ export function Hero() {
   };
 
   const handleWhatsApp = () => {
-    window.open("https://wa.me/573001234567?text=Hola,%20me%20gustaría%20reservar%20una%20cita", "_blank");
+    window.open("https://wa.me/593980865549?text=Hola,%20me%20gustaría%20reservar%20una%20cita", "_blank");
   };
 
   return (
