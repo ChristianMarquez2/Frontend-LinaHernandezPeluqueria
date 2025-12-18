@@ -35,7 +35,7 @@ const services = [
     icon: Crown,
     title: "Keratina",
     description: "Tratamiento alisador premium",
-    price: "$150.000",
+    price: "$150",
     duration: "3 hrs",
   },
   {
