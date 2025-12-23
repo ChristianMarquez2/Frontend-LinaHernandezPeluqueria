@@ -137,9 +137,10 @@ export function ScheduleManagement() {
                     type="date"
                     value={generationDate}
                     onChange={(e) => setGenerationDate(e.target.value)}
-                    className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
+                    className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded generation-date-input"
                   />
                 </div>
+
 
                 <div>
                   <Label className="text-gray-300">Servicio</Label>
@@ -171,19 +172,21 @@ export function ScheduleManagement() {
                       type="time"
                       value={genStart}
                       onChange={(e) => setGenStart(e.target.value)}
-                      className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
+                      className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded time-input-gold"
                     />
                   </div>
+
                   <div>
                     <Label className="text-gray-300">Hora Fin</Label>
                     <input
                       type="time"
                       value={genEnd}
                       onChange={(e) => setGenEnd(e.target.value)}
-                      className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded"
+                      className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded time-input-gold"
                     />
                   </div>
                 </div>
+
 
                 <Button
                   onClick={handleGenerateSlots}
