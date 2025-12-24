@@ -16,8 +16,17 @@ export interface ReportStats {
 }
 
 export function useReportsLogic() {
-  const { dashboardData, dateRange, setDateRange, refreshReports, loading, downloadPdf } = useReports();
-  const { services } = useServices();
+  const {
+    dashboardData,
+    dateRange,
+    setDateRange,
+    refreshReports,
+    loading,
+    downloadPdf,
+    selectedStylistId,
+    setSelectedStylistId,
+  } = useReports();
+  const { services, stylists } = useServices();
 
   useEffect(() => {
     if (!dashboardData) refreshReports();
@@ -95,5 +104,15 @@ export function useReportsLogic() {
     };
   }, [dashboardData]);
 
-  return { stats, loading, dateRange, setDateRange, downloadPdf };
+  return {
+    stats,
+    loading,
+    dateRange,
+    setDateRange,
+    downloadPdf,
+    selectedStylistId,
+    setSelectedStylistId,
+    services,
+    stylists,
+  };
 }
