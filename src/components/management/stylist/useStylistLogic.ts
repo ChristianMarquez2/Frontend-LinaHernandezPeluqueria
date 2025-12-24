@@ -244,6 +244,7 @@ export function useStylistLogic() {
     validateField,
     validateForm,
     handleSaveStylist,
-    handleDeleteStylist
+    handleDeleteStylist,
+    refreshStylists: fetchStylists
   };
 }

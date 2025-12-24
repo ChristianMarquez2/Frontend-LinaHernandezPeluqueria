@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../../../config/api";
-import { 
-  getAllUsers, 
-  deactivateUser, 
-  activateUser 
+import {
+  getAllUsers,
+  deactivateUser,
+  activateUser,
+  updateUserProfile
 } from "../../../services/userService";
 import { User, UserFormData, ValidationErrors, mapRoleToBackend } from "./types";
 
@@ -41,7 +42,8 @@ export function useUserLogic() {
   // 🛡️ Validaciones
   const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]{1,15}$/;
   const cedulaRegex = /^\d{10}$/;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.com$/i;
+  const telefonoRegex = /^\d{10}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
   const validateField = (field: keyof UserFormData, value: string, isEditing: boolean) => {
@@ -55,9 +57,21 @@ export function useUserLogic() {
         if (!value) return "Requerido";
         if (!cedulaRegex.test(value)) return "Cédula debe tener exactamente 10 dígitos numéricos";
         return "";
+      case "telefono":
+        if (!value) return "Requerido";
+        if (!telefonoRegex.test(value)) return "Teléfono debe tener 10 dígitos";
+        return "";
+      case "genero":
+        if (!value) return "Requerido";
+        return "";
+      case "edad":
+        if (!value) return "Requerido";
+        if (Number.isNaN(Number(value))) return "Edad debe ser un número";
+        if (Number(value) < 0 || Number(value) > 120) return "Edad inválida";
+        return "";
       case "email":
         if (!value) return "Requerido";
-        if (!emailRegex.test(value)) return "Email debe contener @ y terminar en .com";
+        if (!emailRegex.test(value)) return "Email inválido";
         return "";
       case "password":
         if (isEditing) return ""; // Opcional al editar
@@ -72,8 +86,8 @@ export function useUserLogic() {
 
   const validateForm = (formData: UserFormData, isEditing: boolean): ValidationErrors => {
     const errors: ValidationErrors = {};
-    const fields = ["nombre", "apellido", "cedula", "email", "password"] as const;
-    
+    const fields = ["nombre", "apellido", "cedula", "telefono", "genero", "edad", "email", "password"] as const;
+
     fields.forEach(field => {
       const error = validateField(field, formData[field] as string, isEditing);
       if (error) errors[field] = error;
@@ -92,40 +106,27 @@ export function useUserLogic() {
 
     try {
       if (editingId) {
-        // --- EDITAR ---
-        const backendRole = mapRoleToBackend(formData.role);
+        // --- EDITAR PERFIL (ADMIN / GERENTE) ---
         const payload: any = {
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          email: formData.email,
-          isActive: formData.isActive,
-          cedula: formData.cedula,
+          nombre: formData.nombre || undefined,
+          apellido: formData.apellido || undefined,
+          cedula: formData.cedula || undefined,
+          telefono: formData.telefono || undefined,
+          genero: formData.genero || undefined,
+          edad: formData.edad ? Number(formData.edad) : undefined,
         };
-        if (backendRole) payload.role = backendRole;
+        if (formData.password) payload.password = formData.password;
 
-        const res = await fetch(`${API_BASE_URL}/users/${editingId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        const updated = await updateUserProfile(editingId, payload, token);
 
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(body || "Error actualizando usuario");
-        }
-
-        const updated = await res.json();
-        // Optimistic UI Update
         setUsers((prev) =>
           prev.map((p) =>
             p._id === editingId
-              ? { ...p, ...(updated.data ?? updated) }
+              ? { ...p, ...((updated as any).data ?? updated) }
               : p
           )
         );
+
         toast.success("Usuario actualizado");
 
       } else {
@@ -150,6 +151,9 @@ export function useUserLogic() {
             role: backendRole,
             isActive: formData.isActive,
             cedula: formData.cedula,
+            telefono: formData.telefono,
+            genero: formData.genero,
+            edad: formData.edad ? Number(formData.edad) : undefined,
           }),
         });
 

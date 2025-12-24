@@ -8,12 +8,14 @@ interface StylistScheduleButtonProps {
 
 export function StylistScheduleButton({ stylistId, onClick }: StylistScheduleButtonProps) {
   const handleClick = () => {
+    if (!stylistId) return;
+
     if (onClick) {
       onClick();
       return;
     }
     // Ajusta la ruta según tu router
-    window.location.href = `/admin/stylists/${stylistId}/schedule`;
+    window.location.href = `/admin/stylists/${encodeURIComponent(stylistId)}/schedule`;
   };
 
   return (

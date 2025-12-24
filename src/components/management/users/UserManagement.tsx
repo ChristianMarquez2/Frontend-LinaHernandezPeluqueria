@@ -77,7 +77,7 @@ export function UserManagement() {
 
             {/* Controles de Filtro y Creación */}
             <div className="flex flex-wrap gap-2 items-center">
-              {currentUser?.role === "admin" && (
+              {mapRoleFromBackend(currentUser?.role) === "admin" && (
                 <Button onClick={handleCreate} className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90">
                   Nuevo Gerente
                 </Button>
@@ -107,7 +107,7 @@ export function UserManagement() {
         <CardContent>
           <UserTable 
             users={filteredUsers}
-            currentUserRole={currentUser?.role}
+            currentUserRole={mapRoleFromBackend(currentUser?.role)}
             onEdit={handleEdit}
             onToggleStatus={handleToggleStatus}
           />

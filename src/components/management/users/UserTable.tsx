@@ -83,7 +83,7 @@ export function UserTable({ users, currentUserRole, onEdit, onToggleStatus }: Us
 
               <TableCell>
                 <div className="flex gap-2">
-                  {currentUserRole === "admin" && (
+                  {(currentUserRole === "admin" || currentUserRole === "manager") && !(currentUserRole === "manager" && uiRole === "admin") && (
                     <Button
                       size="icon"
                       variant="ghost"

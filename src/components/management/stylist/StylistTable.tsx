@@ -18,9 +18,10 @@ interface StylistTableProps {
   stylists: Stylist[];
   onEdit: (stylist: Stylist) => void;
   onDelete: (id: string) => void;
+  onEditUser?: (stylist: Stylist) => void;
 }
 
-export function StylistTable({ stylists, onEdit, onDelete }: StylistTableProps) {
+export function StylistTable({ stylists, onEdit, onDelete, onEditUser }: StylistTableProps) {
 
   // Helper para obtener nombre del servicio de forma segura
   const getMainServiceName = (stylist: Stylist) => {
@@ -84,15 +85,14 @@ export function StylistTable({ stylists, onEdit, onDelete }: StylistTableProps) 
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onEdit(s)}
+                    onClick={() => (onEditUser ? onEditUser(s) : onEdit(s))}
                     className="text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
-                    title="Editar información"
+                    title="Editar usuario"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
 
-                  {/* Botón de Horarios */}
-                  
+                
 
                   <Button
                     variant="ghost"

@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../ui/button';
-import { Switch } from '../../ui/switch'; // Asegúrate de tener este componente UI o usa checkbox
-import { Save, Trash2 } from 'lucide-react';
+import { Switch } from '../../ui/switch';
+import { Save } from 'lucide-react';
+import { DayOfWeekIndex, WeekdayName } from '../../../contexts/data/types';
 
 interface DayRowProps {
-  dayName: string;
-  dayIndex: number;
+  dayName: WeekdayName;
+  dayIndex: DayOfWeekIndex;
   initialStart?: string;
   initialEnd?: string;
   hasSchedule: boolean;
-  onSave: (index: number, start: string, end: string, isOff: boolean) => void;
+  onSave: (index: DayOfWeekIndex, start: string, end: string, isOff: boolean) => void;
 }
 
 export function DayRow({ dayName, dayIndex, initialStart, initialEnd, hasSchedule, onSave }: DayRowProps) {

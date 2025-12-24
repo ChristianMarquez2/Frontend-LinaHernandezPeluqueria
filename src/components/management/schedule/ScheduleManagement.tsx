@@ -1,11 +1,12 @@
-import { useMemo } from 'react'; // 1. Importar useMemo
+import { useMemo } from 'react';
 import { useScheduleLogic } from './useScheduleLogic';
 import { DayRow } from './DayRow';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Button } from '../../ui/button';
-import { Calendar, Clock, Scissors } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
+import { DayOfWeekIndex } from '../../../contexts/data/types';
 
 export function ScheduleManagement() {
   const {
@@ -88,8 +89,9 @@ export function ScheduleManagement() {
             </CardHeader>
             <CardContent>
               {DAY_NAMES.map((dayName, index) => {
+                const dayIndex = index as DayOfWeekIndex;
                 // Buscar si existe config para este día
-                const schedule = schedules.find(s => s.dayOfWeek === index);
+                const schedule = schedules.find(s => s.dayOfWeek === dayIndex);
                 const hasSchedule = !!schedule && schedule.slots.length > 0;
                 const start = hasSchedule ? schedule!.slots[0].start : "09:00";
                 const end = hasSchedule ? schedule!.slots[0].end : "18:00";
@@ -98,7 +100,7 @@ export function ScheduleManagement() {
                   <DayRow
                     key={dayName}
                     dayName={dayName}
-                    dayIndex={index}
+                    dayIndex={dayIndex}
                     initialStart={start}
                     initialEnd={end}
                     hasSchedule={hasSchedule}

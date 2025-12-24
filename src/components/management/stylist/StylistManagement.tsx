@@ -10,6 +10,9 @@ import { useStylistLogic } from './useStylistLogic';
 import { StylistTable } from './StylistTable';
 import { StylistFormDialog, CatalogOption } from './StylistFormDialog';
 import { Stylist } from './types';
+import { UserFormDialog } from '../users/UserFormDialog';
+import type { User as EditUser } from '../users/types';
+import { updateUserProfile } from '../../../services/userService';
 
 export function StylistManagement() {
   const { 
@@ -17,7 +20,8 @@ export function StylistManagement() {
     handleSaveStylist, 
     handleDeleteStylist,
     validateField,
-    validateForm 
+    validateForm,
+    refreshStylists,
   } = useStylistLogic();
   
   // Estado local para Catálogos (Necesario para el dropdown)
@@ -27,6 +31,8 @@ export function StylistManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStylist, setEditingStylist] = useState<Stylist | null>(null);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<EditUser | null>(null);
 
   // 🔄 Fetch de Catálogos al montar
   useEffect(() => {
@@ -70,6 +76,25 @@ export function StylistManagement() {
     setIsDialogOpen(true);
   };
 
+  const handleEditUser = (stylist: Stylist) => {
+    const user: EditUser = {
+      _id: stylist._id,
+      nombre: stylist.nombre,
+      apellido: stylist.apellido,
+      email: stylist.email,
+      role: 'stylist' as any,
+      isActive: stylist.isActive,
+      cedula: stylist.cedula,
+      telefono: stylist.telefono,
+      genero: stylist.genero as any,
+      edad: (stylist as any).edad,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as any;
+    setEditingUser(user);
+    setIsUserDialogOpen(true);
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de desactivar este estilista?')) {
       await handleDeleteStylist(id);
@@ -107,6 +132,7 @@ export function StylistManagement() {
           <StylistTable 
             stylists={filteredStylists}
             onEdit={handleEdit}
+            onEditUser={handleEditUser}
             onDelete={handleDelete}
           />
         </CardContent>
@@ -123,6 +149,53 @@ export function StylistManagement() {
         onSave={handleSaveStylist}
         validateField={validateField}
         validateForm={validateForm}
+      />
+
+      {/* Dialogo para editar el perfil del usuario (estilista) */}
+      <UserFormDialog
+        isOpen={isUserDialogOpen}
+        onClose={() => setIsUserDialogOpen(false)}
+        userToEdit={editingUser}
+        onSave={async (data, id) => {
+          if (!id) return false;
+          const token = localStorage.getItem('accessToken') || '';
+          try {
+            await updateUserProfile(id, {
+              nombre: data.nombre,
+              apellido: data.apellido,
+              cedula: data.cedula,
+              telefono: data.telefono,
+              genero: data.genero,
+              edad: data.edad ? Number(data.edad) : undefined,
+              password: data.password || undefined,
+            }, token);
+            // Refrescar la lista automáticamente tras guardar
+            await refreshStylists();
+            return true;
+          } catch (err) {
+            return false;
+          }
+        }}
+        validateField={(field, value, isEditing) => {
+          // Validación básica: reusar reglas mínimas
+          if (["nombre","apellido","cedula"].includes(field) && !value) return "Requerido";
+          if (field === "cedula" && value && !/^\d{10}$/.test(value)) return "Cédula inválida";
+          if (field === "telefono") {
+            if (!value) return "Requerido";
+            if (!/^\d{10}$/.test(value)) return "Teléfono debe tener 10 dígitos";
+          }
+          if (field === "genero" && !value) return "Seleccione un género";
+          return "";
+        }}
+        validateForm={(formData, isEditing) => {
+          const errors: any = {};
+          if (!formData.nombre) errors.nombre = "Requerido";
+          if (!formData.apellido) errors.apellido = "Requerido";
+          if (!formData.cedula || !/^\d{10}$/.test(formData.cedula)) errors.cedula = "Cédula inválida";
+          if (!formData.telefono || !/^\d{10}$/.test(formData.telefono)) errors.telefono = "Teléfono debe tener 10 dígitos";
+          if (!formData.genero) errors.genero = "Seleccione un género";
+          return errors;
+        }}
       />
     </div>
   );

@@ -8,6 +8,9 @@ export interface User {
   role: string; // Backend devuelve strings como "ADMIN", "GERENTE", etc.
   isActive: boolean;
   cedula?: string;
+  telefono?: string;
+  genero?: string;
+  edad?: number;
   createdAt: string;
 }
 
@@ -19,6 +22,9 @@ export interface UserFormData {
   password: string;
   isActive: boolean;
   cedula: string;
+  telefono: string;
+  genero: string;
+  edad: string;
 }
 
 export interface ValidationErrors {
@@ -27,6 +33,9 @@ export interface ValidationErrors {
   cedula?: string;
   email?: string;
   password?: string;
+  telefono?: string;
+  genero?: string;
+  edad?: string;
 }
 
 // 🛠️ Utilidades de Mapeo de Roles

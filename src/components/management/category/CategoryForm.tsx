@@ -110,17 +110,7 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
             />
           </div>
 
-          {/* IMAGEN */}
-          <div>
-            <Label className="text-gray-300">URL de Imagen (Opcional)</Label>
-            <Input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="bg-black border-gray-700 text-white mt-1.5"
-              placeholder="Función no disponible de momento"
-            />
-          </div>
+          
 
           <DialogFooter className="pt-4">
             <Button

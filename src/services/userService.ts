@@ -8,7 +8,8 @@ export interface User {
   apellido: string;
   cedula: string;
   telefono?: string;
-  genero?: "M" | "F" | "O";
+  genero?: "M" | "F" | "O" | string;
+  edad?: number;
   email: string;
   role: "admin" | "manager" | "stylist" | "client";
   isActive: boolean;
@@ -75,14 +76,14 @@ export async function createUser(newUser: Partial<User>, token?: string) {
 }
 
 // ---------------------------------------------
-// 🔹 Actualizar usuario
+// 🔹 Actualizar perfil de usuario (ADMIN/GERENTE)
 // ---------------------------------------------
-export async function updateUser(
+export async function updateUserProfile(
   id: string,
-  updates: Partial<User>,
+  updates: Partial<Pick<User, 'nombre' | 'apellido' | 'cedula' | 'telefono' | 'genero' | 'edad'>> & { password?: string },
   token?: string
 ) {
-  const res = await api.put(`/users/${id}`, updates, token);
+  const res = await api.put(`/users/${id}/profile`, updates, token);
 
   if (!res.ok) throw new Error(res.error);
   return res.data;

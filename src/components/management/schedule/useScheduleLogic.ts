@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useData } from '../../../contexts/data/index';
 import { dataService } from '../../../contexts/data/service';
-import { StylistSchedule, ServiceSlot } from '../../../contexts/data/types';
+import { StylistSchedule, ServiceSlot, DayOfWeekIndex, WeekdayName } from '../../../contexts/data/types';
 
 // Mapeo de índices 0-6 a nombres de backend
 const DAY_NAMES = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as const;
@@ -32,17 +32,25 @@ export function useScheduleLogic() {
       setSchedules([]);
       return;
     }
+
     const load = async () => {
       setLoadingSchedules(true);
-      const data = await dataService.fetchStylistSchedules(token, selectedStylistId);
-      setSchedules(data);
-      setLoadingSchedules(false);
+      try {
+        const data = await dataService.fetchStylistSchedules(token, selectedStylistId);
+        setSchedules(data);
+      } catch (err: any) {
+        toast.error(err?.message || 'No se pudo cargar la plantilla');
+        setSchedules([]);
+      } finally {
+        setLoadingSchedules(false);
+      }
     };
+
     load();
   }, [selectedStylistId, token]);
 
   // 2. Guardar Plantilla de un día (Configuración Base)
-  const handleSaveDayConfig = async (dayIndex: number, start: string, end: string, isOff: boolean) => {
+  const handleSaveDayConfig = async (dayIndex: DayOfWeekIndex, start: string, end: string, isOff: boolean) => {
     if (!token || !selectedStylistId) return;
 
     try {
@@ -54,7 +62,7 @@ export function useScheduleLogic() {
         // Guardamos horario
         await dataService.upsertStylistSchedule(token, {
           stylistId: selectedStylistId,
-          dayOfWeek: dayIndex as any,
+          dayOfWeek: dayIndex,
           slots: [{ start, end }] // Tu backend soporta múltiples, por ahora UI simple de 1 turno
         });
         toast.success(`Horario guardado para ${DAY_NAMES[dayIndex]}`);
@@ -105,10 +113,19 @@ export function useScheduleLogic() {
 
   // 4. Ver qué slots ya existen para esa fecha/estilista
   const loadExistingSlots = useCallback(async () => {
-    if (!token || !selectedStylistId || !generationDate) return;
-    const slots = await dataService.listSlots(token, selectedStylistId, generationDate);
+    if (!token || !selectedStylistId || !generationDate) {
+      setExistingSlots([]);
+      return;
+    }
+
+    const dayName: WeekdayName = DAY_NAMES[new Date(generationDate + 'T00:00:00').getDay()];
+    const slots = await dataService.listSlots(token, {
+      stylistId: selectedStylistId,
+      serviceId: selectedServiceId || undefined,
+      dayOfWeek: dayName,
+    });
     setExistingSlots(slots);
-  }, [token, selectedStylistId, generationDate]);
+  }, [token, selectedStylistId, generationDate, selectedServiceId]);
 
   useEffect(() => {
     loadExistingSlots();

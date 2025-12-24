@@ -46,6 +46,9 @@ export function UserFormDialog({
     password: "",
     isActive: true,
     cedula: "",
+    telefono: "",
+    genero: "",
+    edad: "",
   };
 
   const [formData, setFormData] = useState<UserFormData>(initialData);
@@ -63,6 +66,9 @@ export function UserFormDialog({
           password: "",
           isActive: !!userToEdit.isActive,
           cedula: userToEdit.cedula ?? "",
+          telefono: userToEdit.telefono ?? "",
+          genero: userToEdit.genero ?? "",
+          edad: userToEdit.edad ? String(userToEdit.edad) : "",
         });
       } else {
         setFormData(initialData);
@@ -138,48 +144,41 @@ export function UserFormDialog({
               onChange={(e) => handleChange("email", e.target.value)}
               required
               className="bg-black border-gray-700 text-white"
+              disabled={!!userToEdit}
             />
             {formErrors.email && <p className="text-red-400 text-sm">{formErrors.email}</p>}
           </div>
 
-          <div className="flex gap-2">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Label className="text-gray-300">Rol</Label>
               <Select
                 value={formData.role}
                 onValueChange={(v) => handleChange("role", v)}
-                disabled={!userToEdit} // Solo cambiar rol al editar si es requerido
+                disabled={!!userToEdit} // Edición de rol no permitida en endpoint /profile
               >
                 <SelectTrigger className="bg-black border-gray-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                  {!userToEdit ? (
-                    <SelectItem value="manager">Gerente</SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Gerente</SelectItem>
-                      <SelectItem value="stylist">Estilista</SelectItem>
-                    </>
-                  )}
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
+                  <SelectItem value="stylist">Estilista</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {!userToEdit && (
-              <div className="flex-1">
-                <Label className="text-gray-300">Contraseña</Label>
-                <Input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  required
-                  className="bg-black border-gray-700 text-white"
-                />
-                {formErrors.password && <p className="text-red-400 text-sm">{formErrors.password}</p>}
-              </div>
-            )}
+            <div>
+              <Label className="text-gray-300">Contraseña {userToEdit ? "(opcional)" : ""}</Label>
+              <Input
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleChange("password", e.target.value)}
+                required={!userToEdit}
+                className="bg-black border-gray-700 text-white"
+              />
+              {formErrors.password && <p className="text-red-400 text-sm">{formErrors.password}</p>}
+            </div>
           </div>
 
           <div>
@@ -194,6 +193,52 @@ export function UserFormDialog({
             {formErrors.cedula && <p className="text-red-400 text-sm">{formErrors.cedula}</p>}
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-gray-300">Teléfono</Label>
+              <Input
+                value={formData.telefono}
+                onChange={(e) => handleChange("telefono", e.target.value.replace(/\D/g, ""))}
+                required
+                maxLength={10}
+                className="bg-black border-gray-700 text-white"
+              />
+              {formErrors.telefono && <p className="text-red-400 text-sm">{formErrors.telefono}</p>}
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Género</Label>
+              <Select
+                value={formData.genero}
+                onValueChange={(v) => handleChange("genero", v)}
+              >
+                <SelectTrigger className="bg-black border-gray-700 text-white">
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-800 text-white">
+                  <SelectItem value="M">Masculino</SelectItem>
+                  <SelectItem value="F">Femenino</SelectItem>
+                  <SelectItem value="O">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+              {formErrors.genero && <p className="text-red-400 text-sm">{formErrors.genero}</p>}
+            </div>
+
+            <div>
+              <Label className="text-gray-300">Edad</Label>
+              <Input
+                type="number"
+                value={formData.edad}
+                onChange={(e) => handleChange("edad", e.target.value)}
+                required
+                min={0}
+                max={120}
+                className="bg-black border-gray-700 text-white"
+              />
+              {formErrors.edad && <p className="text-red-400 text-sm">{formErrors.edad}</p>}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               id="active"
@@ -201,6 +246,7 @@ export function UserFormDialog({
               checked={formData.isActive}
               onChange={(e) => handleChange("isActive", e.target.checked)}
               className="rounded bg-black border-gray-700"
+              disabled={!!userToEdit} // Estado se gestiona desde acción dedicada
             />
             <Label htmlFor="active" className="text-gray-300">Activo</Label>
           </div>
