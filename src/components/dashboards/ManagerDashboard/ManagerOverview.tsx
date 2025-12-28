@@ -1,163 +1,139 @@
-import { useData } from '../../../contexts/data/index';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../ui/card';
+import { TrendingUp, CalendarDays, Users, Scissors, Star, Clock } from 'lucide-react';
+import { Layers } from 'lucide-react';
+import { Tag } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
+import { useData } from '../../../contexts/data';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '../../ui/card';
 import { Badge } from '../../ui/badge';
 
 export function ManagerOverview() {
-  const { appointments, ratings, stylists, services } = useData();
-
-  // ===========================
-  // 📅 Métricas y lógica
-  // ===========================
-  const today = new Date().toISOString().split('T')[0];
-
-  // 1. Cambio: inicio -> start
-  const todayAppointments = appointments.filter(
-    (a) => a.start && a.start.split('T')[0] === today
-  );
-
-  const activeStylists = stylists.filter((s) => s.isActive);
-
-  const avgRating =
-    ratings.length > 0
-      ? (ratings.reduce((acc, r) => acc + r.estrellas, 0) / ratings.length).toFixed(1)
-      : '0.0';
-
-  // ===========================
-  // 🛠 Helpers de Renderizado
-  // ===========================
-
-  // 2. Helper para manejar array de servicios
-  const getServicesName = (apptServices: any[]) => {
-    if (!apptServices || apptServices.length === 0) return 'Sin servicio';
-    return apptServices.map((s) => s.nombre).join(', ');
-  };
-
-  // 3. Helper para obtener nombre del estilista (Objeto o ID)
-  const getStylistName = (stylistData: any) => {
-    if (typeof stylistData === 'object' && stylistData !== null) {
-      return `${stylistData.nombre} ${stylistData.apellido}`;
-    }
-    const s = stylists.find((st) => st._id === stylistData);
-    return s ? `${s.nombre} ${s.apellido}` : 'Estilista no asignado';
-  };
-
-  const formatDateTime = (iso: string) => {
-    const d = new Date(iso);
-    return {
-      date: d.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }),
-      time: d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-    };
-  };
-
-  // 4. Mapeo de estados en ESPAÑOL
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDIENTE':
-        return <Badge className="bg-yellow-900 text-yellow-200 border-yellow-800">Pendiente</Badge>;
-      case 'CONFIRMADA':
-        return <Badge className="bg-green-900 text-green-200 border-green-800">Confirmada</Badge>;
-      case 'COMPLETADA':
-        return <Badge className="bg-blue-900 text-blue-200 border-blue-800">Completada</Badge>;
-      case 'CANCELADA':
-        return <Badge className="bg-red-900 text-red-200 border-red-800">Cancelada</Badge>;
-      default:
-        return <Badge className="bg-gray-800 text-gray-200">{status}</Badge>;
-    }
-  };
+  const sections = [
+    {
+      id: 'agenda',
+      title: 'Agenda de Citas',
+      icon: <Clock className="h-5 w-5 text-[#D4AF37]" />,
+      description: 'Consulta, filtra y gestiona todas las citas del día o historial completo.',
+      features: [
+        'Filtrar por fecha, estilista y estado',
+        'Confirmar, completar o cancelar citas',
+        'Ver detalles de cliente y servicio',
+      ],
+    },
+    {
+      id: 'turnos',
+      title: 'Turnos y Horarios',
+      icon: <CalendarDays className="h-5 w-5 text-[#D4AF37]" />,
+      description: 'Define la disponibilidad por día, genera slots y administra excepciones.',
+      features: [
+        'Plantillas por día de la semana',
+        'Bloques y excepciones por fecha',
+        'Generación automática de slots por servicio',
+      ],
+    },
+    {
+      id: 'usuarios',
+      title: 'Usuarios',
+      icon: <Users className="h-5 w-5 text-blue-400" />,
+      description: 'Administra cuentas de administradores, gerentes, estilistas y clientes.',
+      features: [
+        'Crear y editar usuarios',
+        'Activar/desactivar y restablecer acceso',
+        'Búsqueda y filtros por rol',
+      ],
+    },
+    {
+      id: 'estilistas',
+      title: 'Estilistas',
+      icon: <Scissors className="h-5 w-5 text-purple-400" />,
+      description: 'Gestiona el equipo, sus perfiles y servicios ofrecidos.',
+      features: [
+        'Perfil y estado activo',
+        'Servicios que atiende cada estilista',
+        'Disponibilidad y horarios asociados',
+      ],
+    },
+    {
+      id: 'categorias',
+      title: 'Categorías',
+      icon: <Layers className="h-5 w-5 text-teal-400" />,
+      description: 'Organiza el catálogo agrupando servicios por categorías.',
+      features: [
+        'Crear, editar y activar/desactivar',
+        'Imagen y descripción de cada categoría',
+        'Relación con servicios del catálogo',
+      ],
+    },
+    {
+      id: 'servicios',
+      title: 'Servicios',
+      icon: <Tag className="h-5 w-5 text-pink-400" />,
+      description: 'Administra el catálogo de servicios: precio, duración y estado.',
+      features: [
+        'Crear y editar servicios',
+        'Precio, duración y visibilidad',
+        'Asociación con categorías y estilistas',
+      ],
+    },
+    {
+      id: 'calificaciones',
+      title: 'Calificaciones',
+      icon: <Star className="h-5 w-5 text-yellow-400" />,
+      description: 'Visualiza reseñas, promedio de estrellas y comentarios recientes.',
+      features: [
+        'Listado y filtro de calificaciones',
+        'Promedios por estilista',
+        'Detalle de comentarios',
+      ],
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes',
+      icon: <BarChart3 className="h-5 w-5 text-[#9D8EC1]" />,
+      description: 'Analiza ingresos, rendimiento y estados de reservas. Exporta a PDF.',
+      features: [
+        'Resumen financiero por rango de fechas',
+        'Desglose por estilista y servicio',
+        'Descarga de reportes en PDF',
+      ],
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-[#D4AF37] text-xl font-semibold">Resumen General</h2>
-
-      {/* MÉTRICAS */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardDescription className="text-gray-400">Citas Hoy</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {todayAppointments.length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardDescription className="text-gray-400">Estilistas Activos</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {activeStylists.length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardDescription className="text-gray-400">Servicios</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {services.length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardDescription className="text-gray-400">Calificación Promedio</CardDescription>
-            <CardTitle className="text-[#D4AF37] text-3xl font-bold">
-              {avgRating}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <h2 className="text-[#D4AF37] text-xl font-semibold flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" /> Panel de Administración
+        </h2>
       </div>
 
-      {/* 📌 Citas Recientes */}
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-white text-lg font-semibold">Citas Recientes</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          {appointments.length === 0 ? (
-            <p className="text-gray-400 text-sm">No hay citas registradas.</p>
-          ) : (
-            <div className="space-y-4">
-              {appointments
-                .slice()
-                // Ordenar por start descendente
-                .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
-                .slice(0, 5)
-                .map((appointment) => {
-                  const { date, time } = formatDateTime(appointment.start);
-                  
-                  return (
-                    <div
-                      key={appointment._id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 pb-3 last:border-0 gap-3 sm:gap-0"
-                    >
-                      <div>
-                        <p className="text-white font-medium">
-                          {getServicesName(appointment.services)}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Estilista: {getStylistName(appointment.stylist)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {date} a las {time}
-                        </p>
-                        {appointment.notes && (
-                           <p className="text-xs text-gray-500 italic mt-1">
-                             "{appointment.notes}"
-                           </p>
-                        )}
-                      </div>
-                      <div className="flex-shrink-0">
-                        {getStatusBadge(appointment.status)}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {sections.map((section) => (
+          <Card key={section.id} className="bg-gray-900 border-gray-800 hover:border-[#D4AF37]/40 transition-colors">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                {section.icon}
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <CardDescription className="text-gray-400">
+                {section.description}
+              </CardDescription>
+              <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
+                {section.features.map((f, idx) => (
+                  <li key={idx}>{f}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
