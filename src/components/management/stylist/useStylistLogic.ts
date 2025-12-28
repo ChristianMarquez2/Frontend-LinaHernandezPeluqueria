@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '../../../config/api';
+import { authService } from '../../../contexts/auth/service';
 import { Stylist, StylistFormData, ValidationErrors } from './types';
 
 export function useStylistLogic() {
@@ -202,6 +203,17 @@ export function useStylistLogic() {
           throw new Error(errData.message || 'Error al crear estilista');
         }
         toast.success('Estilista creado exitosamente');
+
+        // 📧 Enviar correo de verificación al nuevo estilista
+        try {
+          await authService.sendVerificationEmail(formData.email);
+          toast.message('Verificación enviada', {
+            description: 'Se envió un correo para verificar la cuenta del estilista.',
+          });
+        } catch (e) {
+          console.error('Error enviando verificación:', e);
+          toast.error('No se pudo enviar el correo de verificación');
+        }
       }
 
       fetchStylists();
