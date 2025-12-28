@@ -1,7 +1,6 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, UserCog } from 'lucide-react'; // Agregamos UserCog
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { cn } from "../../ui/utils"; // o tu ruta real
 import {
   Table,
   TableBody,
@@ -10,9 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../ui/table';
-// Importamos Stylist desde types (que a su vez importa de global)
 import { Stylist } from './types';
-import { StylistScheduleButton } from '../schedule/StylistScheduleButton';
 
 interface StylistTableProps {
   stylists: Stylist[];
@@ -25,11 +22,17 @@ export function StylistTable({ stylists, onEdit, onDelete, onEditUser }: Stylist
 
   // Helper para obtener nombre del servicio de forma segura
   const getMainServiceName = (stylist: Stylist) => {
+    // Primero intentamos ver si tiene catálogos (la nueva estructura)
+    if (stylist.catalogs && stylist.catalogs.length > 0) {
+      const firstCat = stylist.catalogs[0];
+      return typeof firstCat === 'object' && 'nombre' in firstCat ? firstCat.nombre : "Catálogo asignado";
+    }
+
+    // Fallback a servicesOffered (estructura antigua si existe)
     if (!stylist.servicesOffered || stylist.servicesOffered.length === 0) {
       return <span className="text-gray-500 italic">Sin asignar</span>;
     }
     const first = stylist.servicesOffered[0];
-    // Si viene populado (objeto) tiene .nombre, si no es solo un ID string
     if (typeof first === 'object' && 'nombre' in first) {
       return first.nombre;
     }
@@ -82,18 +85,21 @@ export function StylistTable({ stylists, onEdit, onDelete, onEditUser }: Stylist
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
+                  
+                  {/* BOTÓN 1: Editar Datos de Estilista (AQUÍ ESTÁ LA ESPECIALIDAD) */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => (onEditUser ? onEditUser(s) : onEdit(s))}
-                    className="text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
-                    title="Editar usuario"
+                    onClick={() => onEdit(s)}
+                    className="text-blue-400 hover:bg-blue-900/20 hover:text-blue-300"
+                    title="Editar Estilista y Especialidad"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <UserCog className="h-4 w-4" />
                   </Button>
 
-                
+                  
 
+                  {/* BOTÓN 3: Eliminar/Desactivar */}
                   <Button
                     variant="ghost"
                     size="icon"
