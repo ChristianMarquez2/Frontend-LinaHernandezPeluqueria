@@ -10,9 +10,11 @@ import { ManagerOverview } from './ManagerOverview';
 import { ManagerView } from './types';
 
 // Componentes de Gestión
+import { AppointmentCalendar } from '../../management/calendar/AppointmentCalendar';
 import { StylistManagement } from '../../management/stylist/StylistManagement';
 import { ScheduleManagement } from '../../management/schedule/ScheduleManagement';
 import { ServiceManagement } from '../../management/services/ServiceManagement';
+import { RatingsManagement } from '../../management/ratings/RatingsManagement';
 import { ReportsAndStats } from '../../management/reports/ReportsAndStats';
 
 export function ManagerDashboard() {
@@ -85,9 +87,11 @@ export function ManagerDashboard() {
         {/* Contenido */}
         <main className="flex-1 p-6">
           {currentView === 'overview' && <ManagerOverview />}
+          {currentView === 'calendar' && <AppointmentCalendar />}
           {currentView === 'stylists' && <StylistManagement />}
           {currentView === 'schedules' && <ScheduleManagement />}
           {currentView === 'services' && <ServiceManagement />}
+          {currentView === 'ratings' && <RatingsManagement />}
           {currentView === 'reports' && <ReportsAndStats />}
         </main>
       </div>

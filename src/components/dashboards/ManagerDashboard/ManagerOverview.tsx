@@ -1,8 +1,9 @@
-import { TrendingUp, CalendarDays, Users, Scissors, Star, Clock } from 'lucide-react';
+import { TrendingUp, CalendarDays, Users, Scissors, Star, Clock, Calendar } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tag } from 'lucide-react';
 import { BarChart3 } from 'lucide-react';
 import { useData } from '../../../contexts/data';
+
 import {
   Card,
   CardHeader,
@@ -17,7 +18,7 @@ export function ManagerOverview() {
     {
       id: 'agenda',
       title: 'Agenda de Citas',
-      icon: <Clock className="h-5 w-5 text-[#D4AF37]" />,
+      icon: <CalendarDays className="h-5 w-5 text-[#D4AF37]" />,
       description: 'Consulta, filtra y gestiona todas las citas del día o historial completo.',
       features: [
         'Filtrar por fecha, estilista y estado',
@@ -25,31 +26,10 @@ export function ManagerOverview() {
         'Ver detalles de cliente y servicio',
       ],
     },
-    {
-      id: 'turnos',
-      title: 'Turnos y Horarios',
-      icon: <CalendarDays className="h-5 w-5 text-[#D4AF37]" />,
-      description: 'Define la disponibilidad por día, genera slots y administra excepciones.',
-      features: [
-        'Plantillas por día de la semana',
-        'Bloques y excepciones por fecha',
-        'Generación automática de slots por servicio',
-      ],
-    },
-    {
-      id: 'usuarios',
-      title: 'Usuarios',
-      icon: <Users className="h-5 w-5 text-blue-400" />,
-      description: 'Administra cuentas de administradores, gerentes, estilistas y clientes.',
-      features: [
-        'Crear y editar usuarios',
-        'Activar/desactivar y restablecer acceso',
-        'Búsqueda y filtros por rol',
-      ],
-    },
+
     {
       id: 'estilistas',
-      title: 'Estilistas',
+      title: 'Gestión de Estilistas',
       icon: <Scissors className="h-5 w-5 text-purple-400" />,
       description: 'Gestiona el equipo, sus perfiles y servicios ofrecidos.',
       features: [
@@ -59,16 +39,19 @@ export function ManagerOverview() {
       ],
     },
     {
-      id: 'categorias',
-      title: 'Categorías',
-      icon: <Layers className="h-5 w-5 text-teal-400" />,
-      description: 'Organiza el catálogo agrupando servicios por categorías.',
+      id: 'turnos',
+      title: 'Horarios de atención',
+      icon: <Calendar className="h-5 w-5 text-[#D4AF37]" />,
+      description: 'Define la disponibilidad por día, genera slots y administra excepciones.',
       features: [
-        'Crear, editar y activar/desactivar',
-        'Imagen y descripción de cada categoría',
-        'Relación con servicios del catálogo',
+        'Plantillas por día de la semana',
+        'Bloques y excepciones por fecha',
+        'Generación automática de slots por servicio',
       ],
     },
+    
+    
+    
     {
       id: 'servicios',
       title: 'Servicios',
@@ -93,7 +76,7 @@ export function ManagerOverview() {
     },
     {
       id: 'reportes',
-      title: 'Reportes',
+      title: 'Reportes y Estadísticas',
       icon: <BarChart3 className="h-5 w-5 text-[#9D8EC1]" />,
       description: 'Analiza ingresos, rendimiento y estados de reservas. Exporta a PDF.',
       features: [

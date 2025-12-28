@@ -1,6 +1,8 @@
 export type ManagerView = 
   | 'overview' 
+  | 'calendar'
   | 'stylists' 
   | 'schedules' 
-  | 'services' 
+  | 'services'
+  | 'ratings' 
   | 'reports';

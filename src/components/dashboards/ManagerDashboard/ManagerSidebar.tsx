@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, Scissors } from 'lucide-react';
+import { BarChart3, Calendar, Scissors, CalendarDays, Star, Tag } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { ManagerView } from './types';
 
@@ -13,9 +13,11 @@ export function ManagerSidebar({ isOpen, currentView, setCurrentView }: ManagerS
 
   const menuItems = [
     { id: 'overview', label: 'Panel Principal', icon: BarChart3 },
+    { id: 'calendar', label: 'Agenda de Citas', icon: CalendarDays },
     { id: 'stylists', label: 'Gestión de Estilistas', icon: Scissors },
     { id: 'schedules', label: 'Horarios de Atención', icon: Calendar },
-    { id: 'services', label: 'Servicios', icon: Scissors },
+    { id: 'services', label: 'Servicios', icon: Tag },
+    { id: 'ratings', label: 'Calificaciones', icon: Star },
     { id: 'reports', label: 'Reportes y Estadísticas', icon: BarChart3 },
   ];
 
