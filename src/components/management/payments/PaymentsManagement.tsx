@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CreditCard, Download, Eye, CheckCircle, Clock, AlertCircle, Search } from 'lucide-react';
 import { Card, CardContent } from '../../ui/card';
 import { Button } from '../../ui/button';
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../../ui/badge';
 import { dataService } from '../../../contexts/data/service';
 import { toast } from 'sonner';
+import { useServices } from '../../../contexts/data/context/ServicesContext';
 
 // Definimos la interfaz exacta de lo que devuelve tu backend en /transfer-proofs
 interface PaymentProof {
@@ -17,6 +18,16 @@ interface PaymentProof {
   paymentStatus: string;
   amount?: number;
   precio?: number; // Alias
+  serviceId?: string;
+  service?: { _id?: string; nombre?: string; name?: string; precio?: number; price?: number };
+  // A veces el backend puede incluir la reserva poblada
+  booking?: {
+    servicioId?: string;
+    servicio?: { _id?: string; nombre?: string; precio?: number };
+    service?: { _id?: string; nombre?: string; precio?: number };
+    price?: number;
+    precio?: number;
+  };
   inicio?: string; // Fecha cita
   transferProofUrl: string;
   transferProofUploadedAt?: string;
@@ -27,6 +38,7 @@ interface PaymentProof {
 
 export function PaymentsManagement() {
   const token = localStorage.getItem('accessToken') || '';
+  const { services } = useServices();
   
   const [payments, setPayments] = useState<PaymentProof[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<PaymentProof[]>([]);
@@ -39,6 +51,20 @@ export function PaymentsManagement() {
   // Modal de detalles
   const [selectedPayment, setSelectedPayment] = useState<PaymentProof | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Mapa rápido para nombre y precio de servicio
+  const serviceMap = useMemo(() => {
+    const map: Record<string, { name: string; price: number }> = {};
+    services.forEach((s) => {
+      const id = s._id || s.id;
+      if (!id) return;
+      map[id] = {
+        name: s.nombre || s.name || 'Servicio',
+        price: Number(s.precio ?? s.price ?? 0),
+      };
+    });
+    return map;
+  }, [services]);
 
   // Cargar pagos
   useEffect(() => {
@@ -137,8 +163,44 @@ export function PaymentsManagement() {
 
   // Helpers de datos seguros
   const getClientName = (p: PaymentProof) => p.clientName || 'Cliente sin nombre';
-  const getServiceName = (p: PaymentProof) => p.serviceName || 'Servicio';
-  const getAmount = (p: PaymentProof) => p.amount || p.precio || 0;
+  const getServiceName = (p: PaymentProof) => {
+    if (p.serviceName) return p.serviceName;
+    if (p.service?.nombre || p.service?.name) return p.service.nombre || p.service.name || 'Servicio';
+
+    // Si vino la reserva populada, intentamos extraer nombre de servicio
+    const bookingServiceName =
+      (p.booking?.servicio as any)?.nombre ||
+      (p.booking?.service as any)?.nombre;
+    if (bookingServiceName) return bookingServiceName;
+
+    // Map de catálogo
+    const srvId = p.serviceId || p.booking?.servicioId;
+    if (srvId && serviceMap[srvId]) return serviceMap[srvId].name;
+    return 'Servicio';
+  };
+
+  const getAmount = (p: PaymentProof) => {
+    const candidates = [
+      p.amount,
+      p.precio,
+      p.service?.precio,
+      p.service?.price,
+      p.booking?.precio,
+      p.booking?.price,
+      (p.booking?.servicio as any)?.precio,
+      (p.booking?.service as any)?.precio,
+    ];
+
+    for (const c of candidates) {
+      if (c === undefined || c === null) continue;
+      const n = Number(c);
+      if (Number.isFinite(n)) return n;
+    }
+
+    const srvId = p.serviceId || p.booking?.servicioId;
+    if (srvId && serviceMap[srvId]) return serviceMap[srvId].price;
+    return 0;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
