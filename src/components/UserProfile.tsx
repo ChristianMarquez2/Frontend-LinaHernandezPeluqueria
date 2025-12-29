@@ -67,10 +67,19 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
   // Cargar datos reales del usuario
   useEffect(() => {
     if (user) {
+      const mapGenderFromBackend = (value: string | undefined) => {
+        const v = (value || "").toLowerCase();
+        if (v === "f" || v.includes("fem")) return "femenino";
+        if (v === "m" || v.includes("masc")) return "masculino";
+        if (v === "o" || v.includes("otro")) return "otro";
+        if (v) return "prefiero-no-decir";
+        return "";
+      };
+
       setProfileData({
         email: user.email || "",
         phone: user.phone || "",
-        gender: user.gender || "",
+        gender: mapGenderFromBackend(user.gender),
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         cedula: user.cedula || "",
