@@ -94,9 +94,11 @@ export function UserManagement() {
                         : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                     }`}
                   >
-                    {role === "all"
-                      ? "Todos"
-                      : role.charAt(0).toUpperCase() + role.slice(1)}
+                    {role === "all" && "Todos"}
+                    {role === "admin" && "Administrador"}
+                    {role === "manager" && "Gerente"}
+                    {role === "stylist" && "Estilista"}
+                    {role === "client" && "Cliente"}
                   </button>
                 ))}
               </div>

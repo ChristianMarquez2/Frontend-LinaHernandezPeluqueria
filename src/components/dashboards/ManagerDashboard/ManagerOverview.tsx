@@ -3,6 +3,7 @@ import { Layers } from 'lucide-react';
 import { Tag } from 'lucide-react';
 import { BarChart3 } from 'lucide-react';
 import { useData } from '../../../contexts/data';
+import { CreditCard } from 'lucide-react';
 
 import {
   Card,
@@ -72,6 +73,17 @@ export function ManagerOverview() {
         'Listado y filtro de calificaciones',
         'Promedios por estilista',
         'Detalle de comentarios',
+      ],
+    },
+    {
+      id: 'pagos',
+      title: 'Pagos y Comprobantes',
+      icon: <CreditCard className="h-5 w-5 text-emerald-400" />,
+      description: 'Administra comprobantes de transferencias y confirma pagos de reservas.',
+      features: [
+        'Lista de comprobantes con cliente, servicio y estado',
+        'Visualización y descarga del comprobante enviado',
+        'Confirmación de pagos pendientes',
       ],
     },
     {

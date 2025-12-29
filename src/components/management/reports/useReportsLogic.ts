@@ -43,7 +43,7 @@ export function useReportsLogic() {
       'CONFIRMED': 'Confirmada',
       'NO_SHOW': 'No Asistió',
       'IN_PROGRESS': 'En Curso',
-      'PENDING_STYLIST_CONFIRMATION': 'Pendiente Stylist'
+      'PENDING_STYLIST_CONFIRMATION': 'Pendiente Estilista',
     };
 
     const appointmentsByStatus = dashboardData.bookingsByStatus.map((item) => ({

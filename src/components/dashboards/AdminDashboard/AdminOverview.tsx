@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import { CalendarDays, Clock, Users, Scissors, Layers, Tag, Star, BarChart3, TrendingUp } from 'lucide-react';
+import { CalendarDays, Clock, Users, Scissors, Layers, Tag, Star, BarChart3, TrendingUp, CreditCard } from 'lucide-react';
 
 export function AdminOverview() {
   const sections = [
@@ -79,6 +79,17 @@ export function AdminOverview() {
         'Listado y filtro de calificaciones',
         'Promedios por estilista',
         'Detalle de comentarios',
+      ],
+    },
+    {
+      id: 'pagos',
+      title: 'Pagos y Comprobantes',
+      icon: <CreditCard className="h-5 w-5 text-emerald-400" />,
+      description: 'Administra comprobantes de transferencias y confirma pagos de reservas.',
+      features: [
+        'Lista de comprobantes con cliente, servicio y estado',
+        'Visualización y descarga del comprobante enviado',
+        'Confirmación de pagos pendientes',
       ],
     },
     {
