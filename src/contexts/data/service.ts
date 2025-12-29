@@ -20,7 +20,8 @@ import {
   Category,
   CategoryListResponse,
   CreateCategoryDTO,
-  UpdateCategoryDTO
+  UpdateCategoryDTO,
+  TransferRequestResponse,
 } from "./types";
 
 const getHeaders = (token: string) => ({
@@ -287,8 +288,8 @@ export const dataService = {
   fetchDashboardSummary: async (token: string, params: ReportRangeParams): Promise<DashboardSummary | null> => {
     try {
       const q = new URLSearchParams({ from: params.from, to: params.to });
-      const res = await fetch(`${API_BASE_URL}/reports/summary?${q.toString()}`, { 
-        headers: getHeaders(token) 
+      const res = await fetch(`${API_BASE_URL}/reports/summary?${q.toString()}`, {
+        headers: getHeaders(token)
       });
       if (!res.ok) throw new Error("Error fetching summary");
       return await res.json();
@@ -304,12 +305,12 @@ export const dataService = {
       const q = new URLSearchParams({ from: params.from, to: params.to });
       // Si un admin busca un estilista específico, añade el ID
       if (params.stylistId && !isPersonal) q.append("stylistId", params.stylistId);
-      
+
       const endpoint = isPersonal ? "/reports/my" : "/reports/stylists";
-      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, { 
-        headers: getHeaders(token) 
+      const res = await fetch(`${API_BASE_URL}${endpoint}?${q.toString()}`, {
+        headers: getHeaders(token)
       });
-      
+
       if (!res.ok) throw new Error("Error fetching stylist reports");
       return await res.json();
     } catch (error) {
@@ -365,10 +366,10 @@ export const dataService = {
   },
 
   fetchCategories: async (token: string, page = 1, q = ""): Promise<CategoryListResponse> => {
-    const params = new URLSearchParams({ 
-      page: String(page), 
-      limit: "20", 
-      includeServices: "true" 
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: "20",
+      includeServices: "true"
     });
     if (q) params.append("q", q);
 
@@ -382,7 +383,7 @@ export const dataService = {
   saveCategory: async (token: string, data: any, id?: string): Promise<Category> => {
     const url = id ? `${API_BASE_URL}/catalog/${id}` : `${API_BASE_URL}/catalog`;
     const method = id ? "PUT" : "POST";
-    
+
     const res = await fetch(url, {
       method,
       headers: getHeaders(token),
@@ -403,12 +404,85 @@ export const dataService = {
     const json = await res.json();
     return json.category; // Tu controlador devuelve { message, category }
   },
-  
+
   deleteCategory: async (token: string, id: string): Promise<void> => {
     const res = await fetch(`${API_BASE_URL}/catalog/${id}`, {
       method: "DELETE",
       headers: getHeaders(token),
     });
     if (!res.ok) throw new Error("No se pudo eliminar la categoría");
-  }
+  },
+
+  // ============================================================
+  // 💰 PAGOS Y TRANSFERENCIAS (Nuevo)
+  // ============================================================
+
+  // 1. Solicitar datos de transferencia
+  requestTransfer: async (token: string, bookingId: string): Promise<TransferRequestResponse> => {
+    const res = await fetch(`${API_BASE_URL}/payments/booking/${bookingId}/transfer-request`, {
+      method: "POST",
+      headers: getHeaders(token),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error al solicitar pago");
+    return data;
+  },
+
+  // 2. Subir comprobante (Multipart File)
+  uploadTransferProof: async (token: string, bookingId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // Nota: NO usamos 'Content-Type': 'application/json' aquí, el navegador lo pone automático con el boundary
+    const res = await fetch(`${API_BASE_URL}/payments/booking/${bookingId}/transfer-proof`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`, // Header manual sin Content-Type json
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error al subir comprobante");
+    return data;
+  },
+
+  // 3. Confirmar pago (Admin)
+  confirmTransferPayment: async (token: string, bookingId: string) => {
+    const res = await fetch(`${API_BASE_URL}/payments/booking/${bookingId}/confirm-transfer`, {
+      method: "POST",
+      headers: getHeaders(token),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error al confirmar pago");
+    return data;
+  },
+
+  // 4. Ver comprobante (Opcional, si quieres ver el estado actual)
+  getTransferProof: async (token: string, bookingId: string) => {
+    const res = await fetch(`${API_BASE_URL}/payments/booking/${bookingId}/transfer-proof`, {
+      headers: getHeaders(token),
+    });
+    if (!res.ok) return null; // Puede no existir aún
+    return await res.json();
+  },
+
+ listTransferProofs: async (token: string, clientId?: string) => {
+    let url = `${API_BASE_URL}/payments/transfer-proofs`;
+    if (clientId) url += `?clientId=${clientId}`;
+    
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error cargando comprobantes");
+    // El backend devuelve { count: number, data: [] }
+    return data; 
+  },
+
+  
 };

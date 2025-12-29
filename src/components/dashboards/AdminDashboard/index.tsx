@@ -20,6 +20,7 @@ import { CategoryManagement } from '../../management/category/CategoryManagement
 // Nuevos Módulos Integrados
 import { AppointmentCalendar } from '../../management/calendar/AppointmentCalendar'; // <--- NUEVO
 import { RatingsManagement } from '../../management/ratings/RatingsManagement';     // <--- NUEVO
+import { PaymentsManagement } from '../../management/payments/PaymentsManagement'; // <--- NUEVO: Gestión de Pagos
 
 export function AdminDashboard() {
   const { user, logout, refreshSession } = useAuth();
@@ -103,6 +104,7 @@ export function AdminDashboard() {
             
             {/* Análisis */}
             {currentView === 'ratings' && <RatingsManagement />} {/* Ahora el Admin ve todos los ratings */}
+            {currentView === 'payments' && <PaymentsManagement />}
             {currentView === 'reports' && <ReportsAndStats />}
           </div>
         </main>

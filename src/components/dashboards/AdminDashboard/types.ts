@@ -7,4 +7,5 @@ export type AdminView =
   | 'categories'
   | 'reports'
   | 'calendar'  // <--- NUEVO: Agenda
-  | 'ratings';  // <--- NUEVO: Calificaciones
+  | 'ratings'   // <--- NUEVO: Calificaciones
+  | 'payments'; // <--- NUEVO: Gestión de Pagos

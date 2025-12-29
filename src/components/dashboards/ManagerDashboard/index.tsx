@@ -16,6 +16,7 @@ import { ScheduleManagement } from '../../management/schedule/ScheduleManagement
 import { ServiceManagement } from '../../management/services/ServiceManagement';
 import { RatingsManagement } from '../../management/ratings/RatingsManagement';
 import { ReportsAndStats } from '../../management/reports/ReportsAndStats';
+import { PaymentsManagement } from '../../management/payments/PaymentsManagement'; // <--- NUEVO: Gestión de Pagos
 
 export function ManagerDashboard() {
   const { user, logout, refreshSession } = useAuth();
@@ -92,6 +93,7 @@ export function ManagerDashboard() {
           {currentView === 'schedules' && <ScheduleManagement />}
           {currentView === 'services' && <ServiceManagement />}
           {currentView === 'ratings' && <RatingsManagement />}
+          {currentView === 'payments' && <PaymentsManagement />}
           {currentView === 'reports' && <ReportsAndStats />}
         </main>
       </div>

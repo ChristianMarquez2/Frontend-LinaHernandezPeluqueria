@@ -161,7 +161,6 @@ export function UserFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-800 text-white">
-                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Gerente</SelectItem>
                   <SelectItem value="stylist">Estilista</SelectItem>
                 </SelectContent>

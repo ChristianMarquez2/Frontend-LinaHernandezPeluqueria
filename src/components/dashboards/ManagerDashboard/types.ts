@@ -5,4 +5,5 @@ export type ManagerView =
   | 'schedules' 
   | 'services'
   | 'ratings' 
-  | 'reports';
+  | 'reports'
+  | 'payments'; // <--- NUEVO: Gestión de Pagos

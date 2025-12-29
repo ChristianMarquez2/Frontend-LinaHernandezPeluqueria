@@ -6,7 +6,8 @@ import {
   Layers,
   Star, // Para Ratings
   Clock, // Para Agenda
-  Tag
+  Tag,
+  CreditCard // Para Pagos
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { AdminView } from './types';
@@ -37,6 +38,7 @@ export function AdminSidebar({ currentView, setCurrentView, isOpen }: AdminSideb
     
     // Análisis y Feedback
     { id: 'ratings' as AdminView, label: 'Calificaciones', icon: Star }, // <--- NUEVO
+    { id: 'payments' as AdminView, label: 'Pagos y Comprobantes', icon: CreditCard }, // <--- NUEVO: Pagos
     { id: 'reports' as AdminView, label: 'Reportes', icon: BarChart3 },
   ];
 

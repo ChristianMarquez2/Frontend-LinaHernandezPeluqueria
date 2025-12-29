@@ -4,7 +4,8 @@ import { Badge } from '../../ui/badge';
 import { RatingsManagement } from '../../management/ratings/RatingsManagement';
 import { safeParseDate, safeParseTime } from './utils';
 import { Booking } from '../../../contexts/data/types';
-import { useData } from '../../../contexts/data/index'; // Importamos useData
+import { useData } from '../../../contexts/data/index';
+import { TransferPaymentDialog } from './TransferPaymentDialog';
 import {
   CalendarDays,
   Clock,
@@ -12,14 +13,8 @@ import {
   Filter,
   CheckCircle2,
   Calendar,
-  Settings,
+  Clock3 // Icono para "En revisión"
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
 
 interface ClientAppointmentsProps {
   showRatings: boolean;
@@ -47,34 +42,27 @@ export function ClientAppointments({
   onCancel,
 }: ClientAppointmentsProps) {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const { services, stylists } = useData(); // Obtenemos datos globales para buscar nombres
+  const { services, stylists } = useData();
+  const [paymentBookingId, setPaymentBookingId] = useState<string | null>(null);
 
   // --- HELPERS DE BÚSQUEDA ---
-
   const getServiceName = (booking: Booking) => {
-    // 1. Si ya viene como objeto populado
     if (booking.servicio && typeof booking.servicio === 'object') return booking.servicio.nombre;
-    
-    // 2. Si viene como ID string, buscamos en la lista global de servicios
     const serviceId = typeof booking.servicioId === 'string' ? booking.servicioId : (booking as any).servicio;
     const found = services.find(s => s._id === serviceId);
     return found ? found.nombre : "Servicio";
   };
 
   const getStylistName = (booking: Booking) => {
-    // 1. Si ya viene como objeto populado
     if (booking.estilista && typeof booking.estilista === 'object') {
       return `${booking.estilista.nombre} ${booking.estilista.apellido}`;
     }
-    
-    // 2. Si viene como ID string, buscamos en la lista global de estilistas
     const stylistId = typeof booking.estilistaId === 'string' ? booking.estilistaId : (booking as any).estilista;
     const found = stylists.find(s => s._id === stylistId);
     return found ? `${found.nombre} ${found.apellido}` : "Estilista asignado";
   };
 
   // --- LÓGICA DE FILTRADO ---
-
   const filteredAppointments = useMemo(() => {
     let data = [...appointments];
     if (filterStatus !== "ALL") {
@@ -94,6 +82,20 @@ export function ClientAppointments({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+
+      {/* DIÁLOGO DE PAGO */}
+      <TransferPaymentDialog 
+        isOpen={!!paymentBookingId}
+        onClose={() => setPaymentBookingId(null)}
+        bookingId={paymentBookingId}
+        onSuccess={() => {
+           setPaymentBookingId(null);
+           // Aquí el estado del componente se actualizará solo si recargas los datos desde el padre
+           // o si gestionas el estado localmente, pero al cerrarse ya no mostrará el botón
+           // porque booking.transferProofUrl habrá cambiado en el backend (requiere refresh de datos).
+        }}
+      />
+
       {/* --- TABS --- */}
       <div className="flex items-center justify-between bg-black/40 p-1.5 rounded-xl border border-gray-800 w-full sm:w-fit backdrop-blur-sm">
         <button
@@ -151,6 +153,25 @@ export function ClientAppointments({
                 const hora = safeParseTime(booking.inicio);
                 const isActive = ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(booking.estado);
                 const statusConfig = STATUS_CONFIG[booking.estado] || STATUS_CONFIG.ALL;
+                
+                // =========================================================
+                // 💡 LÓGICA DE PAGO MODIFICADA (Frontend Forzado)
+                // =========================================================
+                
+                const isCancelled = ["CANCELLED", "NO_SHOW", "COMPLETED"].includes(booking.estado);
+                
+                // 1. Ya pagó?
+                const isPaid = booking.paymentStatus === 'PAID';
+                
+                // 2. Ya subió comprobante? (Aunque el admin no haya confirmado)
+                const hasProof = !!booking.transferProofUrl;
+
+                // 3. Mostrar botón SI: No está cancelada, No está pagada Y No tiene comprobante subido.
+                // Ignoramos si está "Confirmed" o "Scheduled", sale siempre que deba plata.
+                const showPayButton = !isCancelled && !isPaid && !hasProof;
+
+                // 4. Mostrar "En revisión" SI: No está pagada PERO ya tiene foto
+                const showReviewMessage = !isCancelled && !isPaid && hasProof;
 
                 return (
                   <div key={booking._id} className="group relative h-full text-card-foreground flex flex-col gap-6 rounded-xl border bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors overflow-hidden">
@@ -195,26 +216,47 @@ export function ClientAppointments({
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-800/50 flex items-center gap-3">
-                        {isActive ? (
-                          <>
-                            <Button variant="outline" onClick={() => onEdit(booking)} className="btn-green-outline flex-1 h-10">
-                              Reprogramar
-                            </Button>
-                            <Button variant="ghost" onClick={() => onCancel(booking._id)} className="btn-red">
-                              Cancelar
-                            </Button>
-                          </>
-                        ) : (
-                          <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
-                            <span>Histórico</span>
-                            {booking.estado === 'COMPLETED' ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                            ) : (
-                              <div className="h-1.5 w-1.5 rounded-full bg-gray-600"></div>
-                            )}
+                      <div className="pt-4 border-t border-gray-800/50 flex flex-col gap-2">
+                        
+                        {/* ✅ BOTÓN DE PAGO (Solo si no ha subido foto aún) */}
+                        {showPayButton && (
+                          <Button 
+                            onClick={() => setPaymentBookingId(booking._id)}
+                            className="w-full bg-[#D4AF37] hover:bg-[#B5952F] text-black font-bold mb-2 shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                          >
+                            Pagar / Subir Comprobante
+                          </Button>
+                        )}
+
+                        {/* ⏳ MENSAJE EN REVISIÓN (Si ya subió foto pero admin no confirma) */}
+                        {showReviewMessage && (
+                          <div className="w-full bg-blue-900/20 border border-blue-900/50 rounded-lg p-2.5 mb-2 flex items-center justify-center gap-2">
+                             <Clock3 className="h-4 w-4 text-blue-400 animate-pulse" />
+                             <span className="text-sm font-medium text-blue-200">Comprobante en revisión</span>
                           </div>
                         )}
+
+                        <div className="flex items-center gap-3">
+                            {isActive ? (
+                            <>
+                                <Button variant="outline" onClick={() => onEdit(booking)} className="btn-green-outline flex-1 h-10">
+                                Reprogramar
+                                </Button>
+                                <Button variant="ghost" onClick={() => onCancel(booking._id)} className="btn-red">
+                                Cancelar
+                                </Button>
+                            </>
+                            ) : (
+                            <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
+                                <span>Histórico</span>
+                                {booking.estado === 'COMPLETED' ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                ) : (
+                                <div className="h-1.5 w-1.5 rounded-full bg-gray-600"></div>
+                                )}
+                            </div>
+                            )}
+                        </div>
                       </div>
                     </div>
                   </div>

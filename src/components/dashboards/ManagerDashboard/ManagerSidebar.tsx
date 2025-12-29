@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, Scissors, CalendarDays, Star, Tag } from 'lucide-react';
+import { BarChart3, Calendar, Scissors, CalendarDays, Star, Tag, CreditCard } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { ManagerView } from './types';
 
@@ -18,6 +18,7 @@ export function ManagerSidebar({ isOpen, currentView, setCurrentView }: ManagerS
     { id: 'schedules', label: 'Horarios de Atención', icon: Calendar },
     { id: 'services', label: 'Servicios', icon: Tag },
     { id: 'ratings', label: 'Calificaciones', icon: Star },
+    { id: 'payments', label: 'Pagos y Comprobantes', icon: CreditCard },
     { id: 'reports', label: 'Reportes y Estadísticas', icon: BarChart3 },
   ];
 

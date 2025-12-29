@@ -1,40 +1,72 @@
-// ==================== ENTIDADES BASE ====================
+// src/contexts/data/types.ts
+
+// ============================================================
+// 1. ENTIDADES BASE (CATÁLOGO Y USUARIOS)
+// ============================================================
+
+export interface User {
+  _id: string;
+  id?: string; // Alias opcional
+  email: string;
+  nombre: string;     // Backend field
+  apellido: string;   // Backend field
+  firstName?: string; // Frontend alias (opcional)
+  lastName?: string;  // Frontend alias (opcional)
+  telefono?: string;
+  phone?: string;
+  role: 'admin' | 'manager' | 'stylist' | 'client' | 'ADMIN' | 'GERENTE' | 'ESTILISTA' | 'CLIENTE';
+  isActive?: boolean;
+}
 
 export interface Service {
   _id: string;
+  id?: string;
+  
+  // Datos principales (Backend Truth)
   nombre: string;
-  codigo?: string; // El signo '?' permite que sea undefined
   descripcion: string;
   precio: number;
   duracionMin: number;
   activo: boolean;
-  categoria?: string | any; // Añadimos esto para la relación con catálogo
+  codigo?: string;
+  
+  // Relaciones
+  categoria?: string | Category; // Puede ser ID o poblado
+
+  // Alias para compatibilidad frontend (Opcionales)
+  name?: string; 
+  description?: string;
+  price?: number;
+  duration?: number;
+  active?: boolean;
+
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface ServiceFormData {
+export interface Category {
+  _id: string;
   nombre: string;
-  codigo: string;
-  descripcion: string;
-  precio: string;       // Se maneja como string en el form para los inputs
-  duracionMin: string;  // Se maneja como string en el form para los inputs
+  descripcion?: string;
+  imageUrl?: string; 
   activo: boolean;
-  categoria: string;
+  services: string[] | Service[]; 
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Stylist {
   _id: string;
   nombre: string;
   apellido: string;
-  genero: "M" | "F" | "O" | string;
-  cedula: string;
-  telefono: string;
-  role: "ESTILISTA";
   email: string;
+  cedula?: string;
+  telefono?: string;
+  genero?: "M" | "F" | "O" | string;
+  role: "ESTILISTA" | string;
   isActive: boolean;
-  emailVerified: boolean;
-  servicesOffered: Service[];
+  emailVerified?: boolean;
+  servicesOffered: (string | Service)[]; // Array de IDs o de Objetos Service
 }
 
 export interface BusinessHours {
@@ -54,25 +86,20 @@ export interface BusinessHours {
   updatedAt: string;
 }
 
-// ==================== RESERVAS Y CITAS (CORE) ====================
+// ============================================================
+// 2. RESERVAS (CORE)
+// ============================================================
 
-// 1. AvailabilitySlot
-export interface AvailabilitySlot {
-  slotId: string;
-  stylistId: string;
-  stylistName: string;
-  start: string;
-  end: string;
-}
-
-// 2. Booking
 export interface Booking {
   _id: string;
-  clienteId: string;
-  estilistaId: string; 
-  servicioId: string;
+  id?: string; // Alias
+
+  // Relaciones (IDs)
+  clienteId: string | User;
+  estilistaId: string | Stylist;
+  servicioId: string | Service;
   
-  // 🔥 AÑADIMOS ESTOS CAMPOS (Populated del backend)
+  // Objetos Poblados (Populated del backend)
   servicio?: {
     _id: string;
     nombre: string;
@@ -83,31 +110,37 @@ export interface Booking {
     _id: string;
     nombre: string;
     apellido: string;
+    email: string;
+  };
+  cliente?: {
+    _id: string;
+    nombre: string;
+    apellido: string;
+    email: string;
   };
 
-  inicio: string;
-  fin: string;
-  estado: string; 
-  notas?: string;
-  precio?: number;
-  paymentStatus?: 'UNPAID' | 'PAID';
+  // Tiempos
+  inicio: string; // ISO String
+  fin: string;    // ISO String
+  date?: string;  // Alias frontend
+  
+  // Estados
+  estado: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW' | 'SCHEDULED' | 'PENDING_STYLIST_CONFIRMATION' | string;
+  status?: string; // Alias frontend
+
+  // 💰 PAGOS (Nuevos campos vitales)
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'UNPAID';
   paymentMethod?: 'CARD' | 'TRANSFER_PICHINCHA';
   paidAt?: string | null;
   invoiceNumber?: string | null;
+  transferProofUrl?: string | null; // URL de la imagen en Supabase
+  precio?: number;
+
+  notas?: string;
   createdAt: string;
 }
 
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
-
-// 3. Appointment
+// Interfaz para el Calendario Visual (puede ser una transformación de Booking)
 export interface Appointment {
   _id: string;
   stylist: PopulatedStylist | string; 
@@ -115,144 +148,54 @@ export interface Appointment {
   clientId?: PopulatedClient | string | null;
   clientName?: string;
   clientPhone?: string;
-
   start: string;
   end: string;
-  
-  status: "PENDIENTE" | "CONFIRMADA" | "CANCELADA" | "COMPLETADA" | string;
-  
+  status: string;
   notes?: string;
   createdAt?: string;
-  updatedAt?: string;
 }
 
-// === INTERFACES AUXILIARES ===
-export interface PopulatedStylist {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
+// ============================================================
+// 3. PAGOS Y TRANSFERENCIAS (DTOs)
+// ============================================================
+
+export interface BankInfo {
+  bank: string;
+  accountType: string;
+  accountNumber: string;
+  accountHolder: string;
+  reference: string;
 }
 
-export interface PopulatedClient {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-}
-
-export interface Rating {
-  _id: string;
-  bookingId: string;
-  clienteId: string;
-  estilistaId: string;
-  estrellas: number;
-  comentario: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface Notification {
-  _id: string;
-  userId: string;
-  type: "EMAIL" | "SYSTEM" | "BOOKING" | "RATING" | string;
-  title: string;
+export interface TransferRequestResponse {
   message: string;
-  createdAt: string;
-  read?: boolean;
-}
-
-// ==================== DTOs & PAYLOADS ====================
-
-export interface CreateBookingPayload {
-  slotId?: string;
-  slotIds?: string[];
-  date: string;
-  notas?: string;
-}
-
-export interface CreateRatingPayload {
   bookingId: string;
-  estrellas: number;
-  comentario?: string;
+  paymentId: string;
+  amount: number;
+  bankInfo: BankInfo;
+  uploadProofEndpoint: string;
 }
 
-export interface ReportSummary {
-  topServices: { _id: string; count: number }[];
-  ratingsByStylist: { _id: string; avg: number; count: number }[];
-  bookingsByStatus: { _id: string; count: number }[];
-  revenueByMonth: { _id: string; total: number }[];
+// ============================================================
+// 4. HORARIOS Y SLOTS
+// ============================================================
+
+export interface AvailabilitySlot {
+  slotId: string;
+  stylistId: string;
+  stylistName: string;
+  start: string;
+  end: string;
 }
 
-// ==================== CONTEXTO ====================
-
-export interface DataContextType {
-  services: Service[];
-  stylists: Stylist[];
-  businessHours: BusinessHours | null;
-  
-  appointments: Appointment[];
-  myBookings: Booking[];
-
-  ratings: Rating[];
-  notifications: Notification[];
-  reports: ReportSummary | null;
-
-  fetchData: () => Promise<void>;
-  fetchReports: () => Promise<void>;
-  getUserNotifications: (userId: string) => Notification[];
-  createRating: (data: CreateRatingPayload) => Promise<boolean>;
-}
-
-export interface Category {
-  _id: string;
-  nombre: string;
-  descripcion?: string;
-  imageUrl?: string; 
-  activo: boolean;
-  services: string[] | Service[]; 
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-}
-
-// 🔥🔥 NUEVAS INTERFACES FALTANTES 🔥🔥
-export interface CategoryListResponse {
-  data: Category[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
-
-export interface CreateCategoryDTO {
-  nombre: string;
-  descripcion?: string;
-  imageUrl?: string;
-  activo?: boolean;
-  services?: string[]; // IDs de servicios
-}
-
-export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
-
-// ==================== HORARIOS Y SLOTS ====================
-
-// Días de la semana para UI y Backend
-export type DayOfWeekIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Domingo (Backend Schedule)
+export type DayOfWeekIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6; 
 export type WeekdayName = 'DOMINGO' | 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES' | 'SABADO';
 
-// Plantilla de Horario (StylistSchedule)
 export interface StylistSchedule {
   _id?: string;
   stylistId: string;
   dayOfWeek: DayOfWeekIndex;
-  slots: { start: string; end: string }[]; // HH:mm
+  slots: { start: string; end: string }[]; 
   exceptions?: { 
     date: string; 
     closed?: boolean; 
@@ -260,25 +203,6 @@ export interface StylistSchedule {
   }[];
 }
 
-// Payload para guardar plantilla
-export interface UpsertScheduleDTO {
-  stylistId: string;
-  dayOfWeek: DayOfWeekIndex;
-  slots: { start: string; end: string }[];
-  exceptions?: any[];
-}
-
-// Payload para generar Slots (CreateDaySlots)
-export interface GenerateSlotsDTO {
-  stylistId: string;
-  serviceId: string;
-  dayOfWeek: WeekdayName;
-  dayStart: string; // HH:00 o HH:30
-  dayEnd: string;   // HH:00 o HH:30
-  date: string;     // YYYY-MM-DD (Para referencia visual, aunque el backend pide dayOfWeek string)
-}
-
-// Slot generado (Respuesta de listSlots)
 export interface ServiceSlot {
   id: string;
   stylist: string | { _id: string; nombre: string; apellido: string };
@@ -289,7 +213,9 @@ export interface ServiceSlot {
   isActive: boolean;
 }
 
-// ==================== REPORTES (NUEVO) ====================
+// ============================================================
+// 5. REPORTES Y ESTADÍSTICAS
+// ============================================================
 
 export interface ReportRangeParams {
   from: string; // YYYY-MM-DD
@@ -297,7 +223,7 @@ export interface ReportRangeParams {
   stylistId?: string;
 }
 
-// 1. Estructura del Dashboard General (endpoint /summary)
+// Dashboard General
 export interface DashboardSummary {
   range: { from: string; to: string; label: string };
   totals: {
@@ -326,7 +252,7 @@ export interface DashboardSummary {
   }[];
 }
 
-// 2. Estructura del Reporte Detallado de Estilista (endpoint /stylists o /my)
+// Reporte Detallado Estilista
 export interface StylistDetailedReport {
   stylist: {
     id: string;
@@ -350,14 +276,6 @@ export interface StylistDetailedReport {
       clientName: string;
     }[];
   };
-  
-  appointmentsNotes: {
-    date: string;
-    estado: string;
-    servicio: string;
-    cliente: string;
-    notas: string;
-  }[];
   topServices: {
     _id: string;
     serviceName: string;
@@ -370,10 +288,9 @@ export interface StylistDetailedReport {
     uniqueClients: number;
     cancelRatePct: number;
     completionRatePct: number;
-    peakHour: string | null;     // Ej: "14:00"
-    peakWeekday: string | null;  // Ej: "MIE"
+    peakHour: string | null;    
+    peakWeekday: string | null; 
   };
-  
 }
 
 export interface StylistReportResponse {
@@ -382,10 +299,152 @@ export interface StylistReportResponse {
   reports: StylistDetailedReport[];
 }
 
-// Interfaz antigua (fallback)
-export interface ReportSummaryOld {
+// Fallback legacy (opcional)
+export interface ReportSummary {
   topServices: { _id: string; count: number }[];
   ratingsByStylist: { _id: string; avg: number; count: number }[];
   bookingsByStatus: { _id: string; count: number }[];
   revenueByMonth: { _id: string; total: number }[];
+}
+
+// ============================================================
+// 6. FEEDBACK Y NOTIFICACIONES
+// ============================================================
+
+export interface Rating {
+  _id: string;
+  bookingId: string;
+  clienteId: string;
+  estilistaId: string;
+  estrellas: number;
+  comentario: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  type: "EMAIL" | "SYSTEM" | "BOOKING" | "RATING" | string;
+  title: string;
+  message: string;
+  createdAt: string;
+  read?: boolean;
+}
+
+// ============================================================
+// 7. PAYLOADS (DTOs para POST/PUT)
+// ============================================================
+
+export interface CreateBookingPayload {
+  slotId?: string;
+  slotIds?: string[];
+  date: string;
+  notas?: string;
+}
+
+export interface CreateRatingPayload {
+  bookingId: string;
+  estrellas: number;
+  comentario?: string;
+}
+
+export interface ServiceFormData {
+  nombre: string;
+  codigo: string;
+  descripcion: string;
+  precio: string;       // String en forms
+  duracionMin: string;  // String en forms
+  activo: boolean;
+  categoria: string;
+}
+
+export interface CreateCategoryDTO {
+  nombre: string;
+  descripcion?: string;
+  imageUrl?: string;
+  activo?: boolean;
+  services?: string[]; 
+}
+
+export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
+
+export interface UpsertScheduleDTO {
+  stylistId: string;
+  dayOfWeek: DayOfWeekIndex;
+  slots: { start: string; end: string }[];
+  exceptions?: any[];
+}
+
+export interface GenerateSlotsDTO {
+  stylistId: string;
+  serviceId: string;
+  dayOfWeek: WeekdayName;
+  dayStart: string; 
+  dayEnd: string;   
+  date: string;     
+}
+
+// ============================================================
+// 8. RESPUESTAS GENÉRICAS
+// ============================================================
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+export interface CategoryListResponse {
+  data: Category[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+// Interfaces Auxiliares para Populate
+export interface PopulatedStylist {
+  _id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+}
+
+export interface PopulatedClient {
+  _id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+}
+
+// ============================================================
+// 9. CONTEXT TYPE (LO QUE EXPORTA EL PROVIDER)
+// ============================================================
+
+export interface DataContextType {
+  services: Service[];
+  stylists: Stylist[];
+  businessHours: BusinessHours | null;
+  
+  appointments: Appointment[]; // Vista calendario
+  myBookings: Booking[];       // Vista cliente
+
+  ratings: Rating[];
+  notifications: Notification[];
+  reports: DashboardSummary | null; // Usamos el nuevo reporte
+
+  // Métodos de carga
+  fetchData: () => Promise<void>;
+  fetchReports: () => Promise<void>; // Puede redirigir a fetchDashboardSummary
+  
+  // Notificaciones
+  getUserNotifications: (userId: string) => Notification[];
+  
+  // Acciones
+  createRating: (data: CreateRatingPayload) => Promise<boolean>;
 }
