@@ -59,6 +59,8 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
       // 2. Si llegamos aquí, fue exitoso
       toast.success("¡Bienvenido!", {
         description: "Has iniciado sesión correctamente.",
+        style: { color: "black", background: "#10b981" },
+        descriptionClassName: "text-black",
       });
 
       onOpenChange(false);
@@ -71,6 +73,8 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
 
       toast.error("Error al iniciar sesión", {
         description: mensaje,
+        style: { color: "black", background: "#ef4444" },
+        descriptionClassName: "text-black",
       });
     } finally {
       setIsSubmitting(false);
@@ -85,53 +89,53 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
 
     // Validaciones
     if (!registerData.firstName.trim()) {
-      toast.error("El nombre es requerido");
+      toast.error("El nombre es requerido", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     if (!registerData.lastName.trim()) {
-      toast.error("El apellido es requerido");
+      toast.error("El apellido es requerido", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     if (registerData.cedula.length !== 10) {
-      toast.error("La cédula debe tener exactamente 10 dígitos");
+      toast.error("La cédula debe tener exactamente 10 dígitos", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     if (!registerData.gender) {
-      toast.error("Debes seleccionar un género");
+      toast.error("Debes seleccionar un género", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(registerData.email)) {
-      toast.error("Por favor ingresa un email válido");
+      toast.error("Por favor ingresa un email válido", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     // Validar teléfono: solo números, exactamente 10 dígitos
     if (!/^\d{10}$/.test(registerData.phone)) {
-      toast.error("El teléfono debe tener exactamente 10 dígitos");
+      toast.error("El teléfono debe tener exactamente 10 dígitos", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     // Validar contraseña: mínimo 8 caracteres
     if (registerData.password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+      toast.error("La contraseña debe tener al menos 8 caracteres", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     // Validar que la contraseña tenga mayúsculas, minúsculas y números
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (!passwordRegex.test(registerData.password)) {
-      toast.error("La contraseña debe contener mayúsculas, minúsculas y números");
+      toast.error("La contraseña debe contener mayúsculas, minúsculas y números", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      toast.error("Las contraseñas no coinciden", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 
@@ -161,10 +165,14 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
         if (emailSent) {
           toast.success("¡Cuenta creada!", {
             description: "Revisa tu correo para verificar tu cuenta.",
+            style: { color: "black", background: "#10b981" },
+            descriptionClassName: "text-black",
           });
         } else {
           toast.warning("Cuenta creada", {
             description: "No se pudo enviar el correo, solicítalo luego.",
+            style: { color: "black", background: "#f59e0b" },
+            descriptionClassName: "text-black",
           });
         }
       } catch (err) {
@@ -177,6 +185,8 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
       // Si result es false (según tu AuthProvider)
       toast.error("Error al registrarse", {
         description: "El email o la cédula ya están registrados, o hubo un error de conexión.",
+        style: { color: "black", background: "#ef4444" },
+        descriptionClassName: "text-black",
       });
     }
 

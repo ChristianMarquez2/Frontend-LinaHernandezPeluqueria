@@ -4261,3 +4261,61 @@ body {
 .date-green::-webkit-calendar-picker-indicator {
   filter: invert(58%) sepia(72%) saturate(412%) hue-rotate(90deg);
 }
+
+.btn-confirm {
+  /* flex-1 */
+  flex: 1 1 0%;
+  
+  /* bg-green-600 */
+  background-color: #16a34a;
+  
+  /* text-white */
+  color: #ffffff;
+  
+  /* rounded-xl (usualmente 12px o 0.75rem) */
+  border-radius: 0.75rem;
+  
+  /* Estilos recomendados para que funcione bien como botón */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease; /* Para suavizar el hover */
+}
+
+/* hover:bg-green-700 */
+.btn-confirm:hover {
+  background-color: #15803d;
+}
+
+.btn-gold-pay {
+  /* w-full */
+  width: 100%;
+  
+  /* bg-[#D4AF37] */
+  background-color: #D4AF37;
+  
+  /* text-black */
+  color: #000000;
+  
+  /* font-bold */
+  font-weight: 700;
+  
+  /* mb-2 (0.5rem = 8px) */
+  margin-bottom: 0.5rem;
+  
+  /* shadow-[...] */
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+  
+  /* Estilos base necesarios */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  /* Opcional: Para mantener consistencia con los otros botones */
+  border-radius: 0.5rem; /* o el valor que uses en tu UI (ej. rounded-md) */
+  padding: 0.5rem 1rem;  /* padding estándar de botones */
+}
+
+/* hover:bg-[#B5952F] */
+.btn-gold-pay:hover {
+  background-color: #B5952F;
+}

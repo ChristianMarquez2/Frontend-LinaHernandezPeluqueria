@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '../../../contexts/data/service';
 import { useData } from '../../../contexts/data/index';
+import { useAuth } from '../../../contexts/auth';
 // Importamos tus tipos exactos
 import type { Booking, Stylist } from '../../../contexts/data/types'; 
 
 export function useAppointmentCalendar() {
   const token = localStorage.getItem("accessToken");
   const { stylists } = useData(); // Usamos los estilistas del contexto
+  const { user } = useAuth(); // Usuario actual para validación
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
@@ -115,35 +117,100 @@ export function useAppointmentCalendar() {
   const handleConfirm = async (id: string) => { 
       if (!token) return;
       try {
-        // CORRECCIÓN AQUÍ:
-        // Añadimos un objeto vacío {} como cuarto argumento.
-        // Muchos backends esperan un body JSON vacío en lugar de "null" o "undefined".
+        const booking = bookings.find(b => b._id === id);
+        
+        console.log('✅ [CONFIRM] Intentando confirmar booking:', {
+          bookingId: id,
+          endpoint: `${id}/confirm`,
+          currentUser: {
+            id: user?.id,
+            role: user?.role
+          },
+          booking: {
+            estilistaId: booking?.estilistaId,
+            estado: booking?.estado
+          }
+        });
+        
         await dataService.updateBookingStatus(token, id, 'confirm', {}); 
         
         toast.success("Cita confirmada");
         fetchBookings();
-      } catch(e) { 
-        console.error("Error confirmando:", e); // Añade esto para ver el error real en consola
-        toast.error("Error al confirmar, el estilista asignado debe confirmar la cita"); 
+      } catch(e: any) { 
+        console.error('❌ [CONFIRM] Error completo:', e);
+        console.error('❌ [CONFIRM] Mensaje:', e.message);
+        
+        const errorMsg = e.message || "Error al confirmar, el estilista asignado debe confirmar la cita";
+        toast.error(errorMsg); 
       }
   };
 
   const handleComplete = async (id: string, notes: string) => { 
       if (!token) return;
       try {
-        await dataService.updateBookingStatus(token, id, 'complete', { notas: notes });
+        const booking = bookings.find(b => b._id === id);
+        
+        console.log('📝 [COMPLETE] Intentando completar booking:', {
+          bookingId: id,
+          notes,
+          endpoint: `${id}/complete`,
+          method: 'PATCH',
+          currentUser: {
+            id: user?.id,
+            role: user?.role
+          },
+          booking: {
+            estilistaId: booking?.estilistaId,
+            estado: booking?.estado
+          }
+        });
+
+        // Verificar si el usuario es el estilista asignado
+        if (booking && user) {
+          const estilistaId = typeof booking.estilistaId === 'string' 
+            ? booking.estilistaId 
+            : booking.estilistaId?._id;
+          
+          console.log('🔍 [COMPLETE] Comparando IDs:', {
+            userId: user.id,
+            estilistaId: estilistaId,
+            match: user.id === estilistaId
+          });
+
+          if (user.role === 'stylist' && user.id !== estilistaId) {
+            console.warn('⚠️ [COMPLETE] Usuario no es el estilista asignado');
+          }
+        }
+        
+        // ✅ El backend requiere clienteAsistio: true/false
+        await dataService.updateBookingStatus(token, id, 'complete', { 
+          notas: notes,
+          clienteAsistio: true // Si estamos completando la cita, el cliente sí asistió
+        });
         toast.success("Cita completada");
         fetchBookings();
-      } catch(e) { toast.error("Error al completar, el estilista asignado debe completar la cita"); }
+      } catch(e: any) { 
+        console.error('❌ [COMPLETE] Error completo:', e);
+        console.error('❌ [COMPLETE] Mensaje:', e.message);
+        console.error('❌ [COMPLETE] Stack:', e.stack);
+        
+        const errorMsg = e.message || "Error al completar, el estilista asignado debe completar la cita";
+        toast.error(errorMsg); 
+      }
   };
 
   const handleCancel = async (id: string, motivo: string) => { 
       if (!token) return;
       try {
+        console.log('🚫 [CANCEL] Intentando cancelar booking:', { bookingId: id, motivo });
+        
         await dataService.updateBookingStatus(token, id, 'cancel', { motivo });
         toast.success("Cita cancelada");
         fetchBookings();
-      } catch(e) { toast.error("Error al cancelar"); }
+      } catch(e: any) { 
+        console.error('❌ [CANCEL] Error:', e);
+        toast.error(e.message || "Error al cancelar"); 
+      }
   };
 
   const formatTime = (isoDate: string) => 

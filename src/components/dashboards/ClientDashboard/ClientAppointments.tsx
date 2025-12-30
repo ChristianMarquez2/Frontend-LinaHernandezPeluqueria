@@ -84,15 +84,15 @@ export function ClientAppointments({
     <div className="space-y-8 animate-in fade-in duration-500">
 
       {/* DIÁLOGO DE PAGO */}
-      <TransferPaymentDialog 
+      <TransferPaymentDialog
         isOpen={!!paymentBookingId}
         onClose={() => setPaymentBookingId(null)}
         bookingId={paymentBookingId}
         onSuccess={() => {
-           setPaymentBookingId(null);
-           // Aquí el estado del componente se actualizará solo si recargas los datos desde el padre
-           // o si gestionas el estado localmente, pero al cerrarse ya no mostrará el botón
-           // porque booking.transferProofUrl habrá cambiado en el backend (requiere refresh de datos).
+          setPaymentBookingId(null);
+          // Aquí el estado del componente se actualizará solo si recargas los datos desde el padre
+          // o si gestionas el estado localmente, pero al cerrarse ya no mostrará el botón
+          // porque booking.transferProofUrl habrá cambiado en el backend (requiere refresh de datos).
         }}
       />
 
@@ -153,16 +153,16 @@ export function ClientAppointments({
                 const hora = safeParseTime(booking.inicio);
                 const isActive = ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(booking.estado);
                 const statusConfig = STATUS_CONFIG[booking.estado] || STATUS_CONFIG.ALL;
-                
+
                 // =========================================================
                 // 💡 LÓGICA DE PAGO MODIFICADA (Frontend Forzado)
                 // =========================================================
-                
+
                 const isCancelled = ["CANCELLED", "NO_SHOW", "COMPLETED"].includes(booking.estado);
-                
+
                 // 1. Ya pagó?
                 const isPaid = booking.paymentStatus === 'PAID';
-                
+
                 // 2. Ya subió comprobante? (Aunque el admin no haya confirmado)
                 const hasProof = !!booking.transferProofUrl;
 
@@ -217,12 +217,12 @@ export function ClientAppointments({
                       </div>
 
                       <div className="pt-4 border-t border-gray-800/50 flex flex-col gap-2">
-                        
+
                         {/* ✅ BOTÓN DE PAGO (Solo si no ha subido foto aún) */}
                         {showPayButton && (
-                          <Button 
+                          <Button
                             onClick={() => setPaymentBookingId(booking._id)}
-                            className="w-full bg-[#D4AF37] hover:bg-[#B5952F] text-black font-bold mb-2 shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                            className="btn-gold-pay"
                           >
                             Pagar / Subir Comprobante
                           </Button>
@@ -231,31 +231,31 @@ export function ClientAppointments({
                         {/* ⏳ MENSAJE EN REVISIÓN (Si ya subió foto pero admin no confirma) */}
                         {showReviewMessage && (
                           <div className="w-full bg-blue-900/20 border border-blue-900/50 rounded-lg p-2.5 mb-2 flex items-center justify-center gap-2">
-                             <Clock3 className="h-4 w-4 text-blue-400 animate-pulse" />
-                             <span className="text-sm font-medium text-blue-200">Comprobante en revisión</span>
+                            <Clock3 className="h-4 w-4 text-blue-400 animate-pulse" />
+                            <span className="text-sm font-medium text-blue-200">Comprobante en revisión</span>
                           </div>
                         )}
 
                         <div className="flex items-center gap-3">
-                            {isActive ? (
+                          {isActive ? (
                             <>
-                                <Button variant="outline" onClick={() => onEdit(booking)} className="btn-green-outline flex-1 h-10">
+                              <Button variant="outline" onClick={() => onEdit(booking)} className="btn-green-outline flex-1 h-10">
                                 Reprogramar
-                                </Button>
-                                <Button variant="ghost" onClick={() => onCancel(booking._id)} className="btn-red">
+                              </Button>
+                              <Button variant="ghost" onClick={() => onCancel(booking._id)} className="btn-red">
                                 Cancelar
-                                </Button>
+                              </Button>
                             </>
-                            ) : (
+                          ) : (
                             <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
-                                <span>Histórico</span>
-                                {booking.estado === 'COMPLETED' ? (
+                              <span>Histórico</span>
+                              {booking.estado === 'COMPLETED' ? (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                                ) : (
+                              ) : (
                                 <div className="h-1.5 w-1.5 rounded-full bg-gray-600"></div>
-                                )}
+                              )}
                             </div>
-                            )}
+                          )}
                         </div>
                       </div>
                     </div>

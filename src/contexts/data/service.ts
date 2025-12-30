@@ -155,18 +155,47 @@ export const dataService = {
     return data;
   },
 
-  updateBookingStatus: async (token: string, bookingId: string, action: 'confirm' | 'complete' | 'cancel', payload?: any) => {
+  updateBookingStatus: async (token: string, bookingId: string, action: 'confirm' | 'complete' | 'cancel' | 'reschedule', payload?: any) => {
     let url = `${API_BASE_URL}/bookings/${bookingId}/${action}`;
+    
+    // Definir método HTTP según la acción
+    const methodMap: Record<string, string> = {
+      'confirm': 'POST',
+      'reschedule': 'POST',
+      'complete': 'PATCH',
+      'cancel': 'POST'
+    };
+    
+    const method = methodMap[action] || 'POST';
+
+    console.log('🔧 [SERVICE] updateBookingStatus llamado:', {
+      bookingId,
+      action,
+      url,
+      method,
+      payload,
+      hasToken: !!token
+    });
 
     const res = await fetch(url, {
-      method: "POST",
+      method,
       headers: getHeaders(token),
       body: JSON.stringify(payload || {}),
     });
 
+    console.log('📡 [SERVICE] Response status:', res.status, res.statusText);
+
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || `Error al ejecutar ${action}`);
+      let errorMessage = `Error al ejecutar ${action}`;
+      try {
+        const err = await res.json();
+        console.error('❌ [SERVICE] Error del backend:', err);
+        errorMessage = err.message || errorMessage;
+      } catch {
+        console.error('❌ [SERVICE] No se pudo parsear error JSON');
+        errorMessage = `Error ${res.status}: ${res.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
     return await res.json();
   },

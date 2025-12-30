@@ -15,6 +15,13 @@ export function StylistHeader({
   setShowProfile,
   logout,
 }: StylistHeaderProps) {
+  const displayName =
+    [user?.nombre, user?.apellido].filter(Boolean).join(' ') ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    user?.name ||
+    user?.email ||
+    'Estilista';
+
   return (
     <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/95 backdrop-blur">
       <div className="flex h-16 items-center justify-between px-4">
@@ -50,8 +57,7 @@ export function StylistHeader({
             onClick={() => setShowProfile(true)}
           >
             <p className="text-sm hover:text-[#D4AF37] transition-colors">
-              {/* CAMBIO: Usamos nombre y apellido que es lo que viene de la DB */}
-              {user?.nombre} {user?.apellido}
+              {displayName}
             </p>
             <p className="text-xs text-gray-400">Estilista</p>
           </div>
