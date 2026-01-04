@@ -26,9 +26,7 @@ interface ClientAppointmentsProps {
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; borderClass: string }> = {
   ALL: { label: "Todas", className: "status-badge-default", borderClass: "bg-gray-700" },
-  SCHEDULED: { label: "Programada", className: "status-badge-scheduled", borderClass: "bg-blue-500" },
   CONFIRMED: { label: "Confirmada", className: "status-badge-confirmed", borderClass: "bg-[#D4AF37]" },
-  PENDING_STYLIST_CONFIRMATION: { label: "Pendiente", className: "status-badge-pending", borderClass: "bg-orange-500" },
   COMPLETED: { label: "Completada", className: "status-badge-completed", borderClass: "bg-emerald-500" },
   CANCELLED: { label: "Cancelada", className: "status-badge-cancelled", borderClass: "bg-red-500" },
   NO_SHOW: { label: "No Asistió", className: "status-badge-noshow", borderClass: "bg-gray-500" },
