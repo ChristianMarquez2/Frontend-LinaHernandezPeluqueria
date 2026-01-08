@@ -512,6 +512,21 @@ export const dataService = {
     // El backend devuelve { count: number, data: [] }
     return data; 
   },
-
+  // ✅ NUEVO: Obtener un booking por ID (para enriquecer datos)
+  getBookingById: async (token: string, bookingId: string): Promise<Booking | null> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.data || data;
+    } catch (error) {
+      return null;
+    }
+  },
   
 };

@@ -10,39 +10,42 @@ import { Badge } from '../../ui/badge';
 import { dataService } from '../../../contexts/data/service';
 import { toast } from 'sonner';
 import { useServices } from '../../../contexts/data/context/ServicesContext';
+import { useAuth } from '../../../contexts/auth/index'; // ✅ NUEVO
 
-// Definimos la interfaz exacta de lo que devuelve tu backend en /transfer-proofs
+// ✅ ACTUALIZADA: Interfaz que refleja lo que devuelve el backend mejorado
 interface PaymentProof {
     _id: string; // ID del pago
     bookingId: string; // ID de la reserva (para confirmar)
-    paymentStatus: string;
-    amount?: number;
-    precio?: number; // Alias
-    serviceId?: string;
-    service?: { _id?: string; nombre?: string; name?: string; precio?: number; price?: number };
-    // A veces el backend puede incluir la reserva poblada
-    booking?: {
-        servicioId?: string;
-        servicio?: { _id?: string; nombre?: string; precio?: number };
-        service?: { _id?: string; nombre?: string; precio?: number };
-        price?: number;
-        precio?: number;
-    };
-    inicio?: string; // Fecha cita
+    paymentStatus: string; // PENDING, PAID, FAILED
+    
+    // ✅ NUEVOS - Vienen del aggregation pipeline mejorado
+    amount?: number; // Precio del servicio
+    serviceName?: string; // Nombre del servicio
+    
+    // Datos de cliente
+    clientId?: string;
+    clientName?: string;
+    
+    // URL del comprobante
     transferProofUrl: string;
     transferProofUploadedAt?: string;
-    clientName?: string;
-    serviceName?: string;
-    method?: string;
 }
 
 export function PaymentsManagement() {
     const token = localStorage.getItem('accessToken') || '';
     const { services } = useServices();
+    const { user } = useAuth(); // ✅ NUEVO - obtener usuario
 
     const [payments, setPayments] = useState<PaymentProof[]>([]);
     const [filteredPayments, setFilteredPayments] = useState<PaymentProof[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // DEBUG - Mostrar rol del usuario
+    useEffect(() => {
+        console.log('👤 Usuario actual:', user);
+        console.log('🔑 Token:', token ? '✅ Presente' : '❌ Falta');
+        console.log('👥 Rol del usuario:', user?.role);
+    }, [user, token]);
 
     // Filtros
     const [searchClient, setSearchClient] = useState('');
@@ -96,14 +99,103 @@ export function PaymentsManagement() {
             setIsLoading(true);
             // ✅ Llamamos al endpoint correcto
             const response = await dataService.listTransferProofs(token);
-            // El backend devuelve { count: N, data: [...] }
-            setPayments(response.data || []);
+            console.log('📊 Respuesta del servidor:', response);
+            
+            let paymentsData = response.data || [];
+            
+            // ✅ ENRIQUECER DATOS: Si falta serviceName o amount, obtener del booking
+            paymentsData = await enrichPaymentsWithServiceData(paymentsData, token);
+            
+            console.log('📊 Pagos después de enriquecer:', paymentsData);
+            setPayments(paymentsData);
         } catch (error: any) {
-            console.error(error);
+            console.error('❌ Error al cargar pagos:', error);
             toast.error(error.message || 'Error al cargar pagos');
             setPayments([]);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // ✅ NUEVA: Función para enriquecer pagos con datos del servicio
+    const enrichPaymentsWithServiceData = async (
+        paymentsData: PaymentProof[],
+        token: string
+    ): Promise<PaymentProof[]> => {
+        try {
+            // Si ya tienen serviceName y amount, no enriquecer
+            const allHaveData = paymentsData.every(p => p.serviceName && p.amount);
+            if (allHaveData) {
+                console.log('✅ Todos los pagos ya tienen serviceName y amount');
+                return paymentsData;
+            }
+
+            console.log('🔄 Enriqueciendo datos de pagos...');
+
+            // Enriquecer cada pago en paralelo
+            const enrichedPayments = await Promise.all(
+                paymentsData.map(async (payment) => {
+                    // Si ya tiene datos, no hacer nada
+                    if (payment.serviceName && payment.amount) {
+                        return payment;
+                    }
+
+                    try {
+                        // Obtener detalles del booking
+                        const booking = await dataService.getBookingById(token, payment.bookingId);
+                        if (!booking) {
+                            console.warn(`⚠️ No se encontró booking: ${payment.bookingId}`);
+                            return payment;
+                        }
+
+                        // Obtener servicioId del booking
+                        const servicioId = typeof booking.servicioId === 'string' 
+                            ? booking.servicioId 
+                            : booking.servicioId?._id;
+                        
+                        if (!servicioId) {
+                            console.warn(`⚠️ No se encontró servicioId en booking: ${payment.bookingId}`);
+                            return payment;
+                        }
+
+                        // Buscar en el mapa de servicios
+                        const serviceInfo = serviceMap[servicioId];
+                        if (serviceInfo) {
+                            return {
+                                ...payment,
+                                serviceName: serviceInfo.name,
+                                amount: serviceInfo.price
+                            };
+                        }
+
+                        // Si no está en el mapa, obtener del booking si viene populado
+                        const servicio = booking.servicio;
+                        if (servicio && typeof servicio === 'object') {
+                            return {
+                                ...payment,
+                                serviceName: servicio.nombre || 'Servicio',
+                                amount: servicio.precio || 0
+                            };
+                        }
+
+                        // Último recurso: usar precio del booking
+                        return {
+                            ...payment,
+                            serviceName: 'Servicio',
+                            amount: booking.precio || 0
+                        };
+                    } catch (err) {
+                        console.error(`❌ Error enriqueciendo pago ${payment._id}:`, err);
+                        return payment; // Retornar sin cambios si hay error
+                    }
+                })
+            );
+
+            console.log('✅ Enriquecimiento completado');
+            return enrichedPayments;
+        } catch (err) {
+            console.error('❌ Error en enrichPaymentsWithServiceData:', err);
+            return paymentsData; // Retornar sin cambios si hay error
         }
     };
 
@@ -161,44 +253,21 @@ export function PaymentsManagement() {
         }
     };
 
-    // Helpers de datos seguros
+    // Helpers de datos seguros - SIMPLIFICADOS ✅
     const getClientName = (p: PaymentProof) => p.clientName || 'Cliente sin nombre';
+    
     const getServiceName = (p: PaymentProof) => {
+        // ✅ Campo directo del backend (viene del aggregation)
         if (p.serviceName) return p.serviceName;
-        if (p.service?.nombre || p.service?.name) return p.service.nombre || p.service.name || 'Servicio';
-
-        // Si vino la reserva populada, intentamos extraer nombre de servicio
-        const bookingServiceName =
-            (p.booking?.servicio as any)?.nombre ||
-            (p.booking?.service as any)?.nombre;
-        if (bookingServiceName) return bookingServiceName;
-
-        // Map de catálogo
-        const srvId = p.serviceId || p.booking?.servicioId;
-        if (srvId && serviceMap[srvId]) return serviceMap[srvId].name;
         return 'Servicio';
     };
 
     const getAmount = (p: PaymentProof) => {
-        const candidates = [
-            p.amount,
-            p.precio,
-            p.service?.precio,
-            p.service?.price,
-            p.booking?.precio,
-            p.booking?.price,
-            (p.booking?.servicio as any)?.precio,
-            (p.booking?.service as any)?.precio,
-        ];
-
-        for (const c of candidates) {
-            if (c === undefined || c === null) continue;
-            const n = Number(c);
+        // ✅ Campo directo del backend (viene del aggregation)
+        if (p.amount !== undefined && p.amount !== null) {
+            const n = Number(p.amount);
             if (Number.isFinite(n)) return n;
         }
-
-        const srvId = p.serviceId || p.booking?.servicioId;
-        if (srvId && serviceMap[srvId]) return serviceMap[srvId].price;
         return 0;
     };
 
@@ -306,7 +375,7 @@ export function PaymentsManagement() {
                                                 ${getAmount(payment).toFixed(2)}
                                             </TableCell>
                                             <TableCell className="text-gray-300 text-sm">
-                                                {formatDate(payment.transferProofUploadedAt || payment.inicio)}
+                                                {formatDate(payment.transferProofUploadedAt)}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className={`${getPaymentStatusColor(payment.paymentStatus)} border flex items-center gap-1 w-fit`}>
@@ -387,7 +456,7 @@ export function PaymentsManagement() {
                                 <div className="space-y-2">
                                     <span className="text-sm font-medium leading-none text-white">Fecha Subida</span>
                                     <div className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
-                                        {formatDate(selectedPayment.transferProofUploadedAt || selectedPayment.inicio)}
+                                        {formatDate(selectedPayment.transferProofUploadedAt)}
                                     </div>
                                 </div>
                             </div>
