@@ -60,7 +60,7 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     try {
       const userRole = (user.role || '').toString().toUpperCase();
 
-      if (userRole === 'ADMIN' || userRole === 'GERENTE') {
+      if (userRole === 'ADMIN' || userRole === 'MANAGER') {
         // Cargar Dashboard General
         const dash = await dataService.fetchDashboardSummary(token, params);
         setDashboardData(dash);
@@ -69,11 +69,11 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
         const styl = await dataService.fetchStylistReports(token, params);
         setStylistReportData(styl);
       
-      } else if (userRole === 'ESTILISTA') {
-        // Estilista solo ve SU reporte
+      } else if (userRole === 'STYLIST') {
+        // Stylist solo ve SU reporte
         const personal = await dataService.fetchStylistReports(token, params, true);
         setStylistReportData(personal);
-        setDashboardData(null); // Estilista no ve dashboard financiero global
+        setDashboardData(null); // Stylist no ve dashboard financiero global
       }
 
     } catch (e) {

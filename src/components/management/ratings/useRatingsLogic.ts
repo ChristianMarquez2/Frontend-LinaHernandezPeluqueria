@@ -17,7 +17,7 @@ export function useRatingsLogic() {
   const [filterStylist, setFilterStylist] = useState<string>('ALL');
 
   const role = (user?.role || '').toString().toUpperCase();
-  const isAdmin = role === 'ADMIN' || role === 'GERENTE';
+  const isAdmin = role === 'ADMIN' || role === 'MANAGER';
   const isClient = role === 'CLIENTE' || role === 'CLIENT';
 
   // 1. Lógica de Visualización (Filtered Ratings)

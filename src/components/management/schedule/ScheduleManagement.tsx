@@ -47,6 +47,25 @@ export function ScheduleManagement() {
     return services.filter(service => offeredIds.includes(service._id));
   }, [selectedStylistId, stylists, services]);
 
+  // ✅ Helper: Obtener el rango de horarios del día seleccionado
+  const getDayScheduleRange = useMemo(() => {
+    if (!generationDate || schedules.length === 0) return null;
+    
+    const dateObj = new Date(generationDate + 'T00:00:00');
+    const dayIndex = dateObj.getDay() as DayOfWeekIndex;
+    const plantilla = schedules.find(s => s.dayOfWeek === dayIndex);
+    
+    if (!plantilla || plantilla.slots.length === 0) {
+      return null; // Día desactivo
+    }
+    
+    return {
+      start: plantilla.slots[0].start,
+      end: plantilla.slots[0].end,
+      dayName: DAY_NAMES[dayIndex]
+    };
+  }, [generationDate, schedules, DAY_NAMES]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
 
@@ -132,6 +151,17 @@ export function ScheduleManagement() {
               </CardHeader>
               <CardContent className="space-y-4">
 
+                {/* ⚠️ Alerta si el día está desactivo */}
+                {generationDate && !getDayScheduleRange && (
+                  <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-3">
+                    <p className="text-red-300 text-sm">
+                      ⚠️ El día seleccionado ({DAY_NAMES[new Date(generationDate + 'T00:00:00').getDay()]}) está marcado como descanso en la plantilla semanal. 
+                      <br />
+                      Actívalo primero en la sección de Plantilla Semanal para poder generar disponibilidad.
+                    </p>
+                  </div>
+                )}
+
                 {/* Inputs de Generación */}
                 <div>
                   <Label className="text-gray-300">Fecha a generar</Label>
@@ -176,6 +206,11 @@ export function ScheduleManagement() {
                       onChange={(e) => setGenStart(e.target.value)}
                       className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded time-input-gold"
                     />
+                    {getDayScheduleRange && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Rango: {getDayScheduleRange.start} - {getDayScheduleRange.end}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -186,14 +221,19 @@ export function ScheduleManagement() {
                       onChange={(e) => setGenEnd(e.target.value)}
                       className="w-full mt-1 bg-gray-900 border border-gray-700 text-white p-2 rounded time-input-gold"
                     />
+                    {getDayScheduleRange && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        (del plan: {getDayScheduleRange.dayName})
+                      </p>
+                    )}
                   </div>
                 </div>
 
 
                 <Button
                   onClick={handleGenerateSlots}
-                  disabled={isGenerating}
-                  className="w-full bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 text-black font-semibold"
+                  disabled={isGenerating || !getDayScheduleRange || !selectedServiceId}
+                  className="w-full bg-[#9D8EC1] hover:bg-[#9D8EC1]/90 text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGenerating ? "Generando..." : "Generar Espacios Disponibles"}
                 </Button>

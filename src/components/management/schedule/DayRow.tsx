@@ -28,6 +28,12 @@ export function DayRow({ dayName, dayIndex, initialStart, initialEnd, hasSchedul
   }, [initialStart, initialEnd, hasSchedule]);
 
   const handleChange = (field: 'start' | 'end', val: string) => {
+    // ✅ Validar que sea HH:00 o HH:30
+    const timeRegex = /^([01]\d|2[0-3]):(00|30)$/;
+    if (val && !timeRegex.test(val)) {
+      return; // No actualizar si formato inválido
+    }
+    
     if (field === 'start') setStart(val);
     else setEnd(val);
     setIsDirty(true);

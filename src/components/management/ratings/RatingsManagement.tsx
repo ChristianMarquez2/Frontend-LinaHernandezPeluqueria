@@ -153,7 +153,6 @@ export function RatingsManagement() {
             isOpen={isDialogOpen}
             onOpenChange={setIsDialogOpen}
             unratedBookings={unratedBookings}
-            getServiceName={getBookingTitle} 
             onSubmit={handleCreateRating}
           />
       )}

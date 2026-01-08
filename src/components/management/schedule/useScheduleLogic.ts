@@ -54,18 +54,36 @@ export function useScheduleLogic() {
     if (!token || !selectedStylistId) return;
 
     try {
+      // ✅ VALIDACIÓN: Si no está de descanso, validar que las horas sean válidas
+      if (!isOff) {
+        // Validar formato HH:00 o HH:30
+        const timeRegex = /^([01]\d|2[0-3]):(00|30)$/;
+        if (!timeRegex.test(start) || !timeRegex.test(end)) {
+          toast.error("❌ Las horas deben ser HH:00 o HH:30");
+          return;
+        }
+
+        // Validar que start < end
+        const startMin = timeToMinutes(start);
+        const endMin = timeToMinutes(end);
+        if (endMin <= startMin) {
+          toast.error("❌ La hora de fin debe ser mayor que la de inicio");
+          return;
+        }
+      }
+
       if (isOff) {
         // Si marca "descanso", borramos el horario de ese día
         await dataService.deleteStylistScheduleDay(token, selectedStylistId, dayIndex);
-        toast.success(`Día ${DAY_NAMES[dayIndex]} marcado como libre`);
+        toast.success(`✅ Día ${DAY_NAMES[dayIndex]} marcado como descanso`);
       } else {
         // Guardamos horario
         await dataService.upsertStylistSchedule(token, {
           stylistId: selectedStylistId,
           dayOfWeek: dayIndex,
-          slots: [{ start, end }] // Tu backend soporta múltiples, por ahora UI simple de 1 turno
+          slots: [{ start, end }]
         });
-        toast.success(`Horario guardado para ${DAY_NAMES[dayIndex]}`);
+        toast.success(`✅ Horario guardado para ${DAY_NAMES[dayIndex]}`);
       }
       
       // Recargar
@@ -73,7 +91,7 @@ export function useScheduleLogic() {
       setSchedules(data);
 
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Error al guardar horario");
     }
   };
 
@@ -87,6 +105,41 @@ export function useScheduleLogic() {
     // Calcular día de la semana basado en la fecha
     const dateObj = new Date(generationDate + 'T00:00:00'); // Forzar local
     const dayName = DAY_NAMES[dateObj.getDay()];
+    const dayIndex = dateObj.getDay() as DayOfWeekIndex;
+
+    // ✅ VALIDACIÓN 1: Verificar que el día esté activo en la plantilla semanal
+    const plantillaDelDia = schedules.find(s => s.dayOfWeek === dayIndex);
+    if (!plantillaDelDia || plantillaDelDia.slots.length === 0) {
+      toast.error(`❌ No puedes generar disponibilidad para ${dayName} porque ese día está marcado como descanso.`);
+      return;
+    }
+
+    // ✅ VALIDACIÓN 2: Validar formato de hora (HH:00 o HH:30)
+    const timeRegex = /^([01]\d|2[0-3]):(00|30)$/;
+    if (!timeRegex.test(genStart) || !timeRegex.test(genEnd)) {
+      toast.error("❌ Las horas deben ser HH:00 o HH:30 (ej: 09:00, 14:30)");
+      return;
+    }
+
+    // ✅ VALIDACIÓN 3: Validar que genStart < genEnd
+    const startMinutes = timeToMinutes(genStart);
+    const endMinutes = timeToMinutes(genEnd);
+    if (endMinutes <= startMinutes) {
+      toast.error("❌ La hora de fin debe ser mayor que la hora de inicio");
+      return;
+    }
+
+    // ✅ VALIDACIÓN 4: Validar que las horas estén dentro del rango de la plantilla del día
+    const plantillaStart = timeToMinutes(plantillaDelDia.slots[0].start);
+    const plantillaEnd = timeToMinutes(plantillaDelDia.slots[0].end);
+
+    if (startMinutes < plantillaStart || endMinutes > plantillaEnd) {
+      const plantillaFormatted = `${plantillaDelDia.slots[0].start} - ${plantillaDelDia.slots[0].end}`;
+      toast.error(
+        `❌ Las horas deben estar dentro del rango de la plantilla semanal (${plantillaFormatted})`
+      );
+      return;
+    }
 
     setIsGenerating(true);
     try {
@@ -99,7 +152,7 @@ export function useScheduleLogic() {
         dayEnd: genEnd
       });
       
-      toast.success(`Disponibilidad generada para el ${dayName} (${generationDate})`);
+      toast.success(`✅ Disponibilidad generada para el ${dayName} (${generationDate})`);
       
       // Refrescar vista de slots generados
       loadExistingSlots();
@@ -109,6 +162,12 @@ export function useScheduleLogic() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Helper para convertir HH:MM a minutos
+  const timeToMinutes = (time: string): number => {
+    const [hh, mm] = time.split(':').map(Number);
+    return hh * 60 + mm;
   };
 
   // 4. Ver qué slots ya existen para esa fecha/estilista

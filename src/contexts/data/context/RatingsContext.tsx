@@ -28,8 +28,8 @@ export function RatingsProvider({ children }: { children: React.ReactNode }) {
         const data = await dataService.fetchMyRatings(token);
         setRatings(data);
       } 
-      else if (userRole === 'ADMIN' || userRole === 'GERENTE') {
-        // 2. Admin: Simulamos Ratings desde Reportes
+      else if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+        // 2. Admin/Manager: Simulamos Ratings desde Reportes
         const end = new Date();
         const start = new Date();
         start.setMonth(start.getMonth() - 6);
@@ -71,8 +71,8 @@ export function RatingsProvider({ children }: { children: React.ReactNode }) {
             setRatings(allRatings as Rating[]);
         }
       }
-      else if (userRole === 'ESTILISTA' || userRole === 'STYLIST' || userRole === 'stylist') {
-        // 3. Estilista: Simulamos Ratings desde SU Reporte
+      else if (userRole === 'STYLIST') {
+        // 3. Stylist: Simulamos Ratings desde SU Reporte
         const end = new Date();
         const start = new Date();
         start.setMonth(start.getMonth() - 6);
