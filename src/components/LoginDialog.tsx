@@ -237,6 +237,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                 <Input
                   id="login-email"
                   type="email"
+                  autoComplete="username"
                   required
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
@@ -252,6 +253,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                 <Input
                   id="login-password"
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
@@ -305,6 +307,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-firstName"
                     type="text"
+                    autoComplete="given-name"
                     required
                     value={registerData.firstName}
                     maxLength={20} // 1. Límite visual de 20 caracteres
@@ -327,6 +330,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-lastName"
                     type="text"
+                    autoComplete="family-name"
                     required
                     value={registerData.lastName}
                     maxLength={20}
@@ -351,6 +355,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-cedula"
                     type="text"
+                    autoComplete="off"
                     required
                     value={registerData.cedula}
                     maxLength={10}
@@ -370,12 +375,15 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <label htmlFor="register-gender" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                     Género
                   </label>
-                  <Select
+                  <Select 
+                    name="gender"
                     value={registerData.gender}
                     onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}
                     required
                   >
-                    <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white">
+                    <SelectTrigger 
+                    id="register-gender" 
+                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white">
                       <SelectValue placeholder="Selecciona tu género" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1A1A1A] border-[#D4AF37]/30 text-white">
@@ -395,6 +403,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
@@ -409,7 +418,9 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   </label>
                   <Input
                     id="register-phone"
+                    name="phone"
                     type="tel"
+                    autoComplete="tel"
                     required
                     value={registerData.phone}
                     maxLength={10}
@@ -436,6 +447,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
@@ -452,6 +464,7 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <Input
                     id="register-confirm"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={registerData.confirmPassword}
                     onChange={(e) =>

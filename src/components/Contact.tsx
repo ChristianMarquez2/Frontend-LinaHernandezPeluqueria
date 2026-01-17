@@ -25,6 +25,11 @@ export function Contact() {
 
     toast.success("¡Mensaje enviado!", {
       description: "Nos pondremos en contacto contigo pronto.",
+      style: { 
+        color: "#000000 !important",
+        backgroundColor: "#D4AF37",
+      },
+      className: "text-black",
     });
 
     setFormData({ name: "", email: "", phone: "", message: "" });
@@ -78,6 +83,7 @@ export function Contact() {
                   id="name"
                   name="name"
                   type="text"
+                  autoComplete="name"
                   required
                   value={formData.name}
                   onChange={handleChange}
@@ -94,6 +100,7 @@ export function Contact() {
                   id="email"
                   name="email"
                   type="email"
+                  autoComplete="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
@@ -110,6 +117,7 @@ export function Contact() {
                   id="phone"
                   name="phone"
                   type="tel"
+                  autoComplete="tel"
                   required
                   value={formData.phone}
                   onChange={handleChange}

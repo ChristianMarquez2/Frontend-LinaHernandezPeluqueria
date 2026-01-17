@@ -35,7 +35,18 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
 
   // 2. Cargar Mis Reservas (Cliente)
   const refreshMyBookings = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      console.warn("⚠️ refreshMyBookings: No hay token disponible");
+      return;
+    }
+    
+    // Verificar que el usuario sea cliente
+    const userRole = (user?.role as string)?.toUpperCase() || "";
+    if (userRole !== 'CLIENTE') {
+      console.log("ℹ️ refreshMyBookings: Usuario no es cliente (rol:", userRole + "), ignorando");
+      return;
+    }
+    
     setLoading(true);
     try {
       const bookings = await dataService.fetchClientBookings(token);
@@ -45,24 +56,34 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, user]);
 
   // Efecto principal: Cargar datos según rol o login
   useEffect(() => {
     if (user && token) {
       // SOLUCIÓN AL ERROR: Forzamos la interpretación como string para evitar conflictos
       // si UserRole es un Enum o un tipo restrictivo.
-      const userRole = user.role as string;
+      const userRole = (user.role as string)?.toUpperCase() || "";
+
+      console.log("👤 AppointmentsContext - Usuario:", user.email, "Rol:", userRole);
 
       // Si es cliente, priorizamos sus reservas
       if (userRole === 'CLIENTE') {
+        console.log("📌 Cargando reservas de cliente...");
         refreshMyBookings();
       }
       
       // Si es Admin/Gerente/Estilista, cargamos las manuales
       if (['ADMIN', 'GERENTE', 'ESTILISTA'].includes(userRole)) {
+        console.log("📌 Cargando citas manuales para admin/gerente/estilista...");
         refreshAppointments();
       }
+
+      if (!['CLIENTE', 'ADMIN', 'GERENTE', 'ESTILISTA'].includes(userRole)) {
+        console.warn("⚠️ Rol no reconocido:", userRole);
+      }
+    } else {
+      console.log("⚠️ AppointmentsContext: user o token no disponibles", { user, hasToken: !!token });
     }
   }, [user, token, refreshAppointments, refreshMyBookings]);
 

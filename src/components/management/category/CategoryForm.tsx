@@ -27,6 +27,10 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Límites de caracteres
+  const MAX_NOMBRE = 50;
+  const MAX_DESCRIPCION = 500;
+
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -89,11 +93,17 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
 
           {/* NOMBRE */}
           <div>
-            <Label className="text-gray-300">Nombre</Label>
+            <div className="flex justify-between items-center mb-1.5">
+              <Label className="text-gray-300">Nombre</Label>
+              <span className={`text-xs ${nombre.length > MAX_NOMBRE * 0.9 ? 'text-yellow-400' : 'text-gray-500'}`}>
+                {nombre.length}/{MAX_NOMBRE}
+              </span>
+            </div>
             <Input
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(e.target.value.slice(0, MAX_NOMBRE))}
               required
+              maxLength={MAX_NOMBRE}
               className="bg-black border-gray-700 text-white mt-1.5"
               placeholder="Ej. Corte de Cabello"
             />
@@ -101,10 +111,16 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
 
           {/* DESCRIPCIÓN */}
           <div>
-            <Label className="text-gray-300">Descripción</Label>
+            <div className="flex justify-between items-center mb-1.5">
+              <Label className="text-gray-300">Descripción</Label>
+              <span className={`text-xs ${descripcion.length > MAX_DESCRIPCION * 0.9 ? 'text-yellow-400' : 'text-gray-500'}`}>
+                {descripcion.length}/{MAX_DESCRIPCION}
+              </span>
+            </div>
             <textarea
               value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              onChange={(e) => setDescripcion(e.target.value.slice(0, MAX_DESCRIPCION))}
+              maxLength={MAX_DESCRIPCION}
               className="w-full bg-black border border-gray-700 rounded p-2 text-white mt-1.5 h-24 resize-none focus:border-[#D4AF37] outline-none"
               placeholder="Breve descripción..."
             />
@@ -124,7 +140,7 @@ export function CategoryForm({ initialData, isOpen, onClose, onSubmit }: Props) 
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !nombre.trim()}
               className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
               {isSubmitting ? "Guardando..." : "Guardar"}

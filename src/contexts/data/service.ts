@@ -271,11 +271,36 @@ export const dataService = {
 
   fetchClientBookings: async (token: string): Promise<Booking[]> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/bookings/me?page=1&limit=50&sort=-createdAt`, { headers: getHeaders(token) });
-      if (!res.ok) return [];
+      if (!token) {
+        console.warn("⚠️ No hay token disponible para fetchClientBookings");
+        return [];
+      }
+      
+      const res = await fetch(`${API_BASE_URL}/bookings/me?page=1&limit=50&sort=-createdAt`, { 
+        headers: getHeaders(token) 
+      });
+      
+      if (res.status === 403) {
+        console.warn("⚠️ Acceso denegado (403) a /bookings/me - Verifica que el token sea válido");
+        return [];
+      }
+      
+      if (res.status === 401) {
+        console.warn("⚠️ No autorizado (401) - El token puede haber expirado");
+        return [];
+      }
+      
+      if (!res.ok) {
+        console.warn(`⚠️ Error ${res.status} al obtener reservas:`, res.statusText);
+        return [];
+      }
+      
       const json = await res.json();
       return json.data || [];
-    } catch (e) { return []; }
+    } catch (e) {
+      console.error("❌ Error al obtener reservas:", e);
+      return [];
+    }
   },
 
   fetchMyRatings: async (token: string): Promise<any[]> => {

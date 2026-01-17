@@ -43,6 +43,11 @@ export function ServiceFormDialog({
     categoria: "",
   };
 
+  // Límites de caracteres
+  const MAX_NOMBRE = 50;
+  const MAX_DESCRIPCION = 300;
+  const MAX_PRECIO_DIGITOS = 10; // Máximo 999,999.99
+
   const [formData, setFormData] = useState<ServiceFormData>(initialFormState);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,11 +81,15 @@ export function ServiceFormDialog({
     switch (field) {
       case "nombre":
         if (!value || !value.trim()) return "El nombre es requerido";
-        if (value.length > 50) return "Máximo 50 caracteres";
+        if (value.length > MAX_NOMBRE) return `Máximo ${MAX_NOMBRE} caracteres`;
+        return "";
+      case "descripcion":
+        if (value.length > MAX_DESCRIPCION) return `Máximo ${MAX_DESCRIPCION} caracteres`;
         return "";
       case "precio": {
         const n = parseFloat(value);
-        if (isNaN(n) || n < 0) return "Precio inválido (mínimo 0)";
+        if (isNaN(n) || n < 1) return "Precio inválido (mínimo 1)";
+        if (value.replace(/[^0-9.]/g, '').length > MAX_PRECIO_DIGITOS) return `Máximo ${MAX_PRECIO_DIGITOS} dígitos`;
         return "";
       }
       case "duracionMin": {
@@ -179,11 +188,17 @@ export function ServiceFormDialog({
               <Input
                 id="nombre"
                 value={formData.nombre}
-                onChange={(e) => handleChange("nombre", e.target.value)}
+                onChange={(e) => handleChange("nombre", e.target.value.slice(0, MAX_NOMBRE))}
+                maxLength={MAX_NOMBRE}
                 className="bg-black border-gray-700"
                 placeholder="Corte..."
               />
-              {formErrors.nombre && <p className="text-red-400 text-xs">{formErrors.nombre}</p>}
+              <div className="flex justify-between">
+                <p className="text-red-400 text-xs">{formErrors.nombre}</p>
+                <span className={`text-xs ${formData.nombre.length > MAX_NOMBRE * 0.9 ? 'text-yellow-400' : 'text-gray-500'}`}>
+                  {formData.nombre.length}/{MAX_NOMBRE}
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="codigo">Código</Label>
@@ -197,14 +212,22 @@ export function ServiceFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="descripcion">Descripción</Label>
+            <div className="flex justify-between items-center mb-1.5">
+              <Label htmlFor="descripcion">Descripción</Label>
+              <span className={`text-xs ${formData.descripcion.length > MAX_DESCRIPCION * 0.9 ? 'text-yellow-400' : 'text-gray-500'}`}>
+                {formData.descripcion.length}/{MAX_DESCRIPCION}
+              </span>
+            </div>
             <Textarea
               id="descripcion"
               value={formData.descripcion}
-              onChange={(e) => handleChange("descripcion", e.target.value)}
-              className="bg-black border-gray-700 resize-none"
+              onChange={(e) => handleChange("descripcion", e.target.value.slice(0, MAX_DESCRIPCION))}
+              maxLength={MAX_DESCRIPCION}
+              className="bg-black border-gray-700 resize-none h-32 overflow-y-auto overflow-x-hidden w-full"
+              style={{ wordBreak: 'break-all', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}
               placeholder="Detalles del servicio..."
             />
+            {formErrors.descripcion && <p className="text-red-400 text-xs">{formErrors.descripcion}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -215,8 +238,16 @@ export function ServiceFormDialog({
                 type="number"
                 step="0.01"
                 value={formData.precio}
-                onChange={(e) => handleChange("precio", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Limitar a 10 dígitos (sin contar el punto)
+                  const digits = value.replace(/[^0-9.]/g, '');
+                  if (digits.length <= MAX_PRECIO_DIGITOS) {
+                    handleChange("precio", value);
+                  }
+                }}
                 className="bg-black border-gray-700"
+                placeholder="0.00"
               />
               {formErrors.precio && <p className="text-red-400 text-xs">{formErrors.precio}</p>}
             </div>
@@ -258,7 +289,7 @@ export function ServiceFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || Object.values(formErrors).some(err => err) || !formData.nombre.trim()}
               className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
             >
               {isSubmitting ? "Guardando..." : "Confirmar Cambios"}

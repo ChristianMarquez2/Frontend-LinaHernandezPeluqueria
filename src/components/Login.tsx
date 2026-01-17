@@ -43,6 +43,8 @@ export function Login() {
 
       <input
         type="email"
+        // 👇 AGREGA ESTO: Ayuda al navegador a saber que este es el usuario
+        autoComplete="username" 
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Correo"
@@ -52,6 +54,8 @@ export function Login() {
 
       <input
         type="password"
+        // 👇 ESTO SOLUCIONA TU ERROR DE CONSOLA
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Contraseña"

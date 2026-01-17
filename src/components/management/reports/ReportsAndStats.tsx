@@ -9,6 +9,8 @@ import { StatusChart } from './charts/StatusChart';
 import { TopServicesChart } from './charts/TopServicesChart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { useAuth } from '../../../contexts/auth';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export function ReportsAndStats() {
   const { user } = useAuth();
@@ -23,9 +25,45 @@ export function ReportsAndStats() {
     stylists,
   } = useReportsLogic();
 
+  const [dateError, setDateError] = useState<string>("");
+
   // Handler para inputs de fecha (formato YYYY-MM-DD nativo del input date)
   const handleDateChange = (field: 'from' | 'to', value: string) => {
-    setDateRange({ ...dateRange, [field]: value });
+    const newDateRange = { ...dateRange, [field]: value };
+    
+    // Validación 1: Ambas fechas deben estar completadas
+    if (!newDateRange.from || !newDateRange.to) {
+      const fieldName = field === 'from' ? 'inicial' : 'final';
+      const errorMsg = `Debes completar ambas fechas. Falta la fecha ${fieldName}.`;
+      setDateError(errorMsg);
+      toast.error("Fechas incompletas", {
+        description: errorMsg,
+        style: { color: "black", background: "#ef4444" },
+        descriptionClassName: "text-black",
+      });
+      return; // No actualizar si falta alguna fecha
+    }
+    
+    // Validación 2: la fecha "to" no puede ser anterior a "from"
+    if (newDateRange.from && newDateRange.to) {
+      const fromDate = new Date(newDateRange.from);
+      const toDate = new Date(newDateRange.to);
+      
+      if (toDate < fromDate) {
+        const errorMsg = "La fecha final no puede ser anterior a la fecha inicial";
+        setDateError(errorMsg);
+        toast.error("Error en rango de fechas", {
+          description: errorMsg,
+          style: { color: "black", background: "#ef4444" },
+          descriptionClassName: "text-black",
+        });
+        return; // No actualizar el estado si las fechas son inválidas
+      }
+    }
+    
+    // Si todo es válido, limpiar error y actualizar
+    setDateError("");
+    setDateRange(newDateRange);
   };
 
   return (
@@ -88,7 +126,7 @@ export function ReportsAndStats() {
             variant="outline"
             className="border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black gap-2 h-10 transition-all active:scale-95"
             onClick={() => downloadPdf('GENERAL')}
-            disabled={loading || !stats}
+            disabled={loading || !stats || !!dateError || !dateRange.from || !dateRange.to}
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -103,7 +141,7 @@ export function ReportsAndStats() {
               variant="outline"
               className="border-[#9D8EC1] text-[#9D8EC1] hover:bg-[#9D8EC1] hover:text-black gap-2 h-10 transition-all active:scale-95"
               onClick={() => downloadPdf('STYLIST')}
-              disabled={loading || (user?.role !== 'stylist' && !selectedStylistId)}
+              disabled={loading || (user?.role !== 'stylist' && !selectedStylistId) || !!dateError || !dateRange.from || !dateRange.to}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

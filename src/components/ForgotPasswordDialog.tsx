@@ -313,6 +313,17 @@ export function ForgotPasswordDialog({
         {/* Step 3: New Password */}
         {step === "newPassword" && (
           <form onSubmit={handlePasswordSubmit} className="space-y-4 mt-4">
+            {/* Hidden username field for password managers and accessibility */}
+            <input
+              type="email"
+              name="username"
+              autoComplete="username"
+              value={email}
+              readOnly
+              style={{ display: "none" }}
+              aria-hidden="true"
+            />
+            
             <div>
               <label htmlFor="new-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                 Nueva Contraseña
@@ -320,6 +331,7 @@ export function ForgotPasswordDialog({
               <Input
                 id="new-password"
                 type="password"
+                autoComplete="new-password"
                 required
                 minLength={8}
                 value={newPassword}
@@ -336,6 +348,7 @@ export function ForgotPasswordDialog({
               <Input
                 id="confirm-new-password"
                 type="password"
+                autoComplete="new-password"
                 required
                 minLength={8}
                 value={confirmPassword}

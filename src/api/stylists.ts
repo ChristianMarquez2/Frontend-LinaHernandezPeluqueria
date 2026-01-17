@@ -14,6 +14,16 @@ export async function getStylists() {
   return data;
 }
 
+
+// ==============================
+// 🔹 Obtener todos los servicios
+// ==============================
+export async function getServices() {
+  const { data } = await axios.get(`${BASE_URL}/services`); // Asegúrate de que esta URL sea correcta
+  return data;
+}
+
+
 // ==============================
 // 🔹 Crear un estilista
 // ==============================
