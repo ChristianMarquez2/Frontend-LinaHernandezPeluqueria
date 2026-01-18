@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from "./contexts/auth/index";
 import { DataProvider } from "./contexts/data/index";
 // 1. Importar el nuevo Provider
 import { CategoriesProvider } from "./contexts/data/context/CategoriesContext"; 
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { logger } from "./services/logger";
 
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
@@ -29,11 +31,13 @@ function AppContent() {
   // Redirect any deep link back to home when the user is not authenticated
   useEffect(() => {
     if (!isAuthenticated && location.pathname !== "/") {
+      logger.debug(`Redirecting to home from ${location.pathname}`, {}, 'AppContent');
       navigate("/", { replace: true });
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
   if (isAuthenticated) {
+    logger.debug('User authenticated, rendering DashboardRouter', {}, 'AppContent');
     return <DashboardRouter />;
   }
 
@@ -58,15 +62,19 @@ function AppContent() {
 }
 
 export default function App() {
+  logger.info('App initialized');
+  
   return (
-    <AuthProvider>
-      <DataProvider>
-        {/* 2. Envolver AppContent con CategoriesProvider */}
-        <CategoriesProvider>
-           <AppContent />
-           <Toaster />
-        </CategoriesProvider>
-      </DataProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <DataProvider>
+          {/* 2. Envolver AppContent con CategoriesProvider */}
+          <CategoriesProvider>
+             <AppContent />
+             <Toaster />
+          </CategoriesProvider>
+        </DataProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

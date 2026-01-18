@@ -88,7 +88,7 @@ export function ManagerDashboard() {
         {/* Contenido */}
         <main className="flex-1 p-6">
           {currentView === 'overview' && <ManagerOverview />}
-          {currentView === 'calendar' && <AppointmentCalendar />}
+          {currentView === 'calendar' && <AppointmentCalendar enrichWithClientData={true} />}
           {currentView === 'stylists' && <StylistManagement />}
           {currentView === 'schedules' && <ScheduleManagement />}
           {currentView === 'services' && <ServiceManagement />}

@@ -4,8 +4,9 @@ import { Button } from '../../ui/button';
 import { useData } from '../../../contexts/data';
 import { dataService } from '../../../contexts/data/service';
 import { BankInfo } from '../../../types/api';
-import { UploadCloud, CheckCircle, Copy, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, Copy, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../../services/logger';
 
 interface TransferPaymentDialogProps {
   isOpen: boolean;
@@ -48,7 +49,14 @@ export function TransferPaymentDialog({ isOpen, onClose, bookingId, onSuccess }:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      logger.debug('Transfer payment file selected', { fileName: e.target.files[0].name }, 'TransferPaymentDialog');
     }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    logger.debug('Transfer payment file removed', {}, 'TransferPaymentDialog');
+    toast.info("Imagen eliminada");
   };
 
   const handleUpload = async () => {
@@ -139,12 +147,22 @@ export function TransferPaymentDialog({ isOpen, onClose, bookingId, onSuccess }:
                   accept="image/*"
                   className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={handleFileChange}
+                  disabled={!!selectedFile}
                 />
                 {selectedFile ? (
-                  <div className="text-center animate-in fade-in zoom-in duration-300">
+                  <div className="text-center animate-in fade-in zoom-in duration-300 relative w-full">
                     <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
-                    <p className="text-sm font-medium truncate max-w-[200px]">{selectedFile.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">Clic para cambiar</p>
+                    <p className="text-sm font-medium truncate max-w-[200px] mx-auto">{selectedFile.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                    <button
+                      onClick={handleRemoveFile}
+                      className="absolute top-0 right-4 p-2 bg-red-900/20 hover:bg-red-900/40 rounded-full transition-colors group"
+                      title="Eliminar imagen"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-400 group-hover:text-red-300" />
+                    </button>
                   </div>
                 ) : (
                   <div className="text-center">

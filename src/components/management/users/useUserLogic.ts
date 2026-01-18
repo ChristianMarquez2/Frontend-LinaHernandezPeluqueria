@@ -21,12 +21,13 @@ export function useUserLogic() {
     const token = getToken();
     setLoading(true);
     try {
-      // Usamos tu servicio existente
-      const res = await getAllUsers(1, 50, token);
+      // Usamos tu servicio existente - aumentar el límite para ver todos los usuarios
+      const res = await getAllUsers(1, 1000, token);
       if (!res) {
         toast.error("No se pudieron cargar los usuarios");
         return;
       }
+      console.log(`📊 Usuarios cargados: ${res.data.length} de ${res.meta.total} totales`);
       setUsers(res.data);
     } catch (error) {
       console.error(error);
@@ -41,7 +42,7 @@ export function useUserLogic() {
   }, [fetchUsers]);
 
   // 🛡️ Validaciones
-  const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]{1,15}$/;
+  const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]{2,15}$/;
   const cedulaRegex = /^\d{10}$/;
   const telefonoRegex = /^\d{10}$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
@@ -52,7 +53,7 @@ export function useUserLogic() {
       case "nombre":
       case "apellido":
         if (!value) return "Requerido";
-        if (!nameRegex.test(value)) return "Solo letras, máximo 15 caracteres";
+        if (!nameRegex.test(value)) return "Mínimo 2 letras, máximo 15 caracteres";
         return "";
       case "cedula":
         if (!value) return "Requerido";
@@ -64,11 +65,6 @@ export function useUserLogic() {
         return "";
       case "genero":
         if (!value) return "Requerido";
-        return "";
-      case "edad":
-        if (!value) return "Requerido";
-        if (Number.isNaN(Number(value))) return "Edad debe ser un número";
-        if (Number(value) < 0 || Number(value) > 120) return "Edad inválida";
         return "";
       case "email":
         if (!value) return "Requerido";
@@ -87,7 +83,7 @@ export function useUserLogic() {
 
   const validateForm = (formData: UserFormData, isEditing: boolean): ValidationErrors => {
     const errors: ValidationErrors = {};
-    const fields = ["nombre", "apellido", "cedula", "telefono", "genero", "edad", "email", "password"] as const;
+    const fields = ["nombre", "apellido", "cedula", "telefono", "genero", "email", "password"] as const;
 
     fields.forEach(field => {
       const error = validateField(field, formData[field] as string, isEditing);
@@ -114,7 +110,6 @@ export function useUserLogic() {
           cedula: formData.cedula || undefined,
           telefono: formData.telefono || undefined,
           genero: formData.genero || undefined,
-          edad: formData.edad ? Number(formData.edad) : undefined,
         };
         if (formData.password) payload.password = formData.password;
 
@@ -154,7 +149,6 @@ export function useUserLogic() {
             cedula: formData.cedula,
             telefono: formData.telefono,
             genero: formData.genero,
-            edad: formData.edad ? Number(formData.edad) : undefined,
           }),
         });
 
@@ -163,6 +157,8 @@ export function useUserLogic() {
           throw new Error(body || "Error creando usuario");
         }
 
+        const data = await res.json();
+        
         // 📧 Enviar verificación si el nuevo usuario es gerente o estilista
         if (formData.role === 'manager' || formData.role === 'stylist') {
           try {

@@ -1,5 +1,14 @@
 // services/api.ts
 import { API_BASE_URL, getAuthHeader } from "../config/api";
+import { logger } from "./logger";
+import { toast } from "sonner";
+
+// Callback global para logout cuando token expira
+let onTokenExpiredCallback: (() => void) | null = null;
+
+export function setTokenExpiredCallback(callback: () => void) {
+  onTokenExpiredCallback = callback;
+}
 
 // -------------------------
 // 🔧 Tipos básicos
@@ -28,6 +37,8 @@ async function request<T>(
   token?: string
 ): Promise<ApiResponse<T>> {
   try {
+    logger.debug(`API Request: ${method} ${url}`, { body }, 'API');
+    
     const res = await fetch(buildUrl(url), {
       method,
       headers: {
@@ -47,6 +58,24 @@ async function request<T>(
     }
 
     if (!res.ok) {
+      logger.warn(`API Error: ${method} ${url} - Status ${status}`, { error: payload?.error }, 'API');
+      
+      // Detectar errores de autenticación (token expirado o inválido)
+      if (status === 401 || (status === 403 && payload?.message?.toLowerCase().includes('token'))) {
+        logger.error('Token expired or invalid, triggering logout', { status }, 'API');
+        
+        // Mostrar mensaje al usuario
+        toast.error('Sesión expirada', {
+          description: 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.',
+          duration: 5000,
+        });
+        
+        // Ejecutar callback de logout si está configurado
+        if (onTokenExpiredCallback) {
+          setTimeout(() => onTokenExpiredCallback?.(), 1000);
+        }
+      }
+      
       return {
         ok: false,
         status,
@@ -54,12 +83,14 @@ async function request<T>(
       };
     }
 
+    logger.debug(`API Success: ${method} ${url} - Status ${status}`, {}, 'API');
     return {
       ok: true,
       status,
       data: payload,
     };
   } catch (err: any) {
+    logger.error(`API Network Error: ${method} ${url}`, { message: err?.message }, 'API');
     return {
       ok: false,
       status: 0,

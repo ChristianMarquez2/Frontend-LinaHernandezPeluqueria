@@ -48,7 +48,6 @@ export function UserFormDialog({
     cedula: "",
     telefono: "",
     genero: "",
-    edad: "",
   };
 
   const [formData, setFormData] = useState<UserFormData>(initialData);
@@ -68,7 +67,6 @@ export function UserFormDialog({
           cedula: userToEdit.cedula ?? "",
           telefono: userToEdit.telefono ?? "",
           genero: userToEdit.genero ?? "",
-          edad: userToEdit.edad ? String(userToEdit.edad) : "",
         });
       } else {
         setFormData(initialData);
@@ -192,7 +190,7 @@ export function UserFormDialog({
             {formErrors.cedula && <p className="text-red-400 text-sm">{formErrors.cedula}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-gray-300">Teléfono</Label>
               <Input
@@ -221,20 +219,6 @@ export function UserFormDialog({
                 </SelectContent>
               </Select>
               {formErrors.genero && <p className="text-red-400 text-sm">{formErrors.genero}</p>}
-            </div>
-
-            <div>
-              <Label className="text-gray-300">Edad</Label>
-              <Input
-                type="number"
-                value={formData.edad}
-                onChange={(e) => handleChange("edad", e.target.value)}
-                required
-                min={0}
-                max={120}
-                className="bg-black border-gray-700 text-white"
-              />
-              {formErrors.edad && <p className="text-red-400 text-sm">{formErrors.edad}</p>}
             </div>
           </div>
 

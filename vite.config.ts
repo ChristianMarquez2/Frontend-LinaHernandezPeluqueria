@@ -8,7 +8,7 @@
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
-        'vaul@1.1.2': 'vaul',
+        '@': path.resolve(__dirname, './src'),
         'sonner@2.0.3': 'sonner',
         'recharts@2.15.2': 'recharts',
         'react-resizable-panels@2.1.7': 'react-resizable-panels',
@@ -52,6 +52,31 @@
     build: {
       target: 'esnext',
       outDir: 'build',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true, // Elimina console.log, console.warn, etc en producción
+          drop_debugger: true, // Elimina debugger statements
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Vendor chunks - dependencias grandes en archivos separados
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-select',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dropdown-menu',
+            ],
+            'charts': ['recharts'],
+            'utils': ['date-fns', 'clsx', 'tailwind-merge'],
+          },
+        },
+      },
     },
     server: {
       port: 3000,

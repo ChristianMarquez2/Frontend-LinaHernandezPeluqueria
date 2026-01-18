@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { AuthContextType, User, AuthSessionData } from "./types";
 import { normalizeUser } from "./utils";
 import { authService } from "./service";
+import { useInactivityTimer } from "./useInactivityTimer";
+import { SESSION_CONFIG } from "../../config/session";
+import { setTokenExpiredCallback } from "../../services/api";
+import { toast } from "sonner";
+import { logger } from "../../services/logger";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -125,14 +130,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshToken]);
 
   // LOGOUT
-  const logout = async () => {
+  const logout = async (showMessage: boolean = false) => {
     try {
       if (accessToken) {
         await authService.logout(accessToken);
       }
     } catch { } // Ignorar error en logout
+    
     clearSession();
+    
+    if (showMessage) {
+      toast.error("Sesión expirada por inactividad", {
+        description: "Por favor, inicia sesión de nuevo para continuar.",
+        duration: 5000,
+      });
+      logger.info('Session expired due to inactivity', {}, 'AuthContext');
+    }
   };
+
+  // Manejar cierre de sesión por inactividad
+  const handleInactiveLogout = useCallback(() => {
+    logout(true);
+  }, []);
+
+  // Hook de inactividad (20 minutos según SESSION_INACTIVITY_MIN del backend)
+  useInactivityTimer({
+    onInactive: handleInactiveLogout,
+    inactivityMinutes: SESSION_CONFIG.INACTIVITY_TIMEOUT_MIN,
+    isAuthenticated: !!user,
+  });
+
+  // Auto-refresh del token antes de que expire (cada 14 minutos)
+  useEffect(() => {
+    if (!user || !refreshToken) return;
+
+    const intervalId = setInterval(() => {
+      logger.debug('Auto-refreshing access token', {}, 'AuthContext');
+      refreshSession();
+    }, SESSION_CONFIG.AUTO_REFRESH_INTERVAL_MIN * 60 * 1000);
+
+    logger.info('Auto-refresh timer started', { intervalMinutes: SESSION_CONFIG.AUTO_REFRESH_INTERVAL_MIN }, 'AuthContext');
+
+    return () => {
+      clearInterval(intervalId);
+      logger.debug('Auto-refresh timer stopped', {}, 'AuthContext');
+    };
+  }, [user, refreshToken, refreshSession]);
+
+  // Configurar callback para cerrar sesión cuando token expira
+  useEffect(() => {
+    setTokenExpiredCallback(() => {
+      logger.warn('Token expired, forcing logout', {}, 'AuthContext');
+      logout(false); // No mostrar mensaje de inactividad, ya se muestra desde api.ts
+    });
+
+    return () => {
+      setTokenExpiredCallback(() => {});
+    };
+  }, []);
 
   // REGISTER
   const register = async (data: Partial<User> & { password: string }) => {

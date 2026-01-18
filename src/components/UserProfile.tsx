@@ -330,12 +330,22 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
           {/* ---------- TAB CONTRASEÑA ---------- */}
           <TabsContent value="password">
             <form onSubmit={handlePasswordUpdate} className="space-y-4 mt-4">
+              {/* Hidden email field for password managers */}
+              <input
+                type="email"
+                autoComplete="email"
+                value={user?.email || ""}
+                readOnly
+                hidden
+              />
+
               <div>
                 <label className="text-[#F4E5C2] text-sm flex items-center gap-1">
                   <Lock className="w-4 h-4" /> Contraseña Actual
                 </label>
                 <Input
                   type="password"
+                  autoComplete="current-password"
                   value={passwordData.currentPassword}
                   onChange={(e) =>
                     setPasswordData({
@@ -352,6 +362,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                 <label className="text-[#F4E5C2] text-sm">Nueva Contraseña</label>
                 <Input
                   type="password"
+                  autoComplete="new-password"
                   value={passwordData.newPassword}
                   onChange={(e) =>
                     setPasswordData({
@@ -370,6 +381,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                 </label>
                 <Input
                   type="password"
+                  autoComplete="new-password"
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
                     setPasswordData({

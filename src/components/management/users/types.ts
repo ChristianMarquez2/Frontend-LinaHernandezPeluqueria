@@ -24,7 +24,6 @@ export interface UserFormData {
   cedula: string;
   telefono: string;
   genero: string;
-  edad: string;
 }
 
 export interface ValidationErrors {
@@ -35,7 +34,6 @@ export interface ValidationErrors {
   password?: string;
   telefono?: string;
   genero?: string;
-  edad?: string;
 }
 
 // 🛠️ Utilidades de Mapeo de Roles

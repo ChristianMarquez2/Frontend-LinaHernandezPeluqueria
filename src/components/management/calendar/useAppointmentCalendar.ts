@@ -1,18 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import { logger } from '../../../services/logger';
 import { dataService } from '../../../contexts/data/service';
 import { useData } from '../../../contexts/data/index';
 import { useAuth } from '../../../contexts/auth';
+import { API_BASE_URL } from '../../../config/api';
 // Importamos tus tipos exactos
-import type { Booking, Stylist } from '../../../contexts/data/types'; 
+import type { Booking, Stylist, User } from '../../../contexts/data/types'; 
 
-export function useAppointmentCalendar() {
+export function useAppointmentCalendar(enrichWithClientData: boolean = false) {
   const token = localStorage.getItem("accessToken");
-  const { stylists } = useData(); // Usamos los estilistas del contexto
+  const { stylists, services } = useData(); // Obtenemos services del contexto
   const { user } = useAuth(); // Usuario actual para validación
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
+  const [clientsCache, setClientsCache] = useState<Map<string, User>>(new Map());
+  const [failedClientIds, setFailedClientIds] = useState<Set<string>>(new Set());
   
   // Filtros
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -22,9 +26,92 @@ export function useAppointmentCalendar() {
   
   const [loading, setLoading] = useState(false);
 
+  // Función para cargar datos de clientes que no están en caché
+  const enrichBookingsWithClientData = useCallback(async (bookings: Booking[]) => {
+    if (!token || bookings.length === 0) return bookings;
+
+    // Recolectar IDs de clientes únicos que no están ya poblados ni en caché ni fallidos
+    const clientIdsToFetch = new Set<string>();
+    bookings.forEach(booking => {
+      if (typeof booking.clienteId === 'string' && !booking.cliente) {
+        if (!clientsCache.has(booking.clienteId) && !failedClientIds.has(booking.clienteId)) {
+          clientIdsToFetch.add(booking.clienteId);
+        }
+      }
+    });
+
+    // Si no hay nuevos IDs que buscar, retornar los bookings tal cual (sin esperar)
+    if (clientIdsToFetch.size === 0) return bookings;
+
+    logger.debug(`Loading client data for ${clientIdsToFetch.size} clients`, { clientIds: Array.from(clientIdsToFetch) }, 'useAppointmentCalendar');
+
+    // Estrategia: Cargar cada usuario individualmente para evitar 403 en /users
+    const newClients = new Map(clientsCache);
+    const newFailedIds = new Set(failedClientIds);
+    
+    // Cargar usuarios en paralelo
+    const promises = Array.from(clientIdsToFetch).map(async (clientId) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/${clientId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          const userData = await res.json();
+          newClients.set(clientId, {
+            _id: userData._id,
+            nombre: userData.nombre || '',
+            apellido: userData.apellido || '',
+            email: userData.email || '',
+            role: userData.role || 'client'
+          });
+          logger.debug(`Client loaded successfully`, { clientId }, 'useAppointmentCalendar');
+        } else if (res.status === 403 || res.status === 404) {
+          // Usuario sin permisos o no encontrado
+          newFailedIds.add(clientId);
+          logger.warn(`Client not accessible`, { clientId, status: res.status }, 'useAppointmentCalendar');
+        }
+      } catch (err) {
+        newFailedIds.add(clientId);
+        logger.warn(`Error loading client`, { clientId, error: err }, 'useAppointmentCalendar');
+      }
+    });
+
+    await Promise.all(promises);
+
+    setClientsCache(newClients);
+    setFailedClientIds(newFailedIds);
+    logger.debug(`Client data enrichment complete`, { cachedClients: newClients.size, failedClients: newFailedIds.size }, 'useAppointmentCalendar');
+
+    // Retornar bookings enriquecidos
+    return bookings.map(booking => {
+      if (typeof booking.clienteId === 'string' && !booking.cliente) {
+        const clientData = newClients.get(booking.clienteId);
+        if (clientData) {
+          return {
+            ...booking,
+            cliente: {
+              _id: clientData._id,
+              nombre: clientData.nombre,
+              apellido: clientData.apellido,
+              email: clientData.email,
+              role: clientData.role
+            }
+          };
+        }
+      }
+      return booking;
+    });
+  }, [token, clientsCache, failedClientIds]);
+
   const fetchBookings = useCallback(async () => {
     if (!token) return;
     setLoading(true);
+    logger.debug('Fetching appointments', { selectedDate: selectedDate?.toISOString(), selectedStylistId, viewAllDates }, 'useAppointmentCalendar');
+    
     try {
       const params: any = {
         stylistId: selectedStylistId !== 'ALL' ? selectedStylistId : undefined
@@ -53,19 +140,26 @@ export function useAppointmentCalendar() {
       // Ordenar: Más recientes primero
       filtered.sort((a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime());
 
-      setBookings(filtered);
+      // Enriquecer con datos de clientes SOLO si es necesario (Admin/Manager)
+      const enriched = enrichWithClientData 
+        ? await enrichBookingsWithClientData(filtered)
+        : filtered;
+
+      setBookings(enriched);
 
       // Calcular fechas ocupadas para el calendario UI
       const dates = data.map(b => new Date(b.inicio));
       setBookedDates(dates);
 
+      logger.info('Appointments fetched successfully', { count: enriched.length, filtered: enriched.length }, 'useAppointmentCalendar');
+
     } catch (err) {
-      console.error("Error fetching bookings:", err);
+      logger.error("Error fetching bookings", { error: err }, 'useAppointmentCalendar');
       toast.error("Error al cargar el calendario");
     } finally {
       setLoading(false);
     }
-  }, [token, selectedDate, selectedStylistId, selectedStatus, viewAllDates]);
+  }, [token, selectedDate, selectedStylistId, selectedStatus, viewAllDates, enrichBookingsWithClientData, enrichWithClientData]);
 
   useEffect(() => {
     fetchBookings();
@@ -74,8 +168,21 @@ export function useAppointmentCalendar() {
   // === HELPERS INTELIGENTES ===
 
   const getServiceName = (booking: Booking) => {
-    // Tu interfaz Booking tiene: servicio?: { nombre... }
+    // 1. Intentar leer del objeto poblado 'servicio'
     if (booking.servicio?.nombre) return booking.servicio.nombre;
+    
+    // 2. Fallback: Buscar en servicioId si viene poblado como objeto
+    const servicio = booking.servicioId as any;
+    if (servicio && typeof servicio === 'object' && servicio.nombre) {
+      return servicio.nombre;
+    }
+    
+    // 3. Buscar en la lista de servicios del contexto usando el ID
+    if (typeof booking.servicioId === 'string' && services) {
+      const found = services.find(s => s._id === booking.servicioId || s.id === booking.servicioId);
+      if (found) return found.nombre;
+    }
+    
     return 'Servicio General';
   };
 
@@ -95,21 +202,52 @@ export function useAppointmentCalendar() {
   };
 
   const getClientLabel = (booking: Booking) => {
-    // Intentamos "forzar" la lectura del objeto clienteId por si el backend lo manda populado
-    // aunque la interfaz diga string.
+    const isStylist = user?.role?.toLowerCase() === 'stylist' || user?.role?.toLowerCase() === 'estilista';
+    
+    // 1. Intentar leer del objeto poblado 'cliente' (nuevo campo en Booking)
+    if (booking.cliente) {
+      const { nombre, apellido, email } = booking.cliente;
+      if (nombre) return `${nombre} ${apellido || ''}`.trim();
+      if (email) return email;
+    }
+    
+    // 2. Si el ID es desconocido/fallido, mostrar ID parcial
+    if (typeof booking.clienteId === 'string') {
+      if (failedClientIds.has(booking.clienteId)) {
+        // Si es estilista sin permiso, mostrar "Nombre oculto"
+        if (isStylist) {
+          return 'Cliente (Nombre oculto)';
+        }
+        return `Cliente (${booking.clienteId.slice(-6)})`;
+      }
+      
+      // 3. Buscar en el caché de clientes
+      if (clientsCache.has(booking.clienteId)) {
+        const client = clientsCache.get(booking.clienteId)!;
+        if (client.nombre) return `${client.nombre} ${client.apellido || ''}`.trim();
+        if (client.email) return client.email;
+      }
+    }
+    
+    // 4. Intentar leer del objeto clienteId si viene poblado
     const c = booking.clienteId as any; 
-
-    // Caso A: Es un objeto con nombre/apellido (formato Stylist/User hispano)
     if (c && typeof c === 'object') {
-        if (c.nombre) return `${c.nombre} ${c.apellido || ''}`;
-        if (c.firstName) return `${c.firstName} ${c.lastName || ''}`;
-        if (c.email) return c.email; // Fallback al email
+        if (c.nombre) return `${c.nombre} ${c.apellido || ''}`.trim();
+        if (c.firstName) return `${c.firstName} ${c.lastName || ''}`.trim();
+        if (c.email) return c.email;
     }
 
-    // Caso B: Tu interfaz 'Appointment' tiene clientName, a veces Booking también lo trae
+    // 5. Fallback: clientName (usado en Appointment)
     if ((booking as any).clientName) return (booking as any).clientName;
 
-    // Caso C: No tenemos datos del cliente, solo el ID
+    // 6. Mostrar "Nombre oculto" para estilistas, ID parcial para admin/manager
+    if (typeof booking.clienteId === 'string') {
+      if (isStylist) {
+        return 'Cliente (Nombre oculto)';
+      }
+      return `Cliente (${booking.clienteId.slice(-6)})`;
+    }
+
     return "Cliente Registrado";
   };
 

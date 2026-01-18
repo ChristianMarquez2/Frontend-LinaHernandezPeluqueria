@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sparkles, Instagram, Facebook, Youtube } from "lucide-react";
 import { LoginDialog } from "./LoginDialog";
+import { APP_VERSION } from "../config/version";
 
 export function Footer() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -111,6 +112,9 @@ export function Footer() {
         <div className="pt-8 border-t border-[#D4AF37]/10 text-center">
           <p className="text-gray-500" style={{ fontSize: "0.875rem" }}>
             © 2025 Lina Hernández Peluquería. Todos los derechos reservados.
+          </p>
+          <p className="text-gray-600 mt-2 text-xs">
+            Sistema v{APP_VERSION}
           </p>
         </div>
       </div>

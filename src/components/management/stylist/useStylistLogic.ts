@@ -51,12 +51,14 @@ export function useStylistLogic() {
     firstName: (value: string) => {
       if (!value.trim()) return 'El nombre es requerido';
       if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) return 'Solo se permiten letras';
+      if (value.length < 2) return 'Mínimo 2 caracteres';
       if (value.length > 20) return 'Máximo 20 caracteres';
       return null;
     },
     lastName: (value: string) => {
       if (!value.trim()) return 'El apellido es requerido';
       if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) return 'Solo se permiten letras';
+      if (value.length < 2) return 'Mínimo 2 caracteres';
       if (value.length > 20) return 'Máximo 20 caracteres';
       return null;
     },

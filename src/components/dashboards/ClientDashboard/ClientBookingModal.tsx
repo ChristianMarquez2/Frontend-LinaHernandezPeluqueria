@@ -12,6 +12,7 @@ import {
 import { useClientBooking } from './hooks/useClientBooking';
 import { Service, Stylist } from '../../../contexts/data/types';
 import { safeParseDate } from './utils';
+import { LoadingAnimation } from '../../LoadingAnimation';
 
 import { Clock, CalendarCheck, Scissors } from 'lucide-react';
 
@@ -102,6 +103,15 @@ export function ClientBookingModal({
   const handlePrimaryAction = async () => {
     if (!selectedSlot || !selectedDate) return;
 
+    // Validar que la fecha y hora no estén en el pasado
+    const slotDateTime = new Date(selectedSlot.start);
+    const now = new Date();
+    
+    if (slotDateTime <= now) {
+      alert("No puedes agendar una cita en el pasado. Por favor selecciona una fecha y hora futura.");
+      return;
+    }
+
     try {
       await onSave({
         slotId: selectedSlot.slotId,
@@ -113,6 +123,29 @@ export function ClientBookingModal({
       console.error("Error al guardar la cita:", error);
     }
   };
+
+  // Filtrar slots para eliminar los que ya pasaron si es hoy
+  const filteredAvailableSlots = useMemo(() => {
+    if (!selectedDate || availableSlots.length === 0) return availableSlots;
+
+    const today = new Date();
+    const selectedDateObj = new Date(selectedDate);
+    
+    // Si la fecha seleccionada es hoy, filtrar horarios pasados
+    const isToday = 
+      selectedDateObj.getFullYear() === today.getFullYear() &&
+      selectedDateObj.getMonth() === today.getMonth() &&
+      selectedDateObj.getDate() === today.getDate();
+
+    if (!isToday) return availableSlots;
+
+    // Filtrar slots que ya pasaron
+    const now = new Date();
+    return availableSlots.filter(slot => {
+      const slotTime = new Date(slot.start);
+      return slotTime > now;
+    });
+  }, [availableSlots, selectedDate]);
 
   const isProcessing = loadingBooking;
 
@@ -195,7 +228,19 @@ export function ClientBookingModal({
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    const selectedDateValue = e.target.value;
+                    const today = new Date().toISOString().split("T")[0];
+                    
+                    // Validar que la fecha no sea anterior a hoy
+                    if (selectedDateValue < today) {
+                      alert("No puedes seleccionar una fecha en el pasado");
+                      return;
+                    }
+                    
+                    setSelectedDate(selectedDateValue);
+                    setSelectedSlot(null); // Resetear slot al cambiar fecha
+                  }}
                   min={new Date().toISOString().split("T")[0]}
                   disabled={isProcessing}
                   className="w-full bg-gray-800 border border-gray-700 text-white p-2.5 rounded-lg outline-none focus:border-[#9D8EC1]"
@@ -218,16 +263,25 @@ export function ClientBookingModal({
                   Selecciona fecha y servicio
                 </div>
               ) : loadingSlots ? (
-                <div className="flex justify-center py-6 text-[#9D8EC1] animate-pulse">
-                  Buscando horarios...
+                <div className="py-4 px-4">
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src="/tijeras.gif"
+                      alt="Buscando horarios"
+                      className="w-12 h-12 object-contain"
+                    />
+                    <p className="text-[#D4AF37] text-sm font-semibold">Buscando horarios...</p>
+                  </div>
                 </div>
-              ) : availableSlots.length === 0 ? (
+              ) : filteredAvailableSlots.length === 0 ? (
                 <div className="text-amber-300/80 text-center text-sm py-6">
-                  No hay espacios disponibles
+                  {availableSlots.length > 0 
+                    ? "No hay horarios disponibles para hoy (todos los horarios ya pasaron)"
+                    : "No hay espacios disponibles"}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
-                  {availableSlots.map(slot => {
+                  {filteredAvailableSlots.map(slot => {
                     const time = new Date(slot.start).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit'

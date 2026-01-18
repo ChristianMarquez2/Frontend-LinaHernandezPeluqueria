@@ -1,5 +1,6 @@
-import { Menu, X, Bell, User } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { Button } from '../../ui/button';
+import { APP_VERSION } from '../../../config/version';
 import { Badge } from '../../ui/badge';
 
 interface AdminHeaderProps {
@@ -32,22 +33,10 @@ export function AdminHeader({
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <h1 className="text-[#D4AF37] font-semibold">Panel de Administración</h1>
+          <span className="text-xs text-gray-500 ml-2">v{APP_VERSION}</span>
         </div>
 
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-white hover:bg-gray-800"
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-[#9D8EC1] p-0 flex items-center justify-center">
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
-
           <Button
             variant="ghost"
             size="icon"

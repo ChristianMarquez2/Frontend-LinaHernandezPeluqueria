@@ -1,15 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar as CalendarIcon,
   Filter,
   XCircle,
-  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { logger } from "../../../services/logger";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Textarea } from "../../ui/textarea";
+import { LoadingAnimation } from "../../LoadingAnimation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -24,8 +37,15 @@ import { AppointmentCard } from "./AppointmentCard";
 import { useAuth } from "../../../contexts/auth";
 
 
-export function AppointmentCalendar() {
+export function AppointmentCalendar({ enrichWithClientData = false }: { enrichWithClientData?: boolean }) {
   const { user } = useAuth();
+  
+  // Estados para diálogos
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string>("");
+  const [cancelReason, setCancelReason] = useState("");
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [completingBookingId, setCompletingBookingId] = useState<string>("");
 
   const {
     bookings,
@@ -47,7 +67,7 @@ export function AppointmentCalendar() {
     handleConfirm,
     handleCancel,
     handleComplete,
-  } = useAppointmentCalendar();
+  } = useAppointmentCalendar(enrichWithClientData);
 
   const isStylist =
     user?.role?.toLowerCase() === "stylist" ||
@@ -55,12 +75,14 @@ export function AppointmentCalendar() {
 
   useEffect(() => {
     if (isStylist && user?.id && selectedStylistId !== user.id) {
+      logger.debug('AppointmentCalendar: Filtering to stylist appointments', { stylistId: user.id }, 'AppointmentCalendar');
       setSelectedStylistId(user.id);
     }
   }, [isStylist, user?.id, selectedStylistId, setSelectedStylistId]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
+      logger.debug('AppointmentCalendar: Date filter changed', { date: e.target.value }, 'AppointmentCalendar');
       setSelectedDate(new Date(`${e.target.value}T12:00:00`));
     } else {
       setSelectedDate(undefined as any);
@@ -68,6 +90,34 @@ export function AppointmentCalendar() {
   };
 
   const dateValue = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+
+  const handleCancelClick = (id: string) => {
+    logger.info('AppointmentCalendar: Opening cancel dialog', { bookingId: id }, 'AppointmentCalendar');
+    setCancellingBookingId(id);
+    setCancelReason("");
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = () => {
+    if (cancelReason.trim()) {
+      logger.info('AppointmentCalendar: Confirming cancellation', { bookingId: cancellingBookingId, reason: cancelReason }, 'AppointmentCalendar');
+      handleCancel(cancellingBookingId, cancelReason);
+      setCancelDialogOpen(false);
+      setCancelReason("");
+    }
+  };
+
+  const handleCompleteClick = (id: string) => {
+    logger.info('AppointmentCalendar: Opening complete dialog', { bookingId: id }, 'AppointmentCalendar');
+    setCompletingBookingId(id);
+    setCompleteDialogOpen(true);
+  };
+
+  const handleCompleteConfirm = () => {
+    logger.info('AppointmentCalendar: Confirming completion', { bookingId: completingBookingId }, 'AppointmentCalendar');
+    handleComplete(completingBookingId, "Finalizado desde panel");
+    setCompleteDialogOpen(false);
+  };
 
   return (
     <div className="appointment-calendar">
@@ -176,10 +226,7 @@ export function AppointmentCalendar() {
             </div>
 
             {loading ? (
-              <div className="appointment-calendar__loading">
-                <Loader2 className="spin" size={40} />
-                <span>Cargando citas...</span>
-              </div>
+              <LoadingAnimation message="Cargando citas..." />
             ) : bookings.length === 0 ? (
               <div className="appointment-calendar__empty">
                 <XCircle size={48} />
@@ -197,24 +244,8 @@ export function AppointmentCalendar() {
                     getClientLabel={getClientLabel}
                     getStylistLabel={getStylistLabel}
                     onConfirm={handleConfirm}
-                    onCancel={(id) => {
-                      const motivo = prompt(
-                        "Motivo de la cancelación:"
-                      );
-                      if (motivo) handleCancel(id, motivo);
-                    }}
-                    onComplete={(id) => {
-                      if (
-                        window.confirm(
-                          "¿Confirmar que el servicio finalizó?"
-                        )
-                      ) {
-                        handleComplete(
-                          id,
-                          "Finalizado desde panel"
-                        );
-                      }
-                    }}
+                    onCancel={handleCancelClick}
+                    onComplete={handleCompleteClick}
                   />
                 ))}
               </div>
@@ -222,6 +253,75 @@ export function AppointmentCalendar() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Diálogo de Cancelación */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#D4AF37]">
+              Cancelar Cita
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Por favor indica el motivo de la cancelación. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="py-4">
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Escribe el motivo de la cancelación..."
+              className="bg-black border-gray-700 text-white min-h-[100px]"
+              autoFocus
+            />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setCancelDialogOpen(false)}
+              className="bg-gray-800 text-white hover:bg-gray-700"
+            >
+              Volver
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelConfirm}
+              disabled={!cancelReason.trim()}
+              className="btn-red"
+            >
+              Cancelar Cita
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de Completar */}
+      <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#D4AF37]">
+              Completar Servicio
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              ¿Confirmas que el servicio finalizó correctamente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setCompleteDialogOpen(false)}
+              className="bg-gray-800 text-white hover:bg-gray-700"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCompleteConfirm}
+              className="bg-gradient-to-r from-[#D4AF37] to-[#E8C962] text-black hover:shadow-lg hover:shadow-[#D4AF37]/50"
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

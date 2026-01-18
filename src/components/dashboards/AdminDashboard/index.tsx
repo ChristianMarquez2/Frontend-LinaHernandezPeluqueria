@@ -91,7 +91,7 @@ export function AdminDashboard() {
             {currentView === 'overview' && <AdminOverview />}
             
             {/* Gestión Operativa */}
-            {currentView === 'calendar' && <AppointmentCalendar />}
+            {currentView === 'calendar' && <AppointmentCalendar enrichWithClientData={true} />}
             {currentView === 'schedules' && <ScheduleManagement />}
             
             {/* Gestión Recursos */}

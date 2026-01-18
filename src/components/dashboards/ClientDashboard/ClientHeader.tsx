@@ -1,6 +1,6 @@
-import { Bell, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
+import { APP_VERSION } from '../../../config/version';
 
 interface ClientHeaderProps {
   user: any;
@@ -22,6 +22,7 @@ export function ClientHeader({
       <div className="flex h-16 items-center justify-between px-4">
         <h1 className="text-[#D4AF37] font-semibold text-lg">
           Panel del Cliente
+          <span className="text-xs text-gray-500 ml-2">v{APP_VERSION}</span>
         </h1>
 
         <div className="flex items-center gap-4">
@@ -31,20 +32,6 @@ export function ClientHeader({
             className="bg-[#9D8EC1] hover:bg-[#9D8EC1]/90"
           >
             Agendar Cita
-          </Button>
-
-          {/* Notificaciones */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-white hover:bg-gray-800"
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-[#9D8EC1] p-0 flex items-center justify-center">
-                {unreadCount}
-              </Badge>
-            )}
           </Button>
 
           {/* Perfil */}

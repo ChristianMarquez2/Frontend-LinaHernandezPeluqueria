@@ -2,8 +2,21 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/auth/index';
 import { useAppointments } from '../../../contexts/data/index'; 
 import { useData } from '../../../contexts/data/index'; 
+import { logger } from '../../../services/logger';
 import { UserProfile } from '../../UserProfile';
+import { LoadingAnimation } from '../../LoadingAnimation';
 import { API_BASE_URL } from '../../../config/api';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../ui/alert-dialog';
 
 // Sub-componentes
 import { ClientHeader } from './ClientHeader';
@@ -33,6 +46,9 @@ export function ClientDashboard() {
   const [showBooking, setShowBooking] = useState(false);
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
+  
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancellingAppointmentId, setCancellingAppointmentId] = useState<string>("");
 
   const [bookingLoading, setBookingLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,11 +58,13 @@ export function ClientDashboard() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      logger.info('ClientDashboard: Loading dashboard data', { userId }, 'ClientDashboard');
       try {
         await fetchData();
         await refreshMyBookings();
+        logger.debug('ClientDashboard: Data loaded successfully', {}, 'ClientDashboard');
       } catch (err) {
-        console.error("Error loading dashboard:", err);
+        logger.error('ClientDashboard: Error loading dashboard', { error: err }, 'ClientDashboard');
       } finally {
         setLoading(false);
       }
@@ -79,14 +97,22 @@ export function ClientDashboard() {
     setShowBooking(true);
   };
 
-  const handleCancelAppointment = async (id: string) => {
-    if (!confirm("¿Estás seguro que deseas cancelar esta cita?")) return;
-    
-    try {
-      const token = localStorage.getItem("accessToken");
-      if(!token) return;
+  const handleCancelClick = (id: string) => {
+    setCancellingAppointmentId(id);
+    setCancelDialogOpen(true);
+  };
 
-      const res = await fetch(`${API_BASE_URL}/bookings/${id}/cancel`, {
+  const handleCancelConfirm = async () => {
+    try {
+      logger.info('ClientDashboard: Cancelling appointment', { appointmentId: cancellingAppointmentId }, 'ClientDashboard');
+      
+      const token = localStorage.getItem("accessToken");
+      if(!token) {
+        logger.warn('ClientDashboard: No auth token found', {}, 'ClientDashboard');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/bookings/${cancellingAppointmentId}/cancel`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -97,26 +123,40 @@ export function ClientDashboard() {
 
       if (!res.ok) {
          const errData = await res.json();
-         alert("Error: " + (errData.message || "No se pudo cancelar"));
+         logger.warn('ClientDashboard: Failed to cancel appointment', { error: errData }, 'ClientDashboard');
+         toast.error("Error al cancelar", {
+           description: errData.message || "No se pudo cancelar la cita"
+         });
          return;
       }
 
+      logger.info('ClientDashboard: Appointment cancelled successfully', { appointmentId: cancellingAppointmentId }, 'ClientDashboard');
       await refreshMyBookings();
-      alert("Cita cancelada correctamente.");
+      toast.success("Cita cancelada correctamente");
+      setCancelDialogOpen(false);
 
     } catch (err) {
-      console.error(err);
-      alert("Error de conexión al cancelar.");
+      logger.error('ClientDashboard: Error cancelling appointment', { error: err }, 'ClientDashboard');
+      toast.error("Error de conexión", {
+        description: "No se pudo conectar con el servidor"
+      });
     }
   };
 
   const handleSaveBooking = async ({ slotId, date, notes }: { slotId: string, date: string, notes?: string }) => {
     setBookingLoading(true);
+    logger.info('ClientDashboard: Saving booking', { slotId, date, editing: !!editingAppointmentId }, 'ClientDashboard');
+    
     const token = localStorage.getItem("accessToken");
-    if (!token) return;
+    if (!token) {
+      logger.warn('ClientDashboard: No auth token found', {}, 'ClientDashboard');
+      return;
+    }
 
     try {
       if (editingAppointmentId) {
+        logger.debug('ClientDashboard: Rescheduling existing appointment', { appointmentId: editingAppointmentId }, 'ClientDashboard');
+        
         const res = await fetch(`${API_BASE_URL}/bookings/${editingAppointmentId}/reschedule`, {
           method: "PUT",
           headers: {
@@ -128,9 +168,11 @@ export function ClientDashboard() {
 
         if (!res.ok) {
             const errorData = await res.json();
+            logger.warn('ClientDashboard: Failed to reschedule', { error: errorData }, 'ClientDashboard');
             throw new Error(errorData.message || "Error al reprogramar");
         }
       } else {
+        logger.debug('ClientDashboard: Creating new appointment', { slotId, date }, 'ClientDashboard');
         await dataService.createBooking(token, {
           slotId,
           date,
@@ -142,18 +184,23 @@ export function ClientDashboard() {
       await fetchData();
       
       setShowBooking(false);
-      alert(editingAppointmentId ? "Cita reprogramada con éxito" : "¡Cita agendada con éxito!");
+      logger.info('ClientDashboard: Booking saved successfully', { appointmentId: editingAppointmentId }, 'ClientDashboard');
+      toast.success(
+        editingAppointmentId ? "Cita reprogramada con éxito" : "¡Cita agendada con éxito!"
+      );
 
     } catch (err: any) {
-      console.error(err);
-      alert("Error: " + (err.message || "No se pudo procesar la solicitud"));
+      logger.error('ClientDashboard: Error saving booking', { error: err }, 'ClientDashboard');
+      toast.error("Error al procesar", {
+        description: err.message || "No se pudo procesar la solicitud"
+      });
     } finally {
       setBookingLoading(false);
     }
   };
 
   if (!user) {
-    return <div className="flex h-screen items-center justify-center bg-black text-[#9D8EC1]">Cargando...</div>;
+    return <LoadingAnimation message="Cargando..." fullScreen />;
   }
 
   if (user.role !== "client") {
@@ -168,7 +215,7 @@ export function ClientDashboard() {
   }
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center bg-black text-[#9D8EC1]">Cargando tu panel...</div>;
+    return <LoadingAnimation message="Cargando tu panel..." fullScreen />;
   }
 
   return (
@@ -206,7 +253,7 @@ export function ClientDashboard() {
             setShowRatings={setShowRatings}
             appointments={myBookings}
             onEdit={openEditBooking}
-            onCancel={handleCancelAppointment}
+            onCancel={handleCancelClick}
           />
         </section>
       </main>
@@ -223,6 +270,35 @@ export function ClientDashboard() {
       />
 
       <UserProfile open={showProfile} onOpenChange={setShowProfile} />
+
+      {/* Diálogo de Cancelación */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#D4AF37]">
+              Cancelar Cita
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              ¿Estás seguro que deseas cancelar esta cita? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => setCancelDialogOpen(false)}
+              className="bg-gray-800 text-white hover:bg-gray-700"
+            >
+              No, mantener cita
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Sí, cancelar cita
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

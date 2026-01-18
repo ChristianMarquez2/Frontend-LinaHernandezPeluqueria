@@ -93,8 +93,28 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
       return;
     }
 
+    if (registerData.firstName.trim().length < 2) {
+      toast.error("El nombre debe tener al menos 2 caracteres", { style: { color: "black", background: "#ef4444" } });
+      return;
+    }
+
+    if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(registerData.firstName)) {
+      toast.error("El nombre solo puede contener letras", { style: { color: "black", background: "#ef4444" } });
+      return;
+    }
+
     if (!registerData.lastName.trim()) {
       toast.error("El apellido es requerido", { style: { color: "black", background: "#ef4444" } });
+      return;
+    }
+
+    if (registerData.lastName.trim().length < 2) {
+      toast.error("El apellido debe tener al menos 2 caracteres", { style: { color: "black", background: "#ef4444" } });
+      return;
+    }
+
+    if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(registerData.lastName)) {
+      toast.error("El apellido solo puede contener letras", { style: { color: "black", background: "#ef4444" } });
       return;
     }
 

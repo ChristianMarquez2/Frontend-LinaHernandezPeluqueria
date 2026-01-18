@@ -42,7 +42,7 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
     
     // Verificar que el usuario sea cliente
     const userRole = (user?.role as string)?.toUpperCase() || "";
-    if (userRole !== 'CLIENTE') {
+    if (userRole !== 'CLIENTE' && userRole !== 'CLIENT') {
       console.log("ℹ️ refreshMyBookings: Usuario no es cliente (rol:", userRole + "), ignorando");
       return;
     }
@@ -68,18 +68,18 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
       console.log("👤 AppointmentsContext - Usuario:", user.email, "Rol:", userRole);
 
       // Si es cliente, priorizamos sus reservas
-      if (userRole === 'CLIENTE') {
+      if (userRole === 'CLIENTE' || userRole === 'CLIENT') {
         console.log("📌 Cargando reservas de cliente...");
         refreshMyBookings();
       }
       
       // Si es Admin/Gerente/Estilista, cargamos las manuales
-      if (['ADMIN', 'GERENTE', 'ESTILISTA'].includes(userRole)) {
+      if (['ADMIN', 'GERENTE', 'ESTILISTA', 'MANAGER', 'STYLIST'].includes(userRole)) {
         console.log("📌 Cargando citas manuales para admin/gerente/estilista...");
         refreshAppointments();
       }
 
-      if (!['CLIENTE', 'ADMIN', 'GERENTE', 'ESTILISTA'].includes(userRole)) {
+      if (!['CLIENTE', 'CLIENT', 'ADMIN', 'GERENTE', 'ESTILISTA', 'MANAGER', 'STYLIST'].includes(userRole)) {
         console.warn("⚠️ Rol no reconocido:", userRole);
       }
     } else {
