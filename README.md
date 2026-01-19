@@ -11,7 +11,7 @@
 
 **Proyecto de Titulación** | **[Escuela Politecnica Nacional]** | **2026**
 
-[🌐 Ver Demo](#) | [📖 Documentación](#instalación) | [🐛 Reportar Bug](#contribución)
+[🌐 Ver Sitio](#) | [📖 Documentación](#instalación) |
 
 ---
 
@@ -1033,7 +1033,6 @@ Para problemas técnicos o dudas sobre el proyecto:
 
 - [Guía de Manejo de Errores](src/ERROR_HANDLING_GUIDE.md)
 - [Guía de Gestión de Consola](src/CONSOLE_MANAGEMENT.md)
-- [Guidelines de Desarrollo](src/guidelines/Guidelines.md)
 
 ### 🔗 Links Útiles
 
