@@ -160,7 +160,7 @@ export const dataService = {
     
     // Definir método HTTP según la acción
     const methodMap: Record<string, string> = {
-      'confirm': 'POST',
+      'confirm': 'PATCH',  // ✅ Cambio a PATCH según nuevo backend
       'reschedule': 'POST',
       'complete': 'PATCH',
       'cancel': 'POST'

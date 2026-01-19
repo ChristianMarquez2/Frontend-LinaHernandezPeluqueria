@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { PasswordInput } from '../../ui/password-input';
 import { Label } from '../../ui/label';
 import {
   Dialog,
@@ -272,13 +273,12 @@ export function StylistFormDialog({
             <Label htmlFor="password" className="text-gray-300">
               {stylistToEdit ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'}
             </Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               required={!stylistToEdit}
-              className="bg-black border-gray-700 text-white mt-1.5"
+              inputClassName="bg-black border-gray-700 text-white"
               placeholder={stylistToEdit ? "Dejar en blanco para mantener actual" : "Mínimo 8 caracteres"}
             />
             {validationErrors.password && (

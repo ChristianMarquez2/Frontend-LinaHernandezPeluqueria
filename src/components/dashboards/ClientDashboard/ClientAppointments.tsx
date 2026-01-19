@@ -20,12 +20,13 @@ interface ClientAppointmentsProps {
   showRatings: boolean;
   setShowRatings: (show: boolean) => void;
   appointments: Booking[];
-  onEdit: (appointment: Booking) => void;
+  onEdit: (appointment?: Booking) => void;
   onCancel: (id: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; borderClass: string }> = {
   ALL: { label: "Todas", className: "status-badge-default", borderClass: "bg-gray-700" },
+  PENDING_STYLIST_CONFIRMATION: { label: "Pendiente", className: "status-badge-pending", borderClass: "bg-yellow-600" },
   CONFIRMED: { label: "Confirmada", className: "status-badge-confirmed", borderClass: "bg-[#D4AF37]" },
   COMPLETED: { label: "Completada", className: "status-badge-completed", borderClass: "bg-emerald-500" },
   CANCELLED: { label: "Cancelada", className: "status-badge-cancelled", borderClass: "bg-red-500" },
@@ -150,13 +151,15 @@ export function ClientAppointments({
                 const fecha = safeParseDate(booking.inicio);
                 const hora = safeParseTime(booking.inicio);
                 const isActive = ["SCHEDULED", "CONFIRMED", "PENDING_STYLIST_CONFIRMATION"].includes(booking.estado);
+                const isCancelled = ["CANCELLED", "NO_SHOW"].includes(booking.estado);
+                const isPendingConfirmation = booking.estado === "PENDING_STYLIST_CONFIRMATION";
                 const statusConfig = STATUS_CONFIG[booking.estado] || STATUS_CONFIG.ALL;
 
                 // =========================================================
                 // 💡 LÓGICA DE PAGO MODIFICADA (Frontend Forzado)
                 // =========================================================
 
-                const isCancelled = ["CANCELLED", "NO_SHOW", "COMPLETED"].includes(booking.estado);
+                const isCancelledOrNoShow = ["CANCELLED", "NO_SHOW", "COMPLETED"].includes(booking.estado);
 
                 // 1. Ya pagó?
                 const isPaid = booking.paymentStatus === 'PAID';
@@ -166,10 +169,10 @@ export function ClientAppointments({
 
                 // 3. Mostrar botón SI: No está cancelada, No está pagada Y No tiene comprobante subido.
                 // Ignoramos si está "Confirmed" o "Scheduled", sale siempre que deba plata.
-                const showPayButton = !isCancelled && !isPaid && !hasProof;
+                const showPayButton = !isCancelledOrNoShow && !isPaid && !hasProof;
 
                 // 4. Mostrar "En revisión" SI: No está pagada PERO ya tiene foto
-                const showReviewMessage = !isCancelled && !isPaid && hasProof;
+                const showReviewMessage = !isCancelledOrNoShow && !isPaid && hasProof;
 
                 return (
                   <div key={booking._id} className="group relative h-full text-card-foreground flex flex-col gap-6 rounded-xl border bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors overflow-hidden">
@@ -216,6 +219,29 @@ export function ClientAppointments({
 
                       <div className="pt-4 border-t border-gray-800/50 flex flex-col gap-2">
 
+                        {/* ⏰ MENSAJE PENDIENTE DE CONFIRMACIÓN */}
+                        {isPendingConfirmation && (
+                          <div className="w-full bg-yellow-900/20 border border-yellow-900/50 rounded-lg p-2.5 mb-2 flex items-center justify-center gap-2">
+                            <Clock className="h-4 w-4 text-yellow-400 animate-pulse" />
+                            <span className="text-sm font-medium text-yellow-200">Esperando confirmación del estilista</span>
+                          </div>
+                        )}
+
+                        {/* ❌ MENSAJE Y BOTÓN PARA CITAS CANCELADAS */}
+                        {isCancelled && (
+                          <div className="w-full space-y-2">
+                            <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-2.5 flex items-center justify-center gap-2">
+                              <span className="text-sm font-medium text-red-200">Esta cita fue cancelada</span>
+                            </div>
+                            <Button
+                              onClick={() => onEdit(undefined)}
+                              className="w-full bg-gradient-to-r from-[#9D8EC1] to-[#7B6BA0] hover:from-[#8B7CB0] hover:to-[#6A5A8F] text-white font-semibold"
+                            >
+                              Agendar Nueva Cita
+                            </Button>
+                          </div>
+                        )}
+
                         {/* ✅ BOTÓN DE PAGO (Solo si no ha subido foto aún) */}
                         {showPayButton && (
                           <Button
@@ -245,14 +271,16 @@ export function ClientAppointments({
                               </Button>
                             </>
                           ) : (
-                            <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
-                              <span>Histórico</span>
-                              {booking.estado === 'COMPLETED' ? (
-                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                              ) : (
-                                <div className="h-1.5 w-1.5 rounded-full bg-gray-600"></div>
-                              )}
-                            </div>
+                            !isCancelled && (
+                              <div className="w-full flex justify-end items-center gap-2 text-xs text-gray-300 opacity-90">
+                                <span>Histórico</span>
+                                {booking.estado === 'COMPLETED' ? (
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                ) : (
+                                  <div className="h-1.5 w-1.5 rounded-full bg-gray-600"></div>
+                                )}
+                              </div>
+                            )
                           )}
                         </div>
                       </div>

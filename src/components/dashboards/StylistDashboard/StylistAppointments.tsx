@@ -94,7 +94,9 @@ export function StylistAppointments({ appointments }: StylistAppointmentsProps) 
                                 ? "bg-green-900/50 text-green-200 border-green-800"
                                 : a.status === "COMPLETADA"
                                 ? "bg-blue-900/50 text-blue-200 border-blue-800"
-                                : "bg-red-900/50 text-red-200 border-red-800"
+                                : a.status === "CANCELADA"
+                                ? "bg-red-900/50 text-red-200 border-red-800"
+                                : "bg-gray-900/50 text-gray-300 border-gray-700"
                             }
                           >
                             {a.status}

@@ -13,6 +13,7 @@ import {
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/password-input";
 import {
   Select,
   SelectTrigger,
@@ -336,8 +337,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
 
               <div>
                 <label className="text-[#F4E5C2] text-sm">Nueva Contraseña</label>
-                <Input
-                  type="password"
+                <PasswordInput
                   autoComplete="new-password"
                   value={passwordData.newPassword}
                   onChange={(e) =>
@@ -346,7 +346,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                       newPassword: e.target.value,
                     })
                   }
-                  className="bg-black/50 border-[#D4AF37]/30"
+                  inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                   required
                 />
               </div>
@@ -355,8 +355,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                 <label className="text-[#F4E5C2] text-sm">
                   Confirmar Contraseña
                 </label>
-                <Input
-                  type="password"
+                <PasswordInput
                   autoComplete="new-password"
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
@@ -365,7 +364,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                       confirmPassword: e.target.value,
                     })
                   }
-                  className="bg-black/50 border-[#D4AF37]/30"
+                  inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                   required
                 />
               </div>

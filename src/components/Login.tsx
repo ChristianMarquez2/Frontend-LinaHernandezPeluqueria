@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/auth/index"; // Asegúrate de la ruta correcta
+import { useAuth } from "../contexts/auth/index";
+import { PasswordInput } from "./ui/password-input";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -43,7 +44,6 @@ export function Login() {
 
       <input
         type="email"
-        // 👇 AGREGA ESTO: Ayuda al navegador a saber que este es el usuario
         autoComplete="username" 
         value={email}
         onChange={(e) => setEmail(e.target.value)}
@@ -52,15 +52,12 @@ export function Login() {
         className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:border-[#D4AF37] outline-none"
       />
 
-      <input
-        type="password"
-        // 👇 ESTO SOLUCIONA TU ERROR DE CONSOLA
+      <PasswordInput
         autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Contraseña"
         required
-        className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:border-[#D4AF37] outline-none"
       />
 
       <button

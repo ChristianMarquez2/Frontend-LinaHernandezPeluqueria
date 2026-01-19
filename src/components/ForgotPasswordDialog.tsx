@@ -8,6 +8,7 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/password-input";
 import { ArrowLeft, Mail, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
@@ -328,15 +329,14 @@ export function ForgotPasswordDialog({
               <label htmlFor="new-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                 Nueva Contraseña
               </label>
-              <Input
+              <PasswordInput
                 id="new-password"
-                type="password"
                 autoComplete="new-password"
                 required
                 minLength={8}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                 placeholder="Mínimo 8 caracteres"
               />
             </div>
@@ -345,15 +345,14 @@ export function ForgotPasswordDialog({
               <label htmlFor="confirm-new-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                 Confirmar Nueva Contraseña
               </label>
-              <Input
+              <PasswordInput
                 id="confirm-new-password"
-                type="password"
                 autoComplete="new-password"
                 required
                 minLength={8}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                 placeholder="Confirma tu contraseña"
               />
             </div>

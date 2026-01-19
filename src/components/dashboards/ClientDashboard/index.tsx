@@ -91,10 +91,15 @@ export function ClientDashboard() {
     setShowBooking(true);
   };
 
-  const openEditBooking = (booking: Booking) => {
-    setEditingAppointmentId(booking._id);
-    setEditingData(booking);
-    setShowBooking(true);
+  const openEditBooking = (booking?: Booking) => {
+    if (!booking) {
+      // Si no se pasa booking, abrir como nueva cita
+      openNewBooking();
+    } else {
+      setEditingAppointmentId(booking._id);
+      setEditingData(booking);
+      setShowBooking(true);
+    }
   };
 
   const handleCancelClick = (id: string) => {

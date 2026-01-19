@@ -3869,12 +3869,12 @@ body {
   border-color: rgba(59, 130, 246, 0.3);
 }
 
-/* 3. Pendiente (Naranja) */
+/* 3. Pendiente (Amarillo Dorado Brillante) */
 .status-badge-pending {
-  background-color: rgba(249, 115, 22, 0.15);
-  color: #fdba74;
-  /* orange-300 */
-  border-color: rgba(249, 115, 22, 0.3);
+  background-color: rgba(212, 175, 55, 0.15);
+  color: #fbbf24;
+  /* yellow-400 - amarillo brillante */
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 /* 4. Completada (Verde Esmeralda Brillante) */

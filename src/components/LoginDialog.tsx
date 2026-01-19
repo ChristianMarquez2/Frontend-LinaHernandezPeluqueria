@@ -9,6 +9,7 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/password-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import {
   Select,
@@ -270,14 +271,13 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                 <label htmlFor="login-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                   Contraseña
                 </label>
-                <Input
+                <PasswordInput
                   id="login-password"
-                  type="password"
                   autoComplete="current-password"
                   required
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                  inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                   placeholder="••••••••"
                 />
               </div>
@@ -464,14 +464,13 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <label htmlFor="register-password" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                     Contraseña
                   </label>
-                  <Input
+                  <PasswordInput
                     id="register-password"
-                    type="password"
                     autoComplete="new-password"
                     required
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                     placeholder="••••••••"
                   />
                   <p className="text-xs text-gray-400 mt-1">Mín. 8 caracteres, mayúsculas, minúsculas y números</p>
@@ -481,16 +480,15 @@ export function LoginDialog({ open, onOpenChange, onLoginSuccess }: LoginDialogP
                   <label htmlFor="register-confirm" className="block mb-2 text-[#F4E5C2]" style={{ fontSize: "0.9rem" }}>
                     Confirmar contraseña
                   </label>
-                  <Input
+                  <PasswordInput
                     id="register-confirm"
-                    type="password"
                     autoComplete="new-password"
                     required
                     value={registerData.confirmPassword}
                     onChange={(e) =>
                       setRegisterData({ ...registerData, confirmPassword: e.target.value })
                     }
-                    className="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37] text-white"
+                    inputClassName="bg-black/50 border-[#D4AF37]/30 focus:border-[#D4AF37]"
                     placeholder="••••••••"
                   />
                 </div>

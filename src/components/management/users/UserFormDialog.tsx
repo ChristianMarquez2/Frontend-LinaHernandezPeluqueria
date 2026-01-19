@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import { PasswordInput } from "../../ui/password-input";
 import { Label } from "../../ui/label";
 import {
   Dialog,
@@ -167,12 +168,11 @@ export function UserFormDialog({
 
             <div>
               <Label className="text-gray-300">Contraseña {userToEdit ? "(opcional)" : ""}</Label>
-              <Input
-                type="password"
+              <PasswordInput
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!userToEdit}
-                className="bg-black border-gray-700 text-white"
+                inputClassName="bg-black border-gray-700 text-white"
               />
               {formErrors.password && <p className="text-red-400 text-sm">{formErrors.password}</p>}
             </div>

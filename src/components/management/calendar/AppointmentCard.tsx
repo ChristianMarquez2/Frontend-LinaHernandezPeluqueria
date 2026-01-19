@@ -57,6 +57,8 @@ export function AppointmentCard({
     switch (s) {
       case "SCHEDULED":
         return <Badge variant="outline" className="bg-yellow-900 text-yellow-200 border-yellow-500/20">Programada</Badge>;
+      case "PENDING_STYLIST_CONFIRMATION":
+        return <Badge variant="outline" className="bg-yellow-900 text-yellow-300 border-yellow-700">⏰ Pendiente Confirmación</Badge>;
       case "CONFIRMED":
         return <Badge variant="outline" className="bg-blue-900 text-blue-500 border-blue-500/20">Confirmada</Badge>;
       case "COMPLETED":
@@ -65,8 +67,6 @@ export function AppointmentCard({
         return <Badge variant="outline" className="bg-red-900 text-red-200">Cancelada</Badge>;
       case "NO_SHOW":
         return <Badge variant="outline" className="bg-gray-900 text-gray-400 border-gray-500/20">No asistió</Badge>;
-      case "PENDING_STYLIST_CONFIRMATION":
-        return <Badge variant="outline" className="bg-yellow-900 text-yellow-200 border-yellow-500/20">Reagendada</Badge>;
       default:
         return <Badge variant="outline" className="text-gray-400">{estado}</Badge>;
     }
