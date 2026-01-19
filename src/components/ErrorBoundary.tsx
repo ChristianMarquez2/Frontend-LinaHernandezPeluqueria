@@ -100,13 +100,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
               <div className="flex gap-3">
                 <button
                   onClick={this.handleReset}
-                  className="flex-1 bg-[#D4AF37] hover:bg-[#C9A127] text-black font-semibold py-3 rounded-lg transition-colors"
+                  className="btn-red"
                 >
                   Intentar de nuevo
                 </button>
                 <button
                   onClick={() => window.location.href = '/'}
-                  className="flex-1 bg-[#1A1A1A] hover:bg-[#252525] text-[#D4AF37] border border-[#D4AF37]/50 font-semibold py-3 rounded-lg transition-colors"
+                  className="btn-gold-pay"
                 >
                   Inicio
                 </button>

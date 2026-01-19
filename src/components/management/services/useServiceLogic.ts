@@ -3,10 +3,7 @@ import { toast } from "sonner";
 import { Service, ServiceFormData } from "../../../contexts/data/types";
 import { useCategoriesContext } from "../../../contexts/data/context/CategoriesContext";
 import { dataService } from '../../../contexts/data/service';
-
-// 1. Corrección de URL para evitar el error /api/api/v1
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-const API_URL = BASE_URL.endsWith('/api') ? `${BASE_URL}/v1` : `${BASE_URL}/api/v1`;
+import { API_BASE_URL } from "../../../config/api";
 
 export function useServiceLogic() {
   const [services, setServices] = useState<Service[]>([]);
@@ -56,7 +53,7 @@ export function useServiceLogic() {
         activo: formData.activo,
       };
 
-      const url = editingId ? `${API_URL}/services/${editingId}` : `${API_URL}/services`;
+      const url = editingId ? `${API_BASE_URL}/services/${editingId}` : `${API_BASE_URL}/services`;
       
       // Primera petición: Crear o Actualizar el Servicio
       const res = await fetch(url, {
@@ -80,7 +77,7 @@ export function useServiceLogic() {
 
           for (const oldCat of oldCategories) {
             if (oldCat._id !== formData.categoria) {
-              await fetch(`${API_URL}/catalog/${oldCat._id}/services/remove`, {
+              await fetch(`${API_BASE_URL}/catalog/${oldCat._id}/services/remove`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ services: [editingId] }),
@@ -90,7 +87,7 @@ export function useServiceLogic() {
         }
 
         // Segunda petición: Vincular el servicio al catálogo seleccionado
-        const linkRes = await fetch(`${API_URL}/catalog/${formData.categoria}/services/add`, {
+        const linkRes = await fetch(`${API_BASE_URL}/catalog/${formData.categoria}/services/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ services: [serviceId] }),
@@ -116,10 +113,10 @@ export function useServiceLogic() {
 
   // 5. Borrado con limpieza de catálogo
   const handleDeleteService = async (id: string) => {
-    if (!token || !window.confirm("¿Estás seguro de eliminar este servicio?")) return;
+    if (!token) return;
     
     try {
-      const res = await fetch(`${API_URL}/services/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

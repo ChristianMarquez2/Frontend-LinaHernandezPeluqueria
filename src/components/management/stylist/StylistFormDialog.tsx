@@ -80,8 +80,8 @@ export function StylistFormDialog({
         setFormData({
           firstName: stylistToEdit.nombre,
           lastName: stylistToEdit.apellido,
-          cedula: stylistToEdit.cedula,
-          phone: stylistToEdit.telefono,
+          cedula: stylistToEdit.cedula || '',
+          phone: stylistToEdit.telefono || '',
           gender: (stylistToEdit.genero as any) || '',
           catalog: mainCatalogId,
           email: stylistToEdit.email,

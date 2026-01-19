@@ -3,6 +3,7 @@ import { Plus, Search } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../../ui/card";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import { ConfirmDialog } from "../../ui/confirm-dialog";
 import { ServiceTable } from "./ServiceTable";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useServiceLogic } from "./useServiceLogic";
@@ -21,6 +22,8 @@ export function ServiceManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
 
   // 🔥 MEJORA DE FILTRADO: 
   // 1. Manejo de 'categoria' como string o como objeto (el backend a veces lo popula).
@@ -47,6 +50,18 @@ export function ServiceManagement() {
   const handleEdit = (service: Service) => {
     setEditingService(service);
     setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setServiceToDelete(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (serviceToDelete) {
+      await handleDeleteService(serviceToDelete);
+      setServiceToDelete(null);
+    }
   };
 
   if (loading) {
@@ -97,7 +112,7 @@ export function ServiceManagement() {
               services={filteredServices}
               getCategoryName={getCategoryName}
               onEdit={handleEdit}
-              onDelete={handleDeleteService}
+              onDelete={handleDeleteClick}
             />
           )}
         </CardContent>
@@ -110,6 +125,16 @@ export function ServiceManagement() {
         categories={categories}
         existingServices={services}
         onSave={handleSaveService}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Eliminar Servicio"
+        description="¿Estás seguro de eliminar este servicio? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        onConfirm={confirmDelete}
+        variant="destructive"
       />
     </div>
   );

@@ -143,6 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error("Sesión expirada por inactividad", {
         description: "Por favor, inicia sesión de nuevo para continuar.",
         duration: 5000,
+        style: { color: "black", background: "#ef4444" },
+        descriptionClassName: "text-black",
       });
       logger.info('Session expired due to inactivity', {}, 'AuthContext');
     }

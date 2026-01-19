@@ -187,7 +187,6 @@ export function useUserLogic() {
   // 🛠️ Cambiar estado
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     const action = currentStatus ? "desactivar" : "activar";
-    if (!confirm(`¿Seguro que deseas ${action} este usuario?`)) return;
 
     const token = getToken();
     try {

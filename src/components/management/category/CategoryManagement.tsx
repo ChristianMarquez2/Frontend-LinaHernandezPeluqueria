@@ -6,6 +6,7 @@ import { Category, CreateCategoryDTO } from "../../../contexts/data/types";
 import { CategoryList } from "./CategoryList";
 import { CategoryFilters } from "./CategoryFilters";
 import { CategoryForm } from "./CategoryForm";
+import { ConfirmDialog } from "../../ui/confirm-dialog";
 
 export function CategoryManagement() {
   const {
@@ -22,6 +23,8 @@ export function CategoryManagement() {
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   // Debounce simple para búsqueda
   useEffect(() => {
@@ -49,10 +52,16 @@ export function CategoryManagement() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta categoría permanentemente?")) {
+  const handleDeleteClick = (id: string) => {
+    setCategoryToDelete(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (categoryToDelete) {
       try {
-        await deleteCategory(id);
+        await deleteCategory(categoryToDelete);
+        setCategoryToDelete(null);
       } catch (err) {
         alert("Error eliminando categoría");
       }
@@ -86,7 +95,7 @@ export function CategoryManagement() {
           categories={categories}
           meta={meta}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={handleDeleteClick}
           onToggleStatus={(id, status) => toggleCategoryStatus(id, status)}
           onPageChange={(page) => refreshCategories(page, search)}
         />
@@ -98,6 +107,17 @@ export function CategoryManagement() {
         onClose={() => setIsFormOpen(false)}
         initialData={editingCategory}
         onSubmit={handleSubmit}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Eliminar Categoría"
+        description="¿Estás seguro de eliminar esta categoría permanentemente? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        onConfirm={confirmDelete}
+        variant="destructive"
       />
     </div>
   );

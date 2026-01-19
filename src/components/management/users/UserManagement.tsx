@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { useAuth } from "../../../contexts/auth/index";
+import { ConfirmDialog } from "../../ui/confirm-dialog";
 
 import { useUserLogic } from "./useUserLogic";
 import { UserStats } from "./UserStats";
@@ -26,6 +27,8 @@ export function UserManagement() {
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "manager" | "stylist" | "client">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [userToToggle, setUserToToggle] = useState<{ id: string; isActive: boolean } | null>(null);
 
   // 🔍 Filtrado
   const filteredUsers = users.filter((u) => {
@@ -51,6 +54,18 @@ export function UserManagement() {
   const handleEdit = (user: User) => {
     setEditingUser(user);
     setIsDialogOpen(true);
+  };
+
+  const handleToggleClick = (id: string, isActive: boolean) => {
+    setUserToToggle({ id, isActive });
+    setConfirmOpen(true);
+  };
+
+  const confirmToggle = () => {
+    if (userToToggle) {
+      handleToggleStatus(userToToggle.id, userToToggle.isActive);
+      setUserToToggle(null);
+    }
   };
 
   return (
@@ -111,7 +126,7 @@ export function UserManagement() {
             users={filteredUsers}
             currentUserRole={mapRoleFromBackend(currentUser?.role)}
             onEdit={handleEdit}
-            onToggleStatus={handleToggleStatus}
+            onToggleStatus={handleToggleClick}
           />
         </CardContent>
       </Card>
@@ -124,6 +139,17 @@ export function UserManagement() {
         onSave={handleSaveUser}
         validateField={validateField}
         validateForm={validateForm}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={userToToggle?.isActive ? "Desactivar Usuario" : "Activar Usuario"}
+        description={`¿Seguro que deseas ${userToToggle?.isActive ? 'desactivar' : 'activar'} este usuario?`}
+        confirmText={userToToggle?.isActive ? "Desactivar" : "Activar"}
+        onConfirm={confirmToggle}
+        variant={userToToggle?.isActive ? "destructive" : "default"}
       />
     </div>
   );

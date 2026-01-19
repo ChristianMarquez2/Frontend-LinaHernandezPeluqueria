@@ -1,6 +1,7 @@
 // UserProfile.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/auth/index";
+import { authService } from "../contexts/auth/service";
 
 import {
   Dialog,
@@ -57,7 +58,6 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
 
   // Contraseña
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -157,10 +157,6 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!passwordData.currentPassword) {
-      return toast.error("Ingresa tu contraseña actual");
-    }
-
     if (!validatePasswordStrong(passwordData.newPassword)) {
       return toast.error("Contraseña insegura", {
         description:
@@ -180,7 +176,6 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     toast.success("Contraseña actualizada correctamente");
 
     setPasswordData({
-      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
@@ -338,25 +333,6 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                 readOnly
                 hidden
               />
-
-              <div>
-                <label className="text-[#F4E5C2] text-sm flex items-center gap-1">
-                  <Lock className="w-4 h-4" /> Contraseña Actual
-                </label>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      currentPassword: e.target.value,
-                    })
-                  }
-                  className="bg-black/50 border-[#D4AF37]/30"
-                  required
-                />
-              </div>
 
               <div>
                 <label className="text-[#F4E5C2] text-sm">Nueva Contraseña</label>

@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { ConfirmDialog } from '../../ui/confirm-dialog';
 // import { useData } from '../../../contexts/data/index'; // Ya no usamos services de aquí
 import { API_BASE_URL } from '../../../config/api';
 
@@ -33,6 +34,8 @@ export function StylistManagement() {
   const [editingStylist, setEditingStylist] = useState<Stylist | null>(null);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<EditUser | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [stylistToDelete, setStylistToDelete] = useState<string | null>(null);
 
   // 🔄 Fetch de Catálogos al montar
   useEffect(() => {
@@ -95,9 +98,15 @@ export function StylistManagement() {
     setIsUserDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Está seguro de desactivar este estilista?')) {
-      await handleDeleteStylist(id);
+  const handleDelete = (id: string) => {
+    setStylistToDelete(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (stylistToDelete) {
+      await handleDeleteStylist(stylistToDelete);
+      setStylistToDelete(null);
     }
   };
 
@@ -196,6 +205,17 @@ export function StylistManagement() {
           if (!formData.genero) errors.genero = "Seleccione un género";
           return errors;
         }}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Desactivar Estilista"
+        description="¿Está seguro de desactivar este estilista? Esta acción se puede revertir posteriormente."
+        confirmText="Desactivar"
+        onConfirm={confirmDelete}
+        variant="destructive"
       />
     </div>
   );
