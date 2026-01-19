@@ -1,84 +1,84 @@
-# Error Handling & Logging System
+# Sistema de Manejo de Errores y Logging
 
-## Overview
+## Descripción General
 
-The application now includes a comprehensive error handling and centralized logging system to improve debugging, monitoring, and user experience. Additionally, automatic session management with inactivity detection ensures secure user sessions.
+La aplicación ahora incluye un sistema integral de manejo de errores y logging centralizado para mejorar la depuración, el monitoreo y la experiencia del usuario. Además, la gestión automática de sesiones con detección de inactividad asegura que las sesiones de usuario sean seguras.
 
-## Components
+## Componentes
 
-### 1. Logger Service (`src/services/logger.ts`)
+### 1. Servicio Logger (`src/services/logger.ts`)
 
-Centralized logging service with multiple log levels.
+Servicio de logging centralizado con múltiples niveles de log.
 
-**Log Levels:**
-- `DEBUG` - Development only, low-level debugging
-- `INFO` - General information about application flow
-- `WARN` - Warning messages for non-critical issues
-- `ERROR` - Error messages for critical issues
+**Niveles de Log:**
+- `DEBUG` - Solo desarrollo, depuración de bajo nivel
+- `INFO` - Información general sobre el flujo de la aplicación
+- `WARN` - Mensajes de advertencia para problemas no críticos
+- `ERROR` - Mensajes de error para problemas críticos
 
-**Usage:**
+**Uso:**
 
 ```typescript
 import { logger } from '@/services/logger';
 
-// Debug log (only in development)
-logger.debug('User logged in', { userId: '123' }, 'LoginComponent');
+// Debug log (solo en desarrollo)
+logger.debug('Usuario logueado', { userId: '123' }, 'LoginComponent');
 
 // Info log
-logger.info('Dashboard loaded successfully', { userId: '456' }, 'Dashboard');
+logger.info('Dashboard cargado correctamente', { userId: '456' }, 'Dashboard');
 
 // Warning log
-logger.warn('Failed to load client data', { clientId: '789', status: 403 }, 'AppointmentCalendar');
+logger.warn('Error al cargar datos del cliente', { clientId: '789', status: 403 }, 'AppointmentCalendar');
 
-// Error log (includes console.error + optional cloud reporting)
-logger.error('API request failed', { error: err, endpoint: '/bookings' }, 'ClientDashboard');
+// Error log (incluye console.error + rastreo en la nube opcional)
+logger.error('Error en solicitud de API', { error: err, endpoint: '/bookings' }, 'ClientDashboard');
 ```
 
-**Features:**
-- Automatic timestamps
-- Component name tracking
-- Development-only debug logs
-- In-memory log storage (max 500 logs)
-- Log export and download functionality
-- Preparation for cloud logging integration (Sentry, LogRocket, etc.)
+**Características:**
+- Timestamps automáticos
+- Rastreo de nombre de componente
+- Logs de depuración solo en desarrollo
+- Almacenamiento de logs en memoria (máximo 500 logs)
+- Funcionalidad de exportación y descarga de logs
+- Preparación para integración con servicios en la nube (Sentry, LogRocket, etc.)
 
-**Methods:**
+**Métodos:**
 
 ```typescript
-// Retrieve all logs
+// Obtener todos los logs
 const allLogs = logger.getLogs();
 
-// Get logs by level
+// Obtener logs por nivel
 const errors = logger.getLogsByLevel(LogLevel.ERROR);
 
-// Export as JSON string
+// Exportar como string JSON
 const json = logger.exportLogs();
 
-// Download logs as file
+// Descargar logs como archivo
 logger.downloadLogs();
 
-// Clear all logs
+// Limpiar todos los logs
 logger.clearLogs();
 ```
 
-### 2. Error Boundary Component (`src/components/ErrorBoundary.tsx`)
+### 2. Componente Error Boundary (`src/components/ErrorBoundary.tsx`)
 
-React error boundary that catches component errors and prevents white screens.
+Error boundary de React que captura errores de componentes y previene pantallas blancas.
 
-**Features:**
-- Catches React component errors
-- Professional error UI with theme colors
-- Error details shown in development mode
-- Reset button to recover from error state
-- Auto-logs errors to logger service
-- Responsive design
+**Características:**
+- Captura errores de componentes React
+- Interfaz de error profesional con colores del tema
+- Detalles del error mostrados en modo desarrollo
+- Botón de reinicio para recuperarse del estado de error
+- Auto-registra errores al servicio logger
+- Diseño responsivo
 
-**Usage:**
+**Uso:**
 
 ```tsx
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-// Wrap your application or specific sections
+// Envuelve tu aplicación o secciones específicas
 export default function App() {
   return (
     <ErrorBoundary>
@@ -87,19 +87,19 @@ export default function App() {
   );
 }
 
-// With custom fallback UI
+// Con interfaz de error personalizada
 <ErrorBoundary fallback={<CustomErrorScreen />}>
   <DashboardContent />
 </ErrorBoundary>
 ```
 
-**Error UI:**
-- Displays error icon and message in Spanish
-- Shows component stack in development
-- Provides "Retry" and "Home" buttons
-- Support email contact info
+**Interfaz de Error:**
+- Muestra icono de error y mensaje en español
+- Muestra pila de componentes en desarrollo
+- Proporciona botones "Reintentar" e "Inicio"
+- Información de contacto por correo electrónico
 
-### 3. Integration Points
+### 3. Puntos de Integración
 
 #### App.tsx
 ```typescript
@@ -107,54 +107,54 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { logger } from "@/services/logger";
 
 export default function App() {
-  logger.info('App initialized');
+  logger.info('Aplicación inicializada');
   
   return (
     <ErrorBoundary>
       <AuthProvider>
-        {/* App content */}
+        {/* Contenido de la aplicación */}
       </AuthProvider>
     </ErrorBoundary>
   );
 }
 ```
 
-#### API Service (`src/services/api.ts`)
+#### Servicio de API (`src/services/api.ts`)
 ```typescript
 import { logger } from './logger';
 
 async function request<T>(...) {
   try {
-    logger.debug(`API Request: ${method} ${url}`, { body }, 'API');
+    logger.debug(`Solicitud de API: ${method} ${url}`, { body }, 'API');
     const res = await fetch(...);
     
     if (!res.ok) {
-      logger.warn(`API Error: ${method} ${url} - Status ${status}`, { error: payload?.error }, 'API');
+      logger.warn(`Error de API: ${method} ${url} - Estado ${status}`, { error: payload?.error }, 'API');
       return { ok: false, ... };
     }
     
-    logger.debug(`API Success: ${method} ${url} - Status ${status}`, {}, 'API');
+    logger.debug(`Éxito en API: ${method} ${url} - Estado ${status}`, {}, 'API');
     return { ok: true, ... };
   } catch (err: any) {
-    logger.error(`API Network Error: ${method} ${url}`, { message: err?.message }, 'API');
+    logger.error(`Error de Red en API: ${method} ${url}`, { message: err?.message }, 'API');
     return { ok: false, ... };
   }
 }
 ```
 
-#### Client Dashboard (`src/components/dashboards/ClientDashboard/index.tsx`)
+#### Dashboard del Cliente (`src/components/dashboards/ClientDashboard/index.tsx`)
 ```typescript
 import { logger } from '@/services/logger';
 
 export function ClientDashboard() {
   useEffect(() => {
     const load = async () => {
-      logger.info('ClientDashboard: Loading dashboard data', { userId }, 'ClientDashboard');
+      logger.info('ClientDashboard: Cargando datos del dashboard', { userId }, 'ClientDashboard');
       try {
         await fetchData();
-        logger.debug('ClientDashboard: Data loaded successfully', {}, 'ClientDashboard');
+        logger.debug('ClientDashboard: Datos cargados correctamente', {}, 'ClientDashboard');
       } catch (err) {
-        logger.error('ClientDashboard: Error loading dashboard', { error: err }, 'ClientDashboard');
+        logger.error('ClientDashboard: Error al cargar dashboard', { error: err }, 'ClientDashboard');
       }
     };
     load();
@@ -162,72 +162,72 @@ export function ClientDashboard() {
 }
 ```
 
-#### Calendar Management (`src/components/management/calendar/useAppointmentCalendar.ts`)
+#### Gestión del Calendario (`src/components/management/calendar/useAppointmentCalendar.ts`)
 ```typescript
 import { logger } from '@/services/logger';
 
 export function useAppointmentCalendar(...) {
   const fetchBookings = useCallback(async () => {
-    logger.debug('Fetching appointments', { selectedDate, selectedStylistId }, 'useAppointmentCalendar');
+    logger.debug('Obteniendo citas', { selectedDate, selectedStylistId }, 'useAppointmentCalendar');
     try {
       const data = await dataService.fetchAllBookings(...);
-      logger.info('Appointments fetched successfully', { count: data.length }, 'useAppointmentCalendar');
+      logger.info('Citas obtenidas correctamente', { count: data.length }, 'useAppointmentCalendar');
     } catch (err) {
-      logger.error("Error fetching bookings", { error: err }, 'useAppointmentCalendar');
+      logger.error("Error al obtener citas", { error: err }, 'useAppointmentCalendar');
     }
   }, [...]);
 }
 ```
 
-## Best Practices
+## Mejores Prácticas
 
-### When to Log
+### Cuándo Registrar
 
-1. **INFO** - User actions, successful operations
-   - User login/logout
-   - Data loaded successfully
-   - Booking created
+1. **INFO** - Acciones del usuario, operaciones exitosas
+   - Inicio/cierre de sesión de usuario
+   - Datos cargados correctamente
+   - Reserva creada
 
-2. **DEBUG** - Component lifecycle, state changes
-   - Component mounted/unmounted
-   - Filter changes
-   - API request details
-   - *Only displayed in development*
+2. **DEBUG** - Ciclo de vida del componente, cambios de estado
+   - Componente montado/desmontado
+   - Cambios de filtros
+   - Detalles de solicitud de API
+   - *Solo mostrado en desarrollo*
 
-3. **WARN** - Non-critical issues that need attention
-   - Failed to load user data (but fallback exists)
-   - API returns 403/404
-   - Validation warnings
+3. **WARN** - Problemas no críticos que necesitan atención
+   - Error al cargar datos de usuario (pero existe respaldo)
+   - API devuelve 403/404
+   - Advertencias de validación
 
-4. **ERROR** - Critical failures
-   - API errors with no fallback
-   - Unexpected exceptions
-   - Auth failures
+4. **ERROR** - Fallos críticos
+   - Errores de API sin respaldo
+   - Excepciones inesperadas
+   - Fallos de autenticación
 
-### Log Format
+### Formato de Log
 
 ```typescript
 logger.[level](
-  'Human-readable message',
-  { contextKey: contextValue },  // Optional context object
-  'ComponentName'                // Optional component name
+  'Mensaje legible por humanos',
+  { claveContexto: valorContexto },  // Objeto de contexto opcional
+  'NombreDelComponente'               // Nombre del componente opcional
 );
 ```
 
-### Development vs Production
+### Desarrollo vs Producción
 
-- **DEBUG logs** only appear in development (`import.meta.env.DEV`)
-- **ERROR logs** in production can be sent to cloud services
-- In-memory logs are preserved (max 500 entries)
+- Los logs **DEBUG** solo aparecen en desarrollo (`import.meta.env.DEV`)
+- Los logs **ERROR** en producción pueden enviarse a servicios en la nube
+- Los logs en memoria se preservan (máximo 500 entradas)
 
-## Cloud Logging Integration (Future)
+## Integración con Servicios en la Nube (Futuro)
 
-The logger service is prepared for cloud logging integration:
+El servicio logger está preparado para integración con servicios en la nube:
 
 ```typescript
-// In logger.ts sendToErrorTracking() method
+// En logger.ts método sendToErrorTracking()
 private sendToErrorTracking(message: string, data: any, source?: string) {
-  // Example with Sentry:
+  // Ejemplo con Sentry:
   if (window.Sentry) {
     window.Sentry.captureException(new Error(message), {
       contexts: { data, source },
@@ -236,88 +236,88 @@ private sendToErrorTracking(message: string, data: any, source?: string) {
 }
 ```
 
-To enable:
-1. Install cloud service SDK (e.g., `npm install @sentry/react`)
-2. Initialize in main.tsx or App.tsx
-3. Uncomment integration code in `sendToErrorTracking()`
+Para habilitar:
+1. Instalar SDK del servicio en la nube (ej: `npm install @sentry/react`)
+2. Inicializar en main.tsx o App.tsx
+3. Descomentar código de integración en `sendToErrorTracking()`
 
-## Debugging
+## Depuración
 
-### View Logs in Console
+### Ver Logs en Consola
 
 ```typescript
-// Get all logs
+// Obtener todos los logs
 const logs = logger.getLogs();
 console.table(logs);
 
-// Get error logs only
+// Obtener solo logs de error
 const errors = logger.getLogsByLevel(LogLevel.ERROR);
 console.table(errors);
 ```
 
-### Download Logs
+### Descargar Logs
 
 ```typescript
-// In browser console:
+// En consola del navegador:
 logger.downloadLogs();
-// This will download a JSON file with all logs
+// Esto descargará un archivo JSON con todos los logs
 ```
 
-### Error Boundary Recovery
+### Recuperación de Error Boundary
 
-Users can reset from error state by:
-1. Clicking "Intentar de nuevo" (Retry) button
-2. Clicking "Inicio" (Home) button to navigate to home page
+Los usuarios pueden recuperarse del estado de error por:
+1. Hacer clic en el botón "Intentar de nuevo" (Retry)
+2. Hacer clic en el botón "Inicio" (Home) para navegar a la página de inicio
 
 ## Testing
 
-Test error handling:
+Probar el manejo de errores:
 
 ```typescript
-// Force an error
-throw new Error('Test error');
+// Forzar un error
+throw new Error('Error de prueba');
 
-// Error should be caught by ErrorBoundary and logged
-// User sees professional error screen with retry option
+// El error debe ser capturado por ErrorBoundary y registrado
+// El usuario ve una pantalla de error profesional con opción de reintentar
 ```
 
-## Performance Considerations
+## Consideraciones de Rendimiento
 
-- Logger maintains max 500 logs in memory to prevent memory leaks
-- Oldest logs are removed when limit is exceeded
-- DEBUG logs only created in development (minimal overhead)
-- Log retrieval and export are O(n) operations
-- Inactivity timer uses debounced events to minimize performance impact
-- Auto-refresh runs every 14 minutes to keep session alive
+- El Logger mantiene máximo 500 logs en memoria para prevenir fugas de memoria
+- Los logs más antiguos se eliminan cuando se alcanza el límite
+- Los logs DEBUG se crean solo en desarrollo (overhead mínimo)
+- La recuperación y exportación de logs son operaciones O(n)
+- El temporizador de inactividad utiliza eventos con debounce para minimizar impacto en el rendimiento
+- Auto-refresh se ejecuta cada 14 minutos para mantener la sesión viva
 
-## Session Management
+## Gestión de Sesiones
 
-### Automatic Inactivity Logout
+### Logout Automático por Inactividad
 
-The application automatically logs out users after **20 minutes of inactivity** to ensure security.
+La aplicación automáticamente cierra la sesión de usuarios después de **20 minutos de inactividad** para asegurar la seguridad.
 
-**Configuration** (`src/config/session.ts`):
+**Configuración** (`src/config/session.ts`):
 ```typescript
 export const SESSION_CONFIG = {
-  INACTIVITY_TIMEOUT_MIN: 20,       // Auto-logout after 20 min of inactivity
-  ACCESS_TOKEN_TTL_MIN: 15,         // Access token expires in 15 min
-  REFRESH_TOKEN_TTL_DAYS: 7,        // Refresh token expires in 7 days
-  AUTO_REFRESH_INTERVAL_MIN: 14,    // Auto-refresh every 14 min
+  INACTIVITY_TIMEOUT_MIN: 20,       // Auto-logout después de 20 min de inactividad
+  ACCESS_TOKEN_TTL_MIN: 15,         // Token de acceso expira en 15 min
+  REFRESH_TOKEN_TTL_DAYS: 7,        // Refresh token expira en 7 días
+  AUTO_REFRESH_INTERVAL_MIN: 14,    // Auto-refresh cada 14 min
 };
 ```
 
-**How it works:**
-1. **Activity Detection**: Monitors mouse, keyboard, touch, and scroll events
-2. **Timer Reset**: Every user interaction resets the 20-minute countdown
-3. **Automatic Logout**: After 20 minutes without activity, logs out automatically
-4. **User Notification**: Shows toast message: "Sesión expirada por inactividad"
-5. **Logging**: All inactivity events are logged for monitoring
+**Cómo funciona:**
+1. **Detección de Actividad**: Monitorea eventos de mouse, teclado, toque y scroll
+2. **Reinicio del Temporizador**: Cada interacción del usuario reinicia la cuenta atrás de 20 minutos
+3. **Logout Automático**: Después de 20 minutos sin actividad, se cierra la sesión automáticamente
+4. **Notificación al Usuario**: Muestra mensaje toast: "Sesión expirada por inactividad"
+5. **Logging**: Todos los eventos de inactividad se registran para monitoreo
 
-**Implementation** (`src/contexts/auth/useInactivityTimer.ts`):
+**Implementación** (`src/contexts/auth/useInactivityTimer.ts`):
 ```typescript
 import { useInactivityTimer } from '@/contexts/auth/useInactivityTimer';
 
-// In AuthContext
+// En AuthContext
 useInactivityTimer({
   onInactive: handleInactiveLogout,
   inactivityMinutes: SESSION_CONFIG.INACTIVITY_TIMEOUT_MIN,
@@ -325,23 +325,23 @@ useInactivityTimer({
 });
 ```
 
-### Automatic Token Refresh
+### Refresh Automático de Token
 
-To prevent session interruptions, access tokens are automatically refreshed **every 14 minutes** (before the 15-minute expiration).
+Para prevenir interrupciones de sesión, los tokens de acceso se renuevan automáticamente **cada 14 minutos** (antes de la expiración de 15 minutos).
 
-**Benefits:**
-- User stays logged in during active sessions
-- No interruptions during booking or form filling
-- Seamless experience while using the application
-- Only logs out after true inactivity (20 minutes)
+**Beneficios:**
+- El usuario permanece logueado durante sesiones activas
+- Sin interrupciones durante reservas o llenado de formularios
+- Experiencia fluida mientras se usa la aplicación
+- Solo cierra sesión después de verdadera inactividad (20 minutos)
 
-**Implementation** (`src/contexts/auth/AuthContext.tsx`):
+**Implementación** (`src/contexts/auth/AuthContext.tsx`):
 ```typescript
 useEffect(() => {
   if (!user || !refreshToken) return;
 
   const intervalId = setInterval(() => {
-    logger.debug('Auto-refreshing access token');
+    logger.debug('Auto-refrescando token de acceso');
     refreshSession();
   }, SESSION_CONFIG.AUTO_REFRESH_INTERVAL_MIN * 60 * 1000);
 
@@ -349,58 +349,62 @@ useEffect(() => {
 }, [user, refreshToken, refreshSession]);
 ```
 
-### Session Timeline
+### Línea de Tiempo de Sesión
 
 ```
 Login
   ↓
-[0-14 min] → Active session, user working
+[0-14 min] → Sesión activa, usuario trabajando
   ↓
-[14 min] → Auto-refresh token (seamless)
+[14 min] → Auto-refresh de token (sin interrupciones)
   ↓
-[14-20 min] → Continue working with new token
+[14-20 min] → Continuar trabajando con token nuevo
   ↓
-[20 min] → Inactivity detected → Auto-logout → Toast notification
+[20 min] → Inactividad detectada → Auto-logout → Notificación toast
 ```
 
-### Monitored Events
+### Eventos Monitoreados
 
-The inactivity timer considers these events as "user activity":
-- `mousedown` - User clicks
-- `mousemove` - Mouse movement
-- `keypress` - Keyboard input
-- `scroll` - Page scrolling
-- `touchstart` - Touch interactions
-- `click` - Click events
+El temporizador de inactividad considera estos eventos como "actividad del usuario":
+- `mousedown` - Clics del usuario
+- `mousemove` - Movimiento del mouse
+- `keypress` - Entrada de teclado
+- `scroll` - Scroll de página
+- `touchstart` - Interacciones táctiles
+- `click` - Eventos de clic
 
-### User Experience
+### Experiencia del Usuario
 
-**Active Users:**
-- ✅ No interruptions during use
-- ✅ Token refreshes automatically every 14 minutes
-- ✅ Can work continuously without re-login
-- ✅ Only logged out after 20 minutes of true inactivity
+**Usuarios Activos:**
+- ✅ Sin interrupciones durante el uso
+- ✅ Token se refresca automáticamente cada 14 minutos
+- ✅ Pueden trabajar continuamente sin re-login
+- ✅ Solo se cierra sesión después de 20 minutos de verdadera inactividad
 
-**Inactive Users:**
-- ⏰ After 20 minutes of no interaction
-- 🚪 Automatically logged out
-- 📢 Clear message: "Sesión expirada por inactividad"
-- 🔄 Prompt to login again
+**Usuarios Inactivos:**
+- ⏰ Después de 20 minutos sin interacción
+- 🚪 Se cierra sesión automáticamente
+- 📢 Mensaje claro: "Sesión expirada por inactividad"
+- 🔄 Indicación para iniciar sesión nuevamente
 
-### Security Benefits
+### Beneficios de Seguridad
 
-1. **Prevents unauthorized access** if user leaves device unattended
-2. **Complies with security best practices** for sensitive data
-3. **Reduces risk** of session hijacking on shared computers
-4. **Logs all security events** for audit trails
+1. **Previene acceso no autorizado** si el usuario deja el dispositivo desatendido
+2. **Cumple con mejores prácticas de seguridad** para datos sensibles
+3. **Reduce riesgo** de secuestro de sesión en computadoras compartidas
+4. **Registra todos los eventos de seguridad** para auditoría
 
-## Future Improvements
+## Mejoras Futuras
 
-1. **Offline Support**: Store logs to localStorage when API is unavailable
-2. **Remote Logging**: Send critical logs to backend for persistence
-3. **User Sessions**: Track logs per user session
-4. **Analytics**: Aggregate error patterns for monitoring
-5. **Rate Limiting**: Prevent log flooding
-6. **Performance Metrics**: Track component render times and API latency
-7. **Session Warning**: Show warning dialog 2 minutes before auto-logout
-8. **Configurable Timeouts**: Allow admins to adjust inactivity timeout per role
+1. **Soporte Offline**: Almacenar logs en localStorage cuando la API no está disponible
+2. **Logging Remoto**: Enviar logs críticos al backend para persistencia
+3. **Sesiones de Usuario**: Rastrear logs por sesión de usuario
+4. **Analíticas**: Agregar patrones de error para monitoreo
+5. **Limitación de Velocidad**: Prevenir inundación de logs
+6. **Métricas de Rendimiento**: Rastrear tiempos de renderizado de componentes y latencia de API
+7. **Advertencia de Sesión**: Mostrar diálogo de advertencia 2 minutos antes del auto-logout
+8. **Timeouts Configurables**: Permitir a admins ajustar timeout de inactividad por rol
+
+---
+
+**Christian Márquez**
