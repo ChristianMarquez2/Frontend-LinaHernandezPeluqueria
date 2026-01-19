@@ -982,25 +982,16 @@ Usa el template de issues de GitHub incluyendo:
 
 **Bajo la supervisión de:**
 
-- **[Nombre del Tutor]** - *Tutor Académico* - [Universidad]
+- **ING LORENA CHULDE** - *Tutor Académico* - EPN
 
-### 🎓 Información Académica
-
-- **Universidad**: [Nombre de tu Universidad]
-- **Facultad**: [Facultad de Ingeniería en Sistemas / similar]
-- **Carrera**: [Ingeniería en Sistemas / Desarrollo de Software]
-- **Período**: [Fecha de inicio] - [Fecha de finalización]
-- **Nota/Calificación**: [Si ya la tienes]
-
----
 
 ## 📄 Licencia
 
 Este proyecto fue desarrollado como trabajo de titulación académico.
 
-**Derechos de Autor © 2026 [Tu Nombre]**
+**Derechos de Autor © 2026 Christian Márquez**
 
-Todos los derechos reservados. Este software es propiedad intelectual de [Tu Nombre] y fue desarrollado para fines educativos como parte del proyecto de titulación en [Tu Universidad].
+Todos los derechos reservados. Este software es propiedad intelectual de Christian Márquez y fue desarrollado para fines educativos como parte del proyecto de titulación en Escuela Politécnica Nacional.
 
 ### Términos de Uso
 
@@ -1011,20 +1002,6 @@ Todos los derechos reservados. Este software es propiedad intelectual de [Tu Nom
 - ❌ Prohibida redistribución sin créditos
 - ❌ Prohibida venta o sublicencia del código
 
-### Cita Académica Sugerida
-
-```bibtex
-@misc{sistema_peluqueria_lina_2026,
-  author = {Tu Nombre},
-  title = {Sistema de Gestión de Peluquería Lina Hernández},
-  year = {2026},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/tu-usuario/landing-page-peluqueria-lina-hernandez}}
-}
-```
-
----
 
 
 ### 🆘 Soporte Técnico
@@ -1104,12 +1081,12 @@ Para problemas técnicos o dudas sobre el proyecto:
 
 <div align="center">
 
-## ⭐ Si este proyecto te fue útil, considera darle una estrella ⭐
+
 
 ### Hecho con ❤️ por Christian Márquez.
 
 **© 2026 - Sistema de Gestión de Peluquería Lina Hernández**
 
-[⬆ Volver arriba](#-sistema-de-gestión-de-peluquería-lina-hernández)
+
 
 </div>
