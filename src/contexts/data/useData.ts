@@ -9,7 +9,7 @@ import { DataContextType } from "./types";
 export function useData(): DataContextType {
   // 1. Inyectamos todos los sub-contextos
   const { services, stylists, businessHours, refreshServices } = useServices();
-  const { appointments, myBookings, refreshAppointments, refreshMyBookings } = useAppointments();
+  const { appointments, myBookings, stylistBookings, refreshAppointments, refreshMyBookings, refreshStylistBookings } = useAppointments();
   const { ratings, createRating, refreshRatings } = useRatings();
   const { notifications, getUserNotifications, refreshNotifications } = useNotifications();
   const { dashboardData, refreshReports } = useReports();
@@ -21,6 +21,7 @@ export function useData(): DataContextType {
       refreshServices(),
       refreshAppointments(),
       refreshMyBookings(),
+      refreshStylistBookings(),
       refreshRatings(),
       refreshNotifications(),
       refreshReports()
@@ -28,7 +29,8 @@ export function useData(): DataContextType {
   }, [
     refreshServices, 
     refreshAppointments, 
-    refreshMyBookings, 
+    refreshMyBookings,
+    refreshStylistBookings,
     refreshRatings, 
     refreshNotifications, 
     refreshReports
@@ -41,6 +43,7 @@ export function useData(): DataContextType {
     businessHours,
     appointments,
     myBookings,
+    stylistBookings,
     ratings,
     notifications,
     // Mantenemos 'reports' apuntando a dashboardData para no romper tipos

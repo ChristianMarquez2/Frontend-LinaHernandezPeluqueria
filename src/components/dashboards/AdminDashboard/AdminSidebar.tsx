@@ -4,10 +4,10 @@ import {
   Scissors,
   BarChart3,
   Layers,
-  Star, // Para Ratings
-  Clock, // Para Agenda
+  Star, 
+  Clock, 
   Tag,
-  CreditCard // Para Pagos
+  CreditCard 
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { AdminView } from './types';
@@ -25,7 +25,7 @@ export function AdminSidebar({ currentView, setCurrentView, isOpen }: AdminSideb
     { id: 'overview' as AdminView, label: 'Panel Principal', icon: BarChart3 },
     
     // Gestión Operativa
-    { id: 'calendar' as AdminView, label: 'Agenda de Citas', icon: Clock }, // <--- NUEVO
+    { id: 'calendar' as AdminView, label: 'Agenda de Citas', icon: Clock }, 
     { id: 'schedules' as AdminView, label: 'Turnos y Horarios', icon: Calendar },
     
     // Gestión de Recursos
@@ -37,8 +37,8 @@ export function AdminSidebar({ currentView, setCurrentView, isOpen }: AdminSideb
     { id: 'services' as AdminView, label: 'Servicios', icon: Tag },
     
     // Análisis y Feedback
-    { id: 'ratings' as AdminView, label: 'Calificaciones', icon: Star }, // <--- NUEVO
-    { id: 'payments' as AdminView, label: 'Pagos y Comprobantes', icon: CreditCard }, // <--- NUEVO: Pagos
+    { id: 'ratings' as AdminView, label: 'Calificaciones', icon: Star }, 
+    { id: 'payments' as AdminView, label: 'Pagos y Comprobantes', icon: CreditCard }, 
     { id: 'reports' as AdminView, label: 'Reportes', icon: BarChart3 },
   ];
 

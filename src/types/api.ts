@@ -8,9 +8,9 @@ export interface User {
 }
 
 export interface Service {
-  _id: string; // Ojo: tu backend a veces usa _id y a veces id, asegúrate de unificar o usar _id
+  _id: string;
   id?: string;
-  name: string; // Tu backend usa 'nombre' en algunos lados, confirma esto con tu DTO
+  name: string;
   nombre?: string; 
   description: string;
   price: number;
@@ -22,17 +22,16 @@ export interface Service {
 }
 
 export interface Booking {
-  _id: string; // Mongo ID
+  _id: string;
   id?: string;
-  clientId: string | User; // Puede venir populado
+  clientId: string | User;
   stylistId: string | User;
   serviceId: string | Service;
-  date: string; // Tu backend usa 'inicio'
-  inicio: string; 
+  date: string;
+  inicio: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
-  estado: string; // Mapeo directo de tu backend
+  estado: string;
   
-  // ✅ NUEVOS CAMPOS DE PAGO
   paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
   invoiceNumber?: string;
   paymentMethod?: string;
@@ -41,7 +40,6 @@ export interface Booking {
   notas?: string;
 }
 
-// ✅ NUEVAS INTERFACES PARA PAGO
 export interface BankInfo {
   bank: string;
   accountType: string;

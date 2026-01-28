@@ -6,10 +6,12 @@ import { Appointment, Booking } from "../types";
 interface AppointmentsContextType {
   appointments: Appointment[]; // Citas manuales (Admin/Gerente)
   myBookings: Booking[];       // Mis reservas (Cliente)
+  stylistBookings: Booking[];  // Citas del estilista
   loading: boolean;
   
   refreshAppointments: () => Promise<void>; // Refresca Admin
   refreshMyBookings: () => Promise<void>;   // Refresca Cliente
+  refreshStylistBookings: () => Promise<void>; // Refresca Estilista
 }
 
 const AppointmentsContext = createContext<AppointmentsContextType | undefined>(undefined);
@@ -20,6 +22,7 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
   
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
+  const [stylistBookings, setStylistBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   // 1. Cargar Citas Manuales (Admin / General / Estilista)
@@ -58,6 +61,32 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
     }
   }, [token, user]);
 
+  // 3. Cargar Citas del Estilista
+  const refreshStylistBookings = useCallback(async () => {
+    if (!token) {
+      console.warn("⚠️ refreshStylistBookings: No hay token disponible");
+      return;
+    }
+    
+    // Verificar que el usuario sea estilista
+    const userRole = (user?.role as string)?.toUpperCase() || "";
+    if (userRole !== 'ESTILISTA' && userRole !== 'STYLIST') {
+      console.log("ℹ️ refreshStylistBookings: Usuario no es estilista (rol:", userRole + "), ignorando");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const bookings = await dataService.fetchStylistBookings(token);
+      setStylistBookings(bookings);
+      console.log("✅ Citas del estilista cargadas:", bookings.length);
+    } catch (err) {
+      console.error("❌ Error al cargar citas del estilista:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, user]);
+
   // Efecto principal: Cargar datos según rol o login
   useEffect(() => {
     if (user && token) {
@@ -73,9 +102,15 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
         refreshMyBookings();
       }
       
+      // Si es estilista, cargamos sus citas
+      if (userRole === 'ESTILISTA' || userRole === 'STYLIST') {
+        console.log("📌 Cargando citas del estilista...");
+        refreshStylistBookings();
+      }
+      
       // Si es Admin/Gerente/Estilista, cargamos las manuales
-      if (['ADMIN', 'GERENTE', 'ESTILISTA', 'MANAGER', 'STYLIST'].includes(userRole)) {
-        console.log("📌 Cargando citas manuales para admin/gerente/estilista...");
+      if (['ADMIN', 'GERENTE', 'MANAGER'].includes(userRole)) {
+        console.log("📌 Cargando citas manuales para admin/gerente...");
         refreshAppointments();
       }
 
@@ -85,15 +120,17 @@ export function AppointmentsProvider({ children }: { children: React.ReactNode }
     } else {
       console.log("⚠️ AppointmentsContext: user o token no disponibles", { user, hasToken: !!token });
     }
-  }, [user, token, refreshAppointments, refreshMyBookings]);
+  }, [user, token, refreshAppointments, refreshMyBookings, refreshStylistBookings]);
 
   return (
     <AppointmentsContext.Provider value={{ 
       appointments, 
       myBookings, 
+      stylistBookings,
       loading, 
       refreshAppointments, 
-      refreshMyBookings 
+      refreshMyBookings,
+      refreshStylistBookings
     }}>
       {children}
     </AppointmentsContext.Provider>

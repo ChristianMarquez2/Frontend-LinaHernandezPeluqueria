@@ -201,11 +201,9 @@ export function AppointmentCalendar({ enrichWithClientData = false }: { enrichWi
                   </SelectTrigger>
                   <SelectContent className="appointment-calendar__select-content">
                     <SelectItem value="ALL">Todos</SelectItem>
-                    <SelectItem value="SCHEDULED">Pendientes</SelectItem>
                     <SelectItem value="CONFIRMED">Confirmadas</SelectItem>
                     <SelectItem value="COMPLETED">Finalizadas</SelectItem>
                     <SelectItem value="CANCELLED">Canceladas</SelectItem>
-                    <SelectItem value="NO_SHOW">No asistió</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

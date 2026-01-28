@@ -140,8 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearSession();
     
     if (showMessage) {
-      toast.error("Sesión expirada por inactividad", {
-        description: "Por favor, inicia sesión de nuevo para continuar.",
+      toast.error("Sesión Finalizada", {
+        
         duration: 5000,
         style: { color: "black", background: "#ef4444" },
         descriptionClassName: "text-black",

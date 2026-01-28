@@ -22,7 +22,7 @@ interface LogEntry {
 
 class Logger {
   private logs: LogEntry[] = [];
-  private maxLogs = 500; // Máximo de logs en memoria
+  private maxLogs = 500;
   private isDevelopment = import.meta.env.DEV;
 
   /**
@@ -58,7 +58,6 @@ class Logger {
     this.log(LogLevel.ERROR, message, data, source);
     devConsole.error(`[ERROR] ${message}`, data);
     
-    // En producción, podrías enviar a un servicio de error tracking (Sentry, LogRocket, etc)
     if (!this.isDevelopment) {
       this.sendToErrorTracking(message, data, source);
     }
@@ -78,7 +77,6 @@ class Logger {
 
     this.logs.push(entry);
 
-    // Mantener máximo de logs
     if (this.logs.length > this.maxLogs) {
       this.logs.shift();
     }
@@ -92,7 +90,7 @@ class Logger {
     if (!stack) return 'Unknown';
     
     const lines = stack.split('\n');
-    const callerLine = lines[4]; // Saltar algunos niveles de stack
+    const callerLine = lines[4];
     const match = callerLine?.match(/at (\w+)/);
     return match?.[1] || 'Unknown';
   }
@@ -144,19 +142,11 @@ class Logger {
    */
   private sendToErrorTracking(message: string, data: any, source?: string) {
     // Aquí podrías integrar con Sentry, LogRocket, Bugsnag, etc.
-    // Ejemplo con Sentry:
-    // if (window.Sentry) {
-    //   window.Sentry.captureException(new Error(message), {
-    //     contexts: { data, source },
-    //   });
-    // }
   }
 }
 
-// Exportar singleton
 export const logger = new Logger();
 
-// Hook para React
 import { useEffect } from 'react';
 
 export function useLogger(componentName: string) {

@@ -1,18 +1,13 @@
-// services/api.ts
 import { API_BASE_URL, getAuthHeader } from "../config/api";
 import { logger } from "./logger";
 import { toast } from "sonner";
 
-// Callback global para logout cuando token expira
 let onTokenExpiredCallback: (() => void) | null = null;
 
 export function setTokenExpiredCallback(callback: () => void) {
   onTokenExpiredCallback = callback;
 }
 
-// -------------------------
-// 🔧 Tipos básicos
-// -------------------------
 export interface ApiResponse<T = any> {
   ok: boolean;
   status: number;
@@ -20,16 +15,10 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-// -------------------------
-// 🔧 Ayuda: construir URLs
-// -------------------------
 function buildUrl(path: string) {
   return `${API_BASE_URL}${path}`;
 }
 
-// -------------------------
-// 🔧 Centralizador de peticiones
-// -------------------------
 async function request<T>(
   method: string,
   url: string,

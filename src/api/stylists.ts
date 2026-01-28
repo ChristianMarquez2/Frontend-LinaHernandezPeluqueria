@@ -43,7 +43,7 @@ export async function createStylist(formData: any, token: string) {
           : 'O',
       email: formData.email,
       password: formData.password,
-      servicesOffered: [formData.service], // ID o nombre del servicio
+      servicesOffered: [formData.service], 
     },
     {
       headers: { Authorization: `Bearer ${token}` },
@@ -69,7 +69,7 @@ export async function updateStylistServices(id: string, serviceId: string, token
 // ==============================
 export async function deactivateStylist(id: string, token: string) {
   const { data } = await axios.put(
-    `${BASE_URL}/users/${id}`, // ✅ usa BASE_URL, no ruta absoluta
+    `${BASE_URL}/users/${id}`, 
     { isActive: false },
     { headers: { Authorization: `Bearer ${token}` } }
   );

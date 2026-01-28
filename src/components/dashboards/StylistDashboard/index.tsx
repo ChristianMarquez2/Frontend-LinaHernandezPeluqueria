@@ -11,7 +11,7 @@ import { AppointmentCalendar } from '../../management/calendar/AppointmentCalend
 
 export function StylistDashboard() {
   const { user, logout, refreshSession } = useAuth();
-  const { getUserNotifications, fetchData, myBookings } = useData();
+  const { getUserNotifications, fetchData, stylistBookings } = useData();
   const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
@@ -26,10 +26,10 @@ export function StylistDashboard() {
 
   const today = new Date().toISOString().split('T')[0];
   const stats = {
-    today: myBookings.filter(b => b.inicio.startsWith(today)).length,
-    pending: myBookings.filter(b => b.estado === 'SCHEDULED' || b.estado === 'PENDING_STYLIST_CONFIRMATION').length,
-    confirmed: myBookings.filter(b => b.estado === 'CONFIRMED').length,
-    completed: myBookings.filter(b => b.estado === 'COMPLETED' && b.inicio.startsWith(today)).length
+    today: stylistBookings.filter(b => b.inicio.startsWith(today)).length,
+    confirmed: stylistBookings.filter(b => b.estado === 'CONFIRMED').length,
+    canceled: stylistBookings.filter(b => b.estado === 'CANCELLED').length,
+    completed: stylistBookings.filter(b => b.estado === 'COMPLETED').length
   };
 
   // CORRECCIÓN: Hacemos cast a string para evitar el error de tipado estricto
@@ -53,9 +53,9 @@ export function StylistDashboard() {
         {/* Estadísticas Rápidas (Podríamos mejorarlas conectándolas a bookings reales luego) */}
         <StylistStats
           todayCount={stats.today}
-          pendingCount={stats.pending}
           confirmedCount={stats.confirmed}
-          completedTodayCount={stats.completed}
+          canceledCount={stats.canceled}
+          completedCount={stats.completed}
         />
 
         {/* Calendario Interactivo */}

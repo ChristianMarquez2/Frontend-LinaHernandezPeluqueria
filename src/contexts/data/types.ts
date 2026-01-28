@@ -1,17 +1,15 @@
-// src/contexts/data/types.ts
-
 // ============================================================
 // 1. ENTIDADES BASE (CATÁLOGO Y USUARIOS)
 // ============================================================
 
 export interface User {
   _id: string;
-  id?: string; // Alias opcional
+  id?: string;
   email: string;
-  nombre: string;     // Backend field
-  apellido: string;   // Backend field
-  firstName?: string; // Frontend alias (opcional)
-  lastName?: string;  // Frontend alias (opcional)
+  nombre: string;
+  apellido: string;
+  firstName?: string;
+  lastName?: string;
   telefono?: string;
   phone?: string;
   role: 'admin' | 'manager' | 'stylist' | 'client' | 'ADMIN' | 'GERENTE' | 'ESTILISTA' | 'CLIENTE';
@@ -22,7 +20,6 @@ export interface Service {
   _id: string;
   id?: string;
   
-  // Datos principales (Backend Truth)
   nombre: string;
   descripcion: string;
   precio: number;
@@ -30,8 +27,7 @@ export interface Service {
   activo: boolean;
   codigo?: string;
   
-  // Relaciones
-  categoria?: string | Category; // Puede ser ID o poblado
+  categoria?: string | Category;
 
   // Alias para compatibilidad frontend (Opcionales)
   name?: string; 
@@ -66,7 +62,7 @@ export interface Stylist {
   role: "ESTILISTA" | string;
   isActive: boolean;
   emailVerified?: boolean;
-  servicesOffered: (string | Service)[]; // Array de IDs o de Objetos Service
+  servicesOffered: (string | Service)[];
 }
 
 export interface BusinessHours {
@@ -92,14 +88,12 @@ export interface BusinessHours {
 
 export interface Booking {
   _id: string;
-  id?: string; // Alias
+  id?: string;
 
-  // Relaciones (IDs)
   clienteId: string | User;
   estilistaId: string | Stylist;
   servicioId: string | Service;
   
-  // Objetos Poblados (Populated del backend)
   servicio?: {
     _id: string;
     nombre: string;
@@ -433,6 +427,7 @@ export interface DataContextType {
   
   appointments: Appointment[]; // Vista calendario
   myBookings: Booking[];       // Vista cliente
+  stylistBookings: Booking[];  // Vista estilista
 
   ratings: Rating[];
   notifications: Notification[];

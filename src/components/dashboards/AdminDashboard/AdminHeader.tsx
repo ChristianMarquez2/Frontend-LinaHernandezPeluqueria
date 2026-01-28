@@ -8,7 +8,7 @@ interface AdminHeaderProps {
   setSidebarOpen: (open: boolean) => void;
   unreadCount: number;
   setShowProfile: (show: boolean) => void;
-  user: any; // Puedes importar tu tipo User si lo tienes definido
+  user: any; 
   logout: () => void;
 }
 

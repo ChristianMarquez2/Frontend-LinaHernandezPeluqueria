@@ -1,4 +1,3 @@
-// services/users.ts
 import { api } from "./api";
 import { API_BASE_URL } from "../config/api";
 
@@ -23,7 +22,6 @@ interface PaginatedResponse<T> {
   meta: { page: number; limit: number; total: number };
 }
 
-// 🔹 Mapea rol del backend → frontend
 function mapRole(role: string): User["role"] {
   const roleMap: Record<string, User["role"]> = {
     ADMIN: "admin",
@@ -34,9 +32,6 @@ function mapRole(role: string): User["role"] {
   return roleMap[role] || "client";
 }
 
-// ---------------------------------------------
-// 🔹 Obtener todos los usuarios (ADMIN)
-// ---------------------------------------------
 export async function getAllUsers(
   page = 1,
   limit = 20,
@@ -64,10 +59,6 @@ export async function getAllUsers(
   };
 }
 
-
-// ---------------------------------------------
-// 🔹 Crear usuario (solo admin)
-// ---------------------------------------------
 export async function createUser(newUser: Partial<User>, token?: string) {
   const res = await api.post("/users", newUser, token);
 
@@ -75,9 +66,6 @@ export async function createUser(newUser: Partial<User>, token?: string) {
   return res.data;
 }
 
-// ---------------------------------------------
-// 🔹 Actualizar perfil de usuario (ADMIN/GERENTE)
-// ---------------------------------------------
 export async function updateUserProfile(
   id: string,
   updates: Partial<Pick<User, 'nombre' | 'apellido' | 'cedula' | 'telefono' | 'genero' | 'edad'>> & { password?: string },
@@ -89,9 +77,6 @@ export async function updateUserProfile(
   return res.data;
 }
 
-// ---------------------------------------------
-// 🔹 Desactivar usuario (soft delete)
-// ---------------------------------------------
 export async function deactivateUser(id: string, token?: string) {
   const res = await api.patch(`/users/${id}/deactivate`, {}, token);
 
@@ -99,9 +84,6 @@ export async function deactivateUser(id: string, token?: string) {
   return res.data;
 }
 
-// ---------------------------------------------
-// 🔹 Activar usuario
-// ---------------------------------------------
 export async function activateUser(id: string, token?: string) {
   const res = await api.patch(`/users/${id}/activate`, {}, token);
 

@@ -70,7 +70,6 @@ export const dataService = {
   fetchAllBookings: async (token: string, filters: { date?: string; stylistId?: string; status?: string }): Promise<Booking[]> => {
     const params = new URLSearchParams();
 
-    // El backend usa dateFrom y dateTo en listAllBookings
     if (filters.date) {
       params.append("dateFrom", `${filters.date}T00:00:00.000Z`);
       params.append("dateTo", `${filters.date}T23:59:59.999Z`);
@@ -83,7 +82,6 @@ export const dataService = {
       headers: getHeaders(token)
     });
 
-    // Si es 403 (es estilista), intentamos su ruta propia
     if (res.status === 403) {
       const resSty = await fetch(`${API_BASE_URL}/bookings/mystyle?${params.toString()}`, {
         headers: getHeaders(token)
@@ -93,11 +91,9 @@ export const dataService = {
     }
 
     const json = await res.json();
-    // Importante: El backend devuelve { data: [...], meta: {...} }
     return json.data || [];
   },
 
-  // CORRECCIÓN: Tu backend recibe 'motivo' en el body para cancelar
   cancelBooking: async (token: string, bookingId: string, motivo: string) => {
     const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
       method: "POST",
@@ -112,21 +108,19 @@ export const dataService = {
   // 🕒 SLOTS (HORARIOS DISPONIBLES)
   // ============================================================
 
-  // Tu backend tiene un controlador específico para generar slots de un día
   generateDaySlots: async (token: string, data: GenerateSlotsDTO): Promise<ServiceSlot[]> => {
     const res = await fetch(`${API_BASE_URL}/slots/day`, {
       method: "POST",
       headers: getHeaders(token),
-      body: JSON.stringify(data), // { stylistId, serviceId, dayOfWeek, dayStart, dayEnd }
+      body: JSON.stringify(data),
     });
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message || "Error generando slots");
     }
-    return await res.json(); // Devuelve el array de slots generados
+    return await res.json();
   },
 
-  // Listar slots disponibles (Público o Privado)
   listSlots: async (token: string, filters: { stylistId?: string; serviceId?: string; dayOfWeek?: string }): Promise<ServiceSlot[]> => {
     const params = new URLSearchParams();
     if (filters.stylistId) params.append("stylistId", filters.stylistId);
@@ -140,10 +134,7 @@ export const dataService = {
     return json.data || [];
   },
 
-
-  // Agrego también la función de reprogramar que faltaba y es necesaria para el modal
   rescheduleBooking: async (token: string, bookingId: string, payload: { slotId: string; date: string }) => {
-    // Nota: El backend espera PUT en esta ruta
     const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/reschedule`, {
       method: "PUT",
       headers: getHeaders(token),
@@ -160,7 +151,7 @@ export const dataService = {
     
     // Definir método HTTP según la acción
     const methodMap: Record<string, string> = {
-      'confirm': 'PATCH',  // ✅ Cambio a PATCH según nuevo backend
+      'confirm': 'PATCH',
       'reschedule': 'POST',
       'complete': 'PATCH',
       'cancel': 'POST'
@@ -292,6 +283,41 @@ export const dataService = {
       
       if (!res.ok) {
         console.warn(`⚠️ Error ${res.status} al obtener reservas:`, res.statusText);
+        return [];
+      }
+      
+      const json = await res.json();
+      return json.data || [];
+    } catch (e) {
+      console.error("❌ Error en fetchClientBookings:", e);
+      return [];
+    }
+  },
+
+  // Cargar citas del estilista autenticado
+  fetchStylistBookings: async (token: string): Promise<Booking[]> => {
+    try {
+      if (!token) {
+        console.warn("⚠️ No hay token disponible para fetchStylistBookings");
+        return [];
+      }
+      
+      const res = await fetch(`${API_BASE_URL}/bookings/mystyle?page=1&limit=100&sort=-createdAt`, { 
+        headers: getHeaders(token) 
+      });
+      
+      if (res.status === 403) {
+        console.warn("⚠️ Acceso denegado (403) a /bookings/mystyle");
+        return [];
+      }
+      
+      if (res.status === 401) {
+        console.warn("⚠️ No autorizado (401) - El token puede haber expirado");
+        return [];
+      }
+      
+      if (!res.ok) {
+        console.warn(`⚠️ Error ${res.status} al obtener citas del estilista:`, res.statusText);
         return [];
       }
       
